@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{66F78FB5-4CC2-964B-9427-94A4D844CD66}",
+	"Category": "",
+	"Description": "Epic AI MegaJam entry",
+	"Modules": [
+		{
+			"Name": "EpicAiJam",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true
+		}
+	]
+}
