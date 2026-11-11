@@ -1,0 +1,31 @@
+# Unreal Engine 5 (motsv. Godots .godot/-mapp: genererat, ska inte versioneras)
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Build/
+!Build/**/*.ico
+.vs/
+.vscode/
+.idea/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+Plugins/**/Binaries/
+Plugins/**/Intermediate/
+
+# Paketerade byggen (laddas upp separat, inte i git)
+Packaged/
+Archive/
+*.zip
+
+# Video/ljud-råmaterial utanför Content/
+Recordings/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
