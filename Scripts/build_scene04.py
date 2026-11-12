@@ -1,15 +1,16 @@
 """
-Scene04_Finale graybox (par 4, max 6). Run headless like build_scene02.py.
+Scene04_Finale graybox (par 4, max 7). Run headless like build_scene02.py.
 
 Layout (cm, X forward), one long run from the sound stage to a rooftop:
-  Start room x -600..900. Plate (200, -700) opens Gate at x = 1000 (corridor y -170..170).
-  Explosive (fuse 0.5 s, radius 5 m) at (1600, 110) next to the breakable wall at x = 1700.
+  Start room x -600..900. TWO plates (200, 700) and (200, -700) must BOTH be pressed to open the
+  gate at x = 1000 (corridor y -170..170). A small crate (150 cm) at (200, 300) can be pushed onto
+  the north plate - crates press plates too - so one take can hold both marks.
   Courtyard x 2000..4400, y -1500..1500. Guard patrols x 2600..3300 at y = 700, watching the lever (2900, 1100).
   East courtyard wall has a door at x = 4400 guarded by 3 lasers (linked to the lever).
   Back alley x 4400..6300 (y -170..170): long crate x 4620..5380, pit x 5400..6200 (crate-only rails).
   Ramp x 6300..7100 up to the rooftop (z = 300), goal at (7600, 0).
-  Intended: 1 holds the plate, 2 arms the explosive (and is blown up), 3 lures the guard,
-  4 pulls the lever, pushes the crate into the pit and runs up to the roof.
+  Intended (par 4): plate A, plate B, lure the guard, then lever + crate bridge + roof.
+  The crate trick (push the small crate onto plate A, stand on plate B) saves a take: 3 takes.
 """
 import math
 import os
@@ -32,16 +33,16 @@ L.box_span("CorridorFloor", 900, 2000, -W, W, -20, 0)
 L.box_span("CorridorWall_N", 900, 2000, W, W + 30, 0, H)
 L.box_span("CorridorWall_S", 900, 2000, -W - 30, -W, 0, H)
 
-plate = L.spawn(unreal.PressurePlate, (200, -700, 40), label="PressurePlate")
+plate_n = L.spawn(unreal.PressurePlate, (200, 700, 40), label="PressurePlate_North")
+plate_s = L.spawn(unreal.PressurePlate, (200, -700, 40), label="PressurePlate_South")
 gate = L.spawn(unreal.Gate, (1000, 0, 0), label="Gate")
 gate.set_actor_scale3d(unreal.Vector(1, 340.0 / 300.0, 1.2))
-gate.set_editor_property("linked_activators", [plate])
+gate.set_editor_property("linked_activators", [plate_n, plate_s])
+gate.set_editor_property("require_all_activators", True)
 
-wall = L.box_span("BreakableWall", 1680, 1720, -W, W, 0, H)
-L.tag(wall, "BreakableWall")
-bomb = L.spawn(unreal.ExplosiveProp, (1600, 110, 45), label="Explosive")
-bomb.set_editor_property("fuse_seconds", 0.5)
-bomb.set_editor_property("radius", 500.0)
+prop_crate = L.spawn(unreal.PushCrate, (200, 300, 75), label="PropCrate")
+prop_crate.set_editor_property("size", unreal.Vector(150, 150, 150))
+prop_crate.set_actor_scale3d(unreal.Vector(1.5, 1.5, 1.5))
 
 # --- Courtyard: guard + lever, laser door ---------------------------------------------------
 L.box_span("CourtyardFloor", 2000, 4400, -1500, 1500, -20, 0)
@@ -102,13 +103,15 @@ start = L.spawn(unreal.PlayerStart, (0, 0, 100), label="PlayerStart")
 L.studio_lights(spots=[((1500, -1600, 1500), (1800, 0, 0)), ((3300, 1600, 1500), (3000, 600, 0))])
 L.cameras([
     ((-400, -2200, 2400), (3500, 0, 0), 14),     # big wide over the whole set
+    ((-500, 0, 500), (300, 0, 50), 20),          # start room: both marks + prop crate
     ((2300, -1300, 500), (2900, 900, 100), 28),  # courtyard: guard + lever
     ((4900, -900, 900), (5800, 0, -50), 24),     # alley + pit (looking over the south wall)
     ((8300, -900, 900), (7300, 0, 350), 30),     # rooftop finale
 ])
 
 L.director(start, "Scene 4: The Finale",
-           "Final scene. Everything you've learned. Make it a classic.",
-           par=4, max_takes=6, duration=45)
+           "Two marks, one gate. Props can hit a mark too.",
+           par=4, max_takes=7, duration=45,
+           bonus=("NO_SCRAPS", 0, "No scrapped takes."))
 L.save_map(MAP)
 L.log("Saved " + MAP)

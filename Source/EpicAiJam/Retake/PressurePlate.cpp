@@ -22,6 +22,8 @@ APressurePlate::APressurePlate()
 	PlateMesh->SetMobility(EComponentMobility::Movable);
 	PlateMesh->SetCollisionProfileName(TEXT("BlockAll"));
 	PlateMesh->SetGenerateOverlapEvents(false);
+	// Crates (WorldDynamic) slide over the ~10 cm plate instead of catching on its edge.
+	PlateMesh->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
 	PlateMesh->SetCanEverAffectNavigation(false);
 }
 

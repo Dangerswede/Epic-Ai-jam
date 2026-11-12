@@ -29,6 +29,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Retake")
 	TArray<TObjectPtr<ARetakeActivator>> LinkedActivators;
 
+	/** If true, ALL linked activators must be active (e.g. two plates); otherwise any one opens the gate. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Retake")
+	bool bRequireAllActivators = false;
+
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	bool ShouldBeOpen() const;
 

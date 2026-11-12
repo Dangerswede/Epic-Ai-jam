@@ -24,7 +24,9 @@ APushCrate::APushCrate()
 	CrateMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CrateMesh"));
 	SetRootComponent(CrateMesh);
 	CrateMesh->SetStaticMesh(RetakeVisuals::LoadBasicShape(TEXT("Cube")));
-	CrateMesh->SetCollisionProfileName(TEXT("BlockAll"));
+	// WorldDynamic so pressure-plate meshes can let it slide over their lip; overlaps so plates notice it.
+	CrateMesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+	CrateMesh->SetGenerateOverlapEvents(true);
 	CrateMesh->SetMobility(EComponentMobility::Movable);
 	CrateMesh->SetSimulatePhysics(false);
 

@@ -32,14 +32,17 @@ void AGate::BeginPlay()
 
 bool AGate::ShouldBeOpen() const
 {
+	int32 Valid = 0;
+	int32 Active = 0;
 	for (const ARetakeActivator* Activator : LinkedActivators)
 	{
-		if (Activator && Activator->IsActive())
+		if (Activator)
 		{
-			return true;
+			++Valid;
+			Active += Activator->IsActive() ? 1 : 0;
 		}
 	}
-	return false;
+	return bRequireAllActivators ? (Valid > 0 && Active == Valid) : (Active > 0);
 }
 
 void AGate::Tick(float DeltaSeconds)
