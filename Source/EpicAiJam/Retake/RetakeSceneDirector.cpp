@@ -5,6 +5,7 @@
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Retake/DirectorsCutComponent.h"
 #include "Retake/RetakeCharacter.h"
 #include "Retake/RetakeRecorderComponent.h"
 #include "Retake/RetakeResettable.h"
@@ -29,6 +30,7 @@ ARetakeSceneDirector::ARetakeSceneDirector()
 #endif
 
 	GhostClass = ATakeGhost::StaticClass();
+	DirectorsCut = CreateDefaultSubobject<UDirectorsCutComponent>(TEXT("DirectorsCut"));
 	ShotListText = FText::FromString(TEXT("Reach the mark."));
 }
 
@@ -342,12 +344,8 @@ void ARetakeSceneDirector::StartDirectorsCut()
 {
 	SetState(ERetakeSceneState::DirectorsCut);
 
-	if (!bBuiltInDirectorsCutReplay)
-	{
-		return; // UDirectorsCutComponent drives it and calls FinishDirectorsCut().
-	}
 
-	// Built-in fallback: replay every take (including the winning one) together.
+	// Replay every take (including the winning one) together from time 0.
 	ResetResettables();
 	if (Player)
 	{
@@ -366,7 +364,19 @@ void ARetakeSceneDirector::StartDirectorsCut()
 	{
 		Longest = FMath::Max(Longest, Take.Duration);
 	}
-	ScheduleState(Longest + 1.f, [this]() { FinishDirectorsCut(); });
+	if (bCinematicDirectorsCut && DirectorsCut)
+	{
+		TArray<ATakeGhost*> Playing;
+		for (ATakeGhost* Ghost : Ghosts)
+		{
+			Playing.Add(Ghost);
+		}
+		DirectorsCut->Begin(Playing, Longest); // calls FinishDirectorsCut() when done
+	}
+	else
+	{
+		ScheduleState(Longest + 1.f, [this]() { FinishDirectorsCut(); });
+	}
 }
 
 void ARetakeSceneDirector::FinishDirectorsCut()
@@ -374,6 +384,10 @@ void ARetakeSceneDirector::FinishDirectorsCut()
 	if (State != ERetakeSceneState::DirectorsCut)
 	{
 		return;
+	}
+	if (DirectorsCut)
+	{
+		DirectorsCut->End();
 	}
 	EnterResults();
 }

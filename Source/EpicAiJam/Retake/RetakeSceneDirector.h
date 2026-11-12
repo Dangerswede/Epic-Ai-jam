@@ -7,6 +7,7 @@
 
 class ARetakeCharacter;
 class ATakeGhost;
+class UDirectorsCutComponent;
 
 UENUM(BlueprintType)
 enum class ERetakeSceneState : uint8
@@ -91,12 +92,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Timing", meta = (ClampMin = "0.0"))
 	float WrapSeconds = 2.f;
 
-	/**
-	 * If true and nothing else ends the Director's Cut (UDirectorsCutComponent calls FinishDirectorsCut),
-	 * the director replays all takes as ghosts itself and moves to Results when the longest take ends.
-	 */
+	/** Director's Cut with camera cuts, letterbox and title cards (UDirectorsCutComponent). If false, a plain replay with the player camera. */
 	UPROPERTY(EditAnywhere, Category = "Timing")
-	bool bBuiltInDirectorsCutReplay = true;
+	bool bCinematicDirectorsCut = true;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Retake")
+	TObjectPtr<UDirectorsCutComponent> DirectorsCut;
 
 	// --- Events (HUD, audio, camera) -----------------------------------------
 

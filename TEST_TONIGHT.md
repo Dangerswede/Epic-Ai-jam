@@ -87,3 +87,12 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
     Check: crate drops flush with the floor; the pit can't be jumped; falling in = CUT.
 50. Unlock flow: wrap Scene 1 → menu shows Scene 2 READY, etc.
 51. Packaged build: `Builds\Windows\EpicAiJam.exe` starts in the main menu.
+
+## T10 – Director's Cut
+52. Wrap any scene. After "THAT'S A WRAP!" the HUD disappears, black letterbox bars appear and the title card "DIRECTOR'S CUT" + scene title fades in over a wide shot.
+53. All takes (including the winning one) replay together from the start. The picture is grainy, desaturated/sepia with a vignette.
+54. Every 2.5-4 s it hard-cuts to another placed camera, preferring the one nearest a ghost that just did something (pressed E, jumped, pushed); the camera slowly follows that ghost.
+55. At the end: wide shot + "THAT'S A WRAP / N takes", then the Dailies report.
+56. Press **Space** during the Director's Cut: it skips straight to the Dailies report.
+57. Cameras are the `DC_Cam1..4` actors (folder *Cameras*) in each map; move them freely. A level with no tagged cameras gets one automatic wide camera.
+58. Packaged build: menu → Scene 1 → full loop incl. Director's Cut works outside the editor.
