@@ -1,5 +1,6 @@
 #include "Retake/RetakeCharacter.h"
 
+#include "Retake/RetakeRecorderComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -42,6 +43,8 @@ ARetakeCharacter::ARetakeCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	Recorder = CreateDefaultSubobject<URetakeRecorderComponent>(TEXT("Recorder"));
 
 	BodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BodyMesh"));
 	BodyMesh->SetupAttachment(RootComponent);
@@ -156,7 +159,7 @@ void ARetakeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	Input->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ARetakeCharacter::Move);
 	Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &ARetakeCharacter::Look);
-	Input->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+	Input->BindAction(JumpAction, ETriggerEvent::Started, this, &ARetakeCharacter::StartJump);
 	Input->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 	Input->BindAction(InteractAction, ETriggerEvent::Started, this, &ARetakeCharacter::Interact);
 	Input->BindAction(CutAction, ETriggerEvent::Started, this, &ARetakeCharacter::Cut);
@@ -182,9 +185,21 @@ void ARetakeCharacter::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(Axis.Y);
 }
 
+void ARetakeCharacter::StartJump()
+{
+	// Only record a Jump action when a jump can actually start (not mid-air spam).
+	const bool bCouldJump = CanJump();
+	Jump();
+	if (bCouldJump)
+	{
+		NotifyAction(ERetakeAction::Jump);
+	}
+}
+
 void ARetakeCharacter::Interact()
 {
 	OnInteract.Broadcast();
+	NotifyAction(ERetakeAction::Interact);
 }
 
 void ARetakeCharacter::Cut()

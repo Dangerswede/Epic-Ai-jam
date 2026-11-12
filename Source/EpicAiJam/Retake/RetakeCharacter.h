@@ -2,8 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Retake/TakeData.h"
 #include "RetakeCharacter.generated.h"
 
+class URetakeRecorderComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UStaticMeshComponent;
@@ -12,6 +14,7 @@ class UInputMappingContext;
 struct FInputActionValue;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRetakeCharacterSignature);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FRetakeActionSignature, ERetakeAction, Action);
 
 /**
  * Player stunt double. Third-person camera on a spring arm, Enhanced Input for
@@ -34,6 +37,15 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeCharacterSignature OnCutRequested;
 
+	/** Fired for every recordable discrete action (Jump, Interact, Push). */
+	UPROPERTY(BlueprintAssignable, Category = "Retake")
+	FRetakeActionSignature OnActionPerformed;
+
+	/** Report an action from outside (e.g. APushCrate reports Push). */
+	UFUNCTION(BlueprintCallable, Category = "Retake")
+	void NotifyAction(ERetakeAction Action) { OnActionPerformed.Broadcast(Action); }
+
+	URetakeRecorderComponent* GetRecorder() const { return Recorder; }
 	USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
@@ -46,6 +58,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<UCameraComponent> FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Retake")
+	TObjectPtr<URetakeRecorderComponent> Recorder;
 
 	/** Placeholder body so the character is visible without art assets. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
@@ -79,6 +94,7 @@ private:
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+	void StartJump();
 	void Interact();
 	void Cut();
 };
