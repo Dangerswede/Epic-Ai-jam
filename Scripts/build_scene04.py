@@ -33,8 +33,8 @@ L.box_span("CorridorFloor", 900, 2000, -W, W, -20, 0)
 L.box_span("CorridorWall_N", 900, 2000, W, W + 30, 0, H)
 L.box_span("CorridorWall_S", 900, 2000, -W - 30, -W, 0, H)
 
-plate_n = L.spawn(unreal.PressurePlate, (200, 700, 40), label="PressurePlate_North")
-plate_s = L.spawn(unreal.PressurePlate, (200, -700, 40), label="PressurePlate_South")
+plate_n = L.spawn(unreal.PressurePlate, (200, 600, 40), label="PressurePlate_North")
+plate_s = L.spawn(unreal.PressurePlate, (200, -350, 40), label="PressurePlate_South")
 gate = L.spawn(unreal.Gate, (1000, 0, 0), label="Gate")
 gate.set_actor_scale3d(unreal.Vector(1, 340.0 / 300.0, 1.2))
 gate.set_editor_property("linked_activators", [plate_n, plate_s])
@@ -62,8 +62,8 @@ for i, z in enumerate((40, 110, 180)):
     laser.set_editor_property("beam_length", 340.0)
     laser.set_editor_property("linked_activators", [lever])
 
-guard = L.spawn(unreal.StuntGuard, (2600, 700, 100), label="Guard")
-guard.set_editor_property("patrol_point_b", unreal.Vector(700, 0, 0))
+guard = L.spawn(unreal.StuntGuard, (3300, 700, 100), rot=(0, 180, 0), label="Guard")
+guard.set_editor_property("patrol_point_b", unreal.Vector(700, 0, 0))  # yaw 180: walks west, toward the courtyard entrance
 guard.set_editor_property("lose_sight_multiplier", 3.0)
 
 # --- Back alley: crate + pit ----------------------------------------------------------------
@@ -122,9 +122,15 @@ L.film_crew((-450, -350, 0), 20, (-500, 400, 0), -40,
                    ("PlywoodFlat", (650, 950, 0), 260, 180), ("DirectorChair", (7400, -380, 300), 100, 120),
                    ("Clapperboard", (7300, 380, 300), 40, -30), ("CinemaCamera", (7200, 300, 300), 170, -60)])
 
-L.director(start, "Scene 4: The Finale",
-           "Two marks, one gate. Props can hit a mark too.",
-           par=4, max_takes=7, duration=45,
+d = L.director(start, "Scene 4: The Finale",
+           "Final scene - plan the ORDER. Four jobs, you decide which take does which. "
+           "Some jobs only work once others are in the can. Props can hit a mark too.",
+           par=4, max_takes=7, duration=30,
            bonus=("NO_SCRAPS", 0, "No scrapped takes."))
+L.set_roles(d, [("Grip", "Push the prop crate onto the north mark and stand on the south mark - opens the gate."),
+                ("Decoy", "Get the courtyard guard's attention and keep it busy along the south wall."),
+                ("Inside Man", "Pull the lever by the north wall - it kills the lasers."),
+                ("Hero", "Lasers, crate bridge, rooftop. Make it a classic.")])
+d.set_editor_property("roles_any_order", True)
 L.save_map(MAP)
 L.log("Saved " + MAP)

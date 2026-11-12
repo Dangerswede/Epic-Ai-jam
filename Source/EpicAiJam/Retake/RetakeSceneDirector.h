@@ -83,6 +83,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene|Roles")
 	TArray<FTakeRole> Roles;
 
+	/** Finale: Roles is a cast list - the player decides which take does which job (order planning). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene|Roles")
+	bool bRolesAnyOrder = false;
+
+	/** "CAST: GRIP / DECOY / ..." for any-order scenes (empty otherwise). */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	FText GetCastLine() const;
+
 	/** Director's note: the extra goal for the 3rd star. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene|Director's Note")
 	ERetakeBonus BonusType = ERetakeBonus::None;

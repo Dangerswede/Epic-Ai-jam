@@ -398,36 +398,41 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 			WaitUntil(Why, [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 15.f);
 		};
 
-		// Take 1 (crate trick): push the prop crate onto the north mark, stand on the south mark.
+		// D5: the cast in a working ORDER - GRIP (gate), DECOY (guard), INSIDE MAN (lever), HERO.
+		// Take 1: GRIP - prop crate onto the north mark, stand on the south mark.
 		MoveTo(200, 180, 20.f);
-		MoveTo(200, 545, 40.f, 10.f);
+		MoveTo(200, 390, 40.f, 10.f);
 		WaitUntil(TEXT("prop crate presses the north plate"), [PlateN]() { return PlateN->IsActive(); }, 5.f);
 		Check(TEXT("one plate is not enough: gate still shut"), [Gate]() { return Gate->GetOpenAlpha() < 0.05f; });
-		MoveTo(200, -700, 40.f);
+		MoveTo(200, -350, 40.f);
 		WaitGateOpen(TEXT("both plates -> gate open"));
-		Wait(0.5f);
 		Cut();
-		// Take 2: ghost 1 repeats the crate trick; lure the guard away.
+		// Take 2: DECOY.
 		NextTake(2);
 		MoveTo(700, 0);
-		WaitGateOpen(TEXT("ghost 1 holds both marks -> gate open"));
-		Check(TEXT("ghost pushed the prop crate onto the plate again"), [PlateN, PropCrate]() { return PlateN->IsActive() && PropCrate != nullptr; });
+		WaitGateOpen(TEXT("grip ghost holds both marks -> gate open"));
 		MoveTo(1900, -110);
-		MoveTo(2700, -600);
-		MoveTo(3500, 250);
-		WaitUntil(TEXT("guard spots the player"), [Guard]() { return Guard->GetGuardState() == EStuntGuardState::Chase; }, 8.f);
-		MoveTo(3800, -1400, 80.f);
-		MoveTo(2150, -1400, 80.f); // keep running west, away from the laser door (P4)
-		WaitUntil(TEXT("guard catches up (or 8 s)"), [this]() { return Director->GetState() != ERetakeSceneState::Rolling; }, 8.f);
+		MoveTo(2500, 300);
+		WaitUntil(TEXT("guard spots the decoy"), [Guard]() { return Guard->GetGuardState() == EStuntGuardState::Chase; }, 3.f);
+		// Lead it in a circle (a slower pursuer never closes on a circle) until the take runs out.
+		Steps.Add({ TEXT("decoy circles the south courtyard until the take ends"), 40.f, [this](float)
+		{
+			if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Done;
+			const FVector2D Center(3000.f, -1000.f);
+			const FVector2D P = FVector2D(Player->GetActorLocation()) - Center;
+			const float Ang = FMath::Atan2(P.Y, P.X) + FMath::DegreesToRadians(40.f);
+			const FVector2D Aim = Center + FVector2D(FMath::Cos(Ang), FMath::Sin(Ang)) * 450.f;
+			Player->AddMovementInput(FVector((Aim - FVector2D(Player->GetActorLocation())).GetSafeNormal(), 0.f), 1.f);
+			return EStepResult::Running;
+		} });
 		CutIfRolling();
-		// Take 3: lever, lasers, crate bridge, rooftop.
+		// Take 3: INSIDE MAN.
 		NextTake(3);
-		Check(TEXT("two ghosts spawned"), [this]() { return Director->GetGhosts().Num() == 2; });
 		MoveTo(700, 0);
 		WaitGateOpen(TEXT("gate open again"));
 		MoveTo(1900, -110);
-		WaitUntil(TEXT("ghost 2 lures the guard"), [Guard]() { return Guard->GetGuardState() != EStuntGuardState::Patrol; }, 15.f);
-		Wait(2.f);
+		MoveTo(2100, 1050, 60.f); // hug the west wall while the decoy pulls the guard south
+		WaitUntil(TEXT("decoy ghost has led the guard south"), [Guard]() { return Guard->GetGuardState() != EStuntGuardState::Patrol && Guard->GetActorLocation().Y < -400.f; }, 8.f);
 		MoveTo(2900, 960, 40.f);
 		Check(TEXT("margin: guard still busy and far from the lever"), [Guard, Lever]()
 		{
@@ -436,6 +441,18 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		Interact();
 		Check(TEXT("lever on"), [Lever]() { return Lever->IsActive(); });
 		Check(TEXT("lasers off"), LasersOff);
+		Cut();
+		// Take 4: HERO.
+		NextTake(4);
+		Check(TEXT("three ghosts spawned"), [this]() { return Director->GetGhosts().Num() == 3; });
+		MoveTo(700, 0);
+		WaitGateOpen(TEXT("gate open for the hero"));
+		MoveTo(1900, -110);
+		MoveTo(2080, 800); // hug the west wall while the decoy pulls the guard south
+		WaitUntil(TEXT("decoy ghost has led the guard south"), [Guard]() { return Guard->GetGuardState() != EStuntGuardState::Patrol && Guard->GetActorLocation().Y < -400.f; }, 8.f);
+		MoveTo(2700, 350); // keep clear of the decoy's circle in the south
+		MoveTo(3900, 350);
+		WaitUntil(TEXT("inside man ghost kills the lasers"), LasersOff, 6.f);
 		MoveTo(4200, 0);
 		MoveTo(4560, 0, 30.f);
 		MoveTo(5500, 0, 40.f, 15.f);

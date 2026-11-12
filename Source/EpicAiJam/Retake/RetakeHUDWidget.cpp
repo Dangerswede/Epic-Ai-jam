@@ -165,7 +165,7 @@ void URetakeHUDWidget::RefreshStatic()
 	if (RoleText)
 	{
 		const FText TakeRoleName = D->GetRoleName(Take);
-		RoleText->SetText(TakeRoleName.IsEmpty() ? FText::GetEmpty() : FText::FromString(FString::Printf(TEXT("%s: %s"),
+		RoleText->SetText(TakeRoleName.IsEmpty() ? D->GetCastLine() : FText::FromString(FString::Printf(TEXT("%s: %s"),
 			*TakeRoleName.ToString().ToUpper(), *D->Roles[Take - 1].Task.ToString())));
 	}
 	TakeText->SetText(FText::FromString(FString::Printf(TEXT("TAKE %d / %d"), Take, D->MaxTakes)));

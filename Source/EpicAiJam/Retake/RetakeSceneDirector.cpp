@@ -404,11 +404,39 @@ void ARetakeSceneDirector::ScrapLastTake()
 
 FText ARetakeSceneDirector::GetRoleName(int32 TakeNumber) const
 {
+	if (bRolesAnyOrder)
+	{
+		return FText::GetEmpty(); // the player picks the job per take
+	}
 	return Roles.IsValidIndex(TakeNumber - 1) ? Roles[TakeNumber - 1].Name : FText::GetEmpty();
+}
+
+FText ARetakeSceneDirector::GetCastLine() const
+{
+	if (!bRolesAnyOrder || Roles.Num() == 0)
+	{
+		return FText::GetEmpty();
+	}
+	TArray<FString> Names;
+	for (const FTakeRole& R : Roles)
+	{
+		Names.Add(R.Name.ToString().ToUpper());
+	}
+	return FText::FromString(TEXT("CAST: ") + FString::Join(Names, TEXT(" / ")));
 }
 
 FText ARetakeSceneDirector::GetRoleLine(int32 TakeNumber) const
 {
+	if (bRolesAnyOrder && Roles.Num() > 0)
+	{
+		// Order planning: list every job; the player decides which one this take does.
+		TArray<FString> Jobs;
+		for (const FTakeRole& R : Roles)
+		{
+			Jobs.Add(FString::Printf(TEXT("%s - %s"), *R.Name.ToString().ToUpper(), *R.Task.ToString()));
+		}
+		return FText::FromString(FString::Printf(TEXT("TAKE %d - YOUR CALL. Pick a job:\n%s"), TakeNumber, *FString::Join(Jobs, TEXT("\n"))));
+	}
 	if (!Roles.IsValidIndex(TakeNumber - 1))
 	{
 		return FText::GetEmpty();
