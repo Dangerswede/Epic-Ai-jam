@@ -96,13 +96,16 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Retake")
 	float InteractRadius = 175.f;
 
+public:
+	// Input handlers, public so automated playtests (ARetakeTestDriver) can press buttons.
+	void StartJump();
+	void Interact();
+	void Cut();
+
 private:
 	void BuildDefaultInput();
 	void AddMappingContext();
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
-	void StartJump();
-	void Interact();
-	void Cut();
 };

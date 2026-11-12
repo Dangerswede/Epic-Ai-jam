@@ -1,6 +1,8 @@
 # Test tonight
 
 Numbered steps to try in the editor. Updated after each task.
+
+> **Automated playtests (T10b): all 6 pass** (solution + wrong solution for Scene01/02/03). They drive the real player with simulated input at a fixed 60 fps and check ghosts, plates, gates, lasers, explosive, crate, Wrap -> Director's Cut -> Results and save/unlock. Re-run: `powershell -File Scripts\run_playtests.ps1` (logs in `Saved/Playtests`; uses its own save slot). Not covered by tests: how it *looks* and *feels* (camera, readability, timing at real frame rates), the main menu UI, the Space-skip in the Director's Cut - that's what tonight is for.
 Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
 > Note: `lockable` was removed from `.uasset`/`.umap` in `.gitattributes` so maps/assets are no longer read-only after a commit. If the editor still says a file is read-only, right-click it in Windows → Properties → untick *Read-only*.

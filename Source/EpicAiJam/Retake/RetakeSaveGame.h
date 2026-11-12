@@ -29,5 +29,10 @@ public:
 	/** Record a wrap and save to disk. Returns true if it's a new best. */
 	static bool RecordWrap(const FString& MapName, int32 TakesUsed);
 
-	static const TCHAR* SlotName() { return TEXT("RetakeProgress"); }
+	/** Automated playtests (-RetakeTestSave) use their own slot so they never touch real progress. */
+	static const TCHAR* SlotName()
+	{
+		static const bool bTest = FParse::Param(FCommandLine::Get(), TEXT("RetakeTestSave"));
+		return bTest ? TEXT("RetakeProgress_Test") : TEXT("RetakeProgress");
+	}
 };
