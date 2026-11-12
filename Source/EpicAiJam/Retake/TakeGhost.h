@@ -62,6 +62,9 @@ public:
 	/** Director's Cut look: opaque actor in a solid colour, no TAKE label. */
 	void SetCinematicLook(FLinearColor Color);
 
+	/** Overrides the floating "TAKE N" label (e.g. with the take's role). */
+	void SetLabelText(const FString& Text);
+
 	/** Fired once when the take runs out; the ghost then freezes in its last pose. */
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FTakeGhostSignature OnFinished;

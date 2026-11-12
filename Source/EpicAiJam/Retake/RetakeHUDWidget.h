@@ -74,6 +74,8 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UWidget> BriefingPanel;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> ShotListText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> NoteText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> RoleText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> NextRoleText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> HintText;
 
 	float StampTime = 0.f;

@@ -190,6 +190,11 @@ void ARetakeSceneDirector::SpawnGhosts(const TArray<FTakeData>& TakesToPlay)
 		if (Ghost)
 		{
 			Ghost->Init(Take);
+			const FText TakeRoleName = GetRoleName(Take.TakeNumber);
+			if (!TakeRoleName.IsEmpty())
+			{
+				Ghost->SetLabelText(FString::Printf(TEXT("TAKE %d - %s"), Take.TakeNumber, *TakeRoleName.ToString().ToUpper()));
+			}
 			Ghosts.Add(Ghost);
 		}
 	}
@@ -382,6 +387,22 @@ void ARetakeSceneDirector::ScrapLastTake()
 	SetState(ERetakeSceneState::Cut);
 	OnTakeScrapped.Broadcast(Scrapped);
 	ScheduleState(ScrapPauseSeconds, [this]() { StartRolling(); });
+}
+
+FText ARetakeSceneDirector::GetRoleName(int32 TakeNumber) const
+{
+	return Roles.IsValidIndex(TakeNumber - 1) ? Roles[TakeNumber - 1].Name : FText::GetEmpty();
+}
+
+FText ARetakeSceneDirector::GetRoleLine(int32 TakeNumber) const
+{
+	if (!Roles.IsValidIndex(TakeNumber - 1))
+	{
+		return FText::GetEmpty();
+	}
+	const FTakeRole& R = Roles[TakeNumber - 1];
+	return FText::FromString(FString::Printf(TEXT("TAKE %d - %s: %s"), TakeNumber,
+		*R.Name.ToString().ToUpper(), *R.Task.ToString()));
 }
 
 bool ARetakeSceneDirector::IsBonusMet() const

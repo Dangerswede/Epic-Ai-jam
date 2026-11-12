@@ -22,6 +22,19 @@ enum class ERetakeSceneState : uint8
 	Results,
 };
 
+/** What a take is for, shown before and during the take ("TAKE 2 - INSIDE MAN: Hit all three locks..."). */
+USTRUCT(BlueprintType)
+struct EPICAIJAM_API FTakeRole
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Retake")
+	FText Name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Retake", meta = (MultiLine = "true"))
+	FText Task;
+};
+
 /** One 30 Hz sample of a world actor (guard, crate) for the Director's Cut world track. */
 struct FWorldTrackFrame
 {
@@ -65,6 +78,10 @@ public:
 	/** Takes needed for 3 stars. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene", meta = (ClampMin = "1"))
 	int32 ParTakes = 2;
+
+	/** Role per take (index 0 = take 1). Empty = no roles in this scene. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene|Roles")
+	TArray<FTakeRole> Roles;
 
 	/** Director's note: the extra goal for the 3rd star. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene|Director's Note")
@@ -187,6 +204,14 @@ public:
 	/** True if the director's note was fulfilled (evaluate after the wrap). */
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	bool IsBonusMet() const;
+
+	/** "TAKE N - NAME: Task" for a take number, or empty if that take has no role. */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	FText GetRoleLine(int32 TakeNumber) const;
+
+	/** Role name for a take number (empty if none). */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	FText GetRoleName(int32 TakeNumber) const;
 
 	/** Stars for the current result: 1 wrap, 2 at/under par, 3 at/under par + director's note. */
 	UFUNCTION(BlueprintPure, Category = "Retake")

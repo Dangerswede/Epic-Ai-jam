@@ -151,3 +151,7 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
 ## C1 – Stunt double character
 84. The player is now the UE mannequin in a white-and-red stunt suit with a retro motorcycle helmet (Tripo prop on the "head" socket). Check: walking/running/jumping animate, the helmet sits right (tweak in Project Settings → Game → Retake → Character: Helmet Size/Offset/Rotation), the stunt launch looks OK. Ghosts use the mannequin with the translucent sepia ghost material; in the Director's Cut they are solid per-take colours; a ghost that died lies on its side. Scene 2's money bag is now the Tripo money bag; film reel cans were added to the set dressing.
+
+## D1 – Roles and timing windows (mechanics; scenes follow in D2-D5)
+85. New gameplay piece **TimedSwitch** (post with a bar on top and a label): press E (or a ghost does) and it stays on for 5 s, the bar shrinks, the label counts down; press again to restart. A gate linked to several timed switches with "require all" is only open while all of them are on at once. Not placed in any scene yet (D2+).
+86. Scenes can now give each take a **role** ("TAKE 2 - INSIDE MAN: Hit all three locks inside 6 seconds."): shown on the briefing card, again on the card during the CUT pause (for the next take), in gold under the clapperboard while rolling, and on the ghosts' labels. No scene has roles yet (D2+).

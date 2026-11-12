@@ -270,6 +270,11 @@ float ATakeGhost::GetTimeToNextAction() const
 	return 1e6f;
 }
 
+void ATakeGhost::SetLabelText(const FString& Text)
+{
+	TakeLabel->SetText(FText::FromString(Text));
+}
+
 void ATakeGhost::SetCinematicLook(FLinearColor Color)
 {
 	TakeLabel->SetVisibility(false);

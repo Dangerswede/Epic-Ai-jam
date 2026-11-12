@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Retake/TakeData.h"
 #include "RetakeTestDriver.generated.h"
 
 class ARetakeCharacter;
@@ -66,6 +67,14 @@ private:
 	bool bSawCineCamera = false;
 	bool bEverWrapped = false;
 	int32 InteractCount = 0;
+
+	// D1 idle metric: longest stretch per take with the player standing still and doing nothing.
+	UFUNCTION()
+	void HandlePlayerAction(ERetakeAction Action) { bActedThisTick = true; }
+	bool bActedThisTick = false;
+	float IdleNow = 0.f;
+	int32 IdleTake = 0;
+	TMap<int32, float> MaxIdlePerTake;
 	FVector WrapCrateLocation = FVector::ZeroVector;
 	float DirectorsCutRealSeconds = 0.f;
 

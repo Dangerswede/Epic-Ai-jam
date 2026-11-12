@@ -137,6 +137,16 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 		const APushCrate* Crate = FindCrate(true);
 		WrapCrateLocation = Crate ? Crate->GetActorLocation() : FVector::ZeroVector;
 	});
+	Check(TEXT("no take idles more than 3 s (scenes with roles)"), [this]()
+	{
+		bool bOk = true;
+		for (const TPair<int32, float>& P : MaxIdlePerTake)
+		{
+			UE_LOG(LogRetakeTest, Display, TEXT("  take %d longest idle: %.1f s"), P.Key, P.Value);
+			bOk &= P.Value <= 3.f;
+		}
+		return bOk || Director->Roles.Num() == 0;
+	});
 	WaitState((uint8)ERetakeSceneState::DirectorsCut, 10.f);
 	if (Scene == TEXT("Scene03_Chase") || Scene == TEXT("Scene04_Finale"))
 	{
@@ -595,6 +605,7 @@ void ARetakeTestDriver::StartScenario(const FString& Scenario)
 	if (Player)
 	{
 		Player->OnInteract.AddUniqueDynamic(this, &ARetakeTestDriver::HandlePlayerInteract);
+		Player->OnActionPerformed.AddUniqueDynamic(this, &ARetakeTestDriver::HandlePlayerAction);
 	}
 	ScenarioName = Scenario;
 	if (!Director || !Player)
@@ -630,6 +641,26 @@ void ARetakeTestDriver::Tick(float DeltaSeconds)
 	{
 		bEverWrapped = true;
 	}
+	// D1 idle metric (only while a take rolls; restarts per take).
+	if (Director->GetState() == ERetakeSceneState::Rolling)
+	{
+		const int32 Take = Director->GetCurrentTakeNumber();
+		if (Take != IdleTake)
+		{
+			IdleTake = Take;
+			IdleNow = 0.f;
+			MaxIdlePerTake.Add(Take, 0.f); // a re-rolled take starts over
+		}
+		const bool bIdle = Player->GetVelocity().Size2D() < 20.f && !bActedThisTick;
+		IdleNow = bIdle ? IdleNow + DeltaSeconds : 0.f;
+		float& Max = MaxIdlePerTake.FindOrAdd(Take);
+		Max = FMath::Max(Max, IdleNow);
+	}
+	else
+	{
+		IdleTake = 0;
+	}
+	bActedThisTick = false;
 	if (Director->GetState() == ERetakeSceneState::DirectorsCut)
 	{
 		if (const APlayerController* PC = GetWorld()->GetFirstPlayerController())

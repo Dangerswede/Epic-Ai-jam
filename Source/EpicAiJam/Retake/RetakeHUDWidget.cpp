@@ -31,6 +31,11 @@ void URetakeHUDWidget::BuildTree()
 		Box->AddChildToVerticalBox(SceneTitleText);
 		TakeText = Text(WidgetTree, TEXT("TAKE 1 / 5"), 30, Chalk());
 		Box->AddChildToVerticalBox(TakeText);
+		// Current role while rolling (D1).
+		RoleText = Text(WidgetTree, TEXT(""), 15, Gold(), ETextJustify::Left, false);
+		RoleText->SetAutoWrapText(true);
+		RoleText->SetWrapTextAt(360.f);
+		Box->AddChildToVerticalBox(RoleText);
 		Board->SetContent(Box);
 		UCanvasPanelSlot* S = Canvas->AddChildToCanvas(Board);
 		S->SetAnchors(FAnchors(0.f, 0.f));
@@ -71,6 +76,9 @@ void URetakeHUDWidget::BuildTree()
 		Box->AddChildToVerticalBox(Text(WidgetTree, TEXT("SHOT LIST"), 14, Red()));
 		ShotListText = Text(WidgetTree, TEXT(""), 22, Ink(), ETextJustify::Left, false);
 		Box->AddChildToVerticalBox(ShotListText)->SetPadding(FMargin(0.f, 6.f));
+		// Role of the take that is about to roll (D1).
+		NextRoleText = Text(WidgetTree, TEXT(""), 20, Ink(), ETextJustify::Left);
+		Box->AddChildToVerticalBox(NextRoleText)->SetPadding(FMargin(0.f, 4.f));
 		NoteText = Text(WidgetTree, TEXT(""), 18, Red(), ETextJustify::Left);
 		Box->AddChildToVerticalBox(NoteText)->SetPadding(FMargin(0.f, 4.f));
 		HintText = Text(WidgetTree, TEXT("Press Space to roll"), 18, Ink());
@@ -151,8 +159,18 @@ void URetakeHUDWidget::RefreshStatic()
 	NoteText->SetText(D->BonusText.IsEmpty() ? FText::GetEmpty()
 		: FText::FromString(FString::Printf(TEXT("DIRECTOR'S NOTE: %s"), *D->BonusText.ToString())));
 	const int32 Take = FMath::Max(1, D->GetCurrentTakeNumber());
+	// Up next: during the briefing and the CUT pause, the role of the take that rolls next.
+	const int32 Upcoming = D->GetTakes().Num() + 1;
+	if (NextRoleText) NextRoleText->SetText(D->GetRoleLine(Upcoming));
+	if (RoleText)
+	{
+		const FText TakeRoleName = D->GetRoleName(Take);
+		RoleText->SetText(TakeRoleName.IsEmpty() ? FText::GetEmpty() : FText::FromString(FString::Printf(TEXT("%s: %s"),
+			*TakeRoleName.ToString().ToUpper(), *D->Roles[Take - 1].Task.ToString())));
+	}
 	TakeText->SetText(FText::FromString(FString::Printf(TEXT("TAKE %d / %d"), Take, D->MaxTakes)));
-	HintText->SetText(FText::FromString(D->bWaitForRollInput ? TEXT("Press Space to roll") : TEXT("Get ready...")));
+	HintText->SetText(FText::FromString(D->GetState() == ERetakeSceneState::Cut ? TEXT("Next take rolls in a moment...")
+		: D->bWaitForRollInput ? TEXT("Press Space to roll") : TEXT("Get ready...")));
 }
 
 void URetakeHUDWidget::ShowStamp(const FString& Str, FLinearColor Color, float Duration)
@@ -173,7 +191,10 @@ void URetakeHUDWidget::HandleStateChanged(ERetakeSceneState NewState, ERetakeSce
 	const bool bBriefing = NewState == ERetakeSceneState::Briefing;
 	const bool bHideAll = NewState == ERetakeSceneState::DirectorsCut || NewState == ERetakeSceneState::Results;
 
-	if (BriefingPanel) BriefingPanel->SetVisibility(bBriefing ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	// With roles, the card also comes back during the CUT pause to brief the next take.
+	const bool bShowCard = bBriefing || (NewState == ERetakeSceneState::Cut && Director.IsValid() && Director->Roles.Num() > 0);
+	if (BriefingPanel) BriefingPanel->SetVisibility(bShowCard ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	if (RoleText) RoleText->SetVisibility(NewState == ERetakeSceneState::Rolling ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	if (Clapper) Clapper->SetVisibility(bHideAll ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 	if (TimerPanel) TimerPanel->SetVisibility(NewState == ERetakeSceneState::Rolling ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	if (TimelinePanel) TimelinePanel->SetVisibility(NewState == ERetakeSceneState::Rolling ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
