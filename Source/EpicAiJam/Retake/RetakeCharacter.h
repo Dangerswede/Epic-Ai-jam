@@ -49,6 +49,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void NotifyAction(ERetakeAction Action) { OnActionPerformed.Broadcast(Action); }
 
+	/** Jump / Interact / Cut only work while this is true (the director enables it only while Rolling). */
+	UFUNCTION(BlueprintCallable, Category = "Retake")
+	void SetActionsEnabled(bool bEnabled) { bActionsEnabled = bEnabled; }
+
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	bool AreActionsEnabled() const { return bActionsEnabled; }
+
 	URetakeRecorderComponent* GetRecorder() const { return Recorder; }
 	USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	UCameraComponent* GetFollowCamera() const { return FollowCamera; }
@@ -108,6 +115,8 @@ public:
 	void TogglePause();
 
 private:
+	bool bActionsEnabled = true;
+
 	void BuildDefaultInput();
 	void AddMappingContext();
 

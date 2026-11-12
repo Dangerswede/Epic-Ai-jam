@@ -216,6 +216,7 @@ void ARetakeSceneDirector::SetPlayerControl(bool bEnabled)
 	{
 		return;
 	}
+	Player->SetActionsEnabled(bEnabled);
 	if (APlayerController* PC = Cast<APlayerController>(Player->GetController()))
 	{
 		PC->ResetIgnoreMoveInput();

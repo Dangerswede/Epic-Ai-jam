@@ -28,3 +28,4 @@ How AI tools were used during development.
 | 2026-11-12 | Claude Code | Pause menu (UPauseMenuWidget, IA_Pause on Esc/P/Start with bTriggerWhenPaused), pause/resume check added to all playtests (8/8 pass) | |
 | 2026-11-12 | Claude Code | Docs drafts: README.md (English pitch/controls/how to play), PREEXISTING.md, DEVLOG.md (glass-box draft from AI_LOG + git log) | TODOs left for Markus |
 | 2026-11-12 | Claude Code | Packaging caught M_RetakeMaster failing to compile (ORM sampler vs sRGB default texture) -> linear T_DefaultORM + Masks sampler; retested import with an ORM texture; final package clean | |
+| 2026-11-12 | Claude Code | P1: Jump/Interact/Cut gated by ARetakeCharacter::bActionsEnabled (set by director's SetPlayerControl); Space in briefing no longer jumps/records; playtest checks no Jump in take 1 and E ignored during CUT; 8/8 pass | |

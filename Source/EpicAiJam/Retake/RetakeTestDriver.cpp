@@ -161,6 +161,18 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		WaitUntil(TEXT("gate open"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 3.f);
 		Wait(0.5f);
 		Cut();
+		// P1: Space roll must not record a jump, and E during the CUT pause must do nothing.
+		WaitState((uint8)ERetakeSceneState::Cut, 3.f);
+		Check(TEXT("take 1 has no Jump action (Space only rolled)"), [this]()
+		{
+			for (const FTakeFrame& F : Director->GetTakes()[0].Frames)
+			{
+				if (F.HasAction(ERetakeAction::Jump)) return false;
+			}
+			return true;
+		});
+		Do(TEXT("Press E during CUT"), [this]() { InteractCount = 0; Player->Interact(); });
+		Check(TEXT("E ignored during CUT"), [this]() { return InteractCount == 0; });
 		// Take 2: the ghost holds the plate; walk the bridge.
 		NextTake(2);
 		Check(TEXT("one ghost spawned"), [this]() { return Director->GetGhosts().Num() == 1; });
@@ -375,6 +387,10 @@ void ARetakeTestDriver::StartScenario(const FString& Scenario)
 		}
 	}
 	SceneName = Director ? Director->GetSceneId() : TEXT("?");
+	if (Player)
+	{
+		Player->OnInteract.AddUniqueDynamic(this, &ARetakeTestDriver::HandlePlayerInteract);
+	}
 	ScenarioName = Scenario;
 	if (!Director || !Player)
 	{

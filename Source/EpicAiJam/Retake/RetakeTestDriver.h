@@ -64,4 +64,8 @@ private:
 	bool bRunning = false;
 	bool bSawCineCamera = false;
 	bool bEverWrapped = false;
+	int32 InteractCount = 0;
+
+	UFUNCTION()
+	void HandlePlayerInteract() { ++InteractCount; }
 };

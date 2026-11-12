@@ -126,3 +126,6 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
 ## Docs (drafts, please review)
 69. Read `README.md` (English: pitch, how to play, controls), `PREEXISTING.md` (fill in the TODOs: when the plan/prompts were written, other tools) and `DEVLOG.md` (glass-box devlog draft from AI_LOG + git history; add screenshots later).
+
+## Code-review fixes (12 Nov, afternoon)
+70. **P1 – actions only while Rolling:** In the briefing press Space: the take starts but the character does NOT jump. During the red "CUT!" pause press E next to a lever: nothing happens. During the Director's Cut, E/R do nothing (Space still skips).

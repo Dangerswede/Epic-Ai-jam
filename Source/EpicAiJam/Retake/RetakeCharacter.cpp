@@ -200,7 +200,13 @@ void ARetakeCharacter::Look(const FInputActionValue& Value)
 
 void ARetakeCharacter::StartJump()
 {
+	// Read BEFORE broadcasting: the broadcast may roll the take and enable actions this very frame.
+	const bool bWasEnabled = bActionsEnabled;
 	OnJumpPressed.Broadcast();
+	if (!bWasEnabled)
+	{
+		return; // Space only rolls / skips here, it doesn't jump (and nothing gets recorded)
+	}
 
 	// Only record a Jump action when a jump can actually start (not mid-air spam).
 	const bool bCouldJump = CanJump();
@@ -213,6 +219,10 @@ void ARetakeCharacter::StartJump()
 
 void ARetakeCharacter::Interact()
 {
+	if (!bActionsEnabled)
+	{
+		return;
+	}
 	RetakeInteraction::PerformInteract(this, InteractRadius);
 	OnInteract.Broadcast();
 	NotifyAction(ERetakeAction::Interact);
@@ -231,5 +241,9 @@ void ARetakeCharacter::TogglePause()
 
 void ARetakeCharacter::Cut()
 {
+	if (!bActionsEnabled)
+	{
+		return;
+	}
 	OnCutRequested.Broadcast();
 }
