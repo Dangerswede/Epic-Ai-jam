@@ -22,6 +22,16 @@ void URetakeHUDWidget::BuildTree()
 	UCanvasPanel* Canvas = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass());
 	WidgetTree->RootWidget = Canvas;
 
+	// F3: explosion flash on top of the game view (below the HUD panels added after it).
+	FlashBorder = RetakeUI::Panel(WidgetTree, FLinearColor::White, FMargin(0.f));
+	FlashBorder->SetRenderOpacity(0.f);
+	FlashBorder->SetVisibility(ESlateVisibility::HitTestInvisible);
+	if (UCanvasPanelSlot* FS = Canvas->AddChildToCanvas(FlashBorder))
+	{
+		FS->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
+		FS->SetOffsets(FMargin(0.f));
+	}
+
 	// Clapperboard, top-left.
 	{
 		UBorder* Board = Panel(WidgetTree, Slate(), FMargin(18.f, 10.f));
@@ -175,6 +185,15 @@ void URetakeHUDWidget::RefreshStatic()
 		: D->bWaitForRollInput ? TEXT("Press Space to roll") : TEXT("Get ready...")));
 }
 
+void URetakeHUDWidget::FlashScreen(float Strength)
+{
+	FlashAlpha = FMath::Clamp(FMath::Max(FlashAlpha, Strength), 0.f, 1.f);
+	if (FlashBorder)
+	{
+		FlashBorder->SetRenderOpacity(FlashAlpha);
+	}
+}
+
 void URetakeHUDWidget::ShowStamp(const FString& Str, FLinearColor Color, float Duration)
 {
 	if (!StampText)
@@ -311,6 +330,11 @@ void URetakeHUDWidget::RebuildTimeline()
 void URetakeHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
+	if (FlashBorder && FlashAlpha > 0.f)
+	{
+		FlashAlpha = FMath::Max(0.f, FlashAlpha - InDeltaTime * 3.f);
+		FlashBorder->SetRenderOpacity(FlashAlpha);
+	}
 	if (const ARetakeSceneDirector* PD = Director.Get())
 	{
 		if (Playhead && PD->GetState() == ERetakeSceneState::Rolling)

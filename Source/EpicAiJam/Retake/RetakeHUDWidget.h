@@ -25,6 +25,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void ShowStamp(const FString& Text, FLinearColor Color, float Duration = 1.4f);
 
+	/** F3: full-screen white flash (explosions), fades out in ~0.3 s. */
+	void FlashScreen(float Strength);
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
@@ -74,6 +77,8 @@ private:
 	void RebuildTimeline();
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TimerText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> StampText;
+	UPROPERTY(Transient) TObjectPtr<class UBorder> FlashBorder;
+	float FlashAlpha = 0.f;
 	UPROPERTY(Transient) TObjectPtr<UWidget> BriefingPanel;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> ShotListText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> NoteText;

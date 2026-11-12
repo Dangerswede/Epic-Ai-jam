@@ -1,6 +1,7 @@
 #include "Retake/RetakeTestDriver.h"
 
 #include "CineCameraActor.h"
+#include "Camera/CameraActor.h"
 #include "Components/TextRenderComponent.h"
 #include "Misc/App.h"
 #include "Engine/Engine.h"
@@ -700,7 +701,40 @@ void ARetakeTestDriver::Tick(float DeltaSeconds)
 		IdleTake = 0;
 	}
 	bActedThisTick = false;
-	if (Director->GetState() == ERetakeSceneState::DirectorsCut)
+	// F3: -RetakeBlastShot takes 1080p screenshots just after the first explosion of a take (needs a renderer).
+	if (BlastShots < 2 && Director->GetState() == ERetakeSceneState::Rolling && FParse::Param(FCommandLine::Get(), TEXT("RetakeBlastShot")))
+	{
+		const double Now = FPlatformTime::Seconds();
+		if (BlastSeenAt < 0.0)
+		{
+			for (TActorIterator<AExplosiveProp> It(GetWorld()); It; ++It)
+			{
+				if (It->HasExploded())
+				{
+					BlastSeenAt = Now;
+					// Frame the blast from a low angle a few metres away so the shot shows the effect, not the player's back.
+					const FVector C = It->GetActorLocation();
+					const FVector CamLoc = C + FVector(-520.f, -60.f, 160.f);
+					FActorSpawnParameters P;
+					P.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					if (ACameraActor* Cam = GetWorld()->SpawnActor<ACameraActor>(CamLoc, (C + FVector(0.f, 0.f, 120.f) - CamLoc).Rotation(), P))
+					{
+						if (APlayerController* PC = GetWorld()->GetFirstPlayerController()) { PC->SetViewTarget(Cam); }
+					}
+					break;
+				}
+			}
+		}
+		if (BlastSeenAt >= 0.0 && Now - BlastSeenAt >= (BlastShots == 0 ? 0.15 : 0.6))
+		{
+			++BlastShots;
+			if (APlayerController* ShotPC = GetWorld()->GetFirstPlayerController())
+			{
+				ShotPC->ConsoleCommand(TEXT("HighResShot 1920x1080"));
+				if (BlastShots == 2 && ShotPC->GetPawn()) { ShotPC->SetViewTarget(ShotPC->GetPawn()); }
+			}
+		}
+	}	if (Director->GetState() == ERetakeSceneState::DirectorsCut)
 	{
 		if (const APlayerController* PC = GetWorld()->GetFirstPlayerController())
 		{

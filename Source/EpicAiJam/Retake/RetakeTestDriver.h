@@ -77,6 +77,8 @@ private:
 	TMap<int32, float> MaxIdlePerTake;
 	FVector WrapCrateLocation = FVector::ZeroVector;
 	float DirectorsCutRealSeconds = 0.f;
+	double BlastSeenAt = -1.0;   // F3: -RetakeBlastShot screenshots after the first explosion
+	int32 BlastShots = 0;
 
 	UFUNCTION()
 	void HandlePlayerInteract() { ++InteractCount; }

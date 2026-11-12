@@ -177,3 +177,6 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 94. Every scene has 3-4 **camera marks**: a white tape ring on the floor with a camera on a stand and a label like MARK 2  3-6s. During a take the ring pulses green with NOW! while its window is open; stand on it and you get the stamp ON MARK! and the ring turns gold (IN THE CAN). Check: are the marks easy to see and understand, and are any in a bad spot or blocking the way?
 95. **Results screen:** the DIRECTOR'S RATING meter fills up with popups (WRAP +45, ON PAR +20, NOTE +20, ON MARK x2 +20), the stars light at 45 / 65 / 85 and it ends on PRINT IT! (3 stars) or ... Check that it doesn't feel slow (about 2 s).
 96. **Director's Cut:** it should now cut between the mark cameras (bottom label: MARK 1: UNDER THE BRIDGE and so on). Check the camera angles - is any of them ugly or blocked by a wall?
+
+## F3 – Explosions with punch
+97. **Scene 3**: light charge 1 and watch: an orange fireball, smoke and sparks, a white flash on the screen, the camera shakes, everything goes slow-mo for a split second and wall chunks fly. Check: is the white flash too strong or annoying, and do the chunks ever get in the way (they shouldn't block you)?
