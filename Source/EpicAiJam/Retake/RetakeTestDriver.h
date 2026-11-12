@@ -79,6 +79,8 @@ private:
 	float DirectorsCutRealSeconds = 0.f;
 	double BlastSeenAt = -1.0;   // F3: -RetakeBlastShot screenshots after the first explosion
 	int32 BlastShots = 0;
+	int32 UiShots = 0;          // F4: -RetakeUiShots screenshots with the HUD (ACTION! stamp, results popups)
+	double UiShotClock = -1.0;
 
 	UFUNCTION()
 	void HandlePlayerInteract() { ++InteractCount; }

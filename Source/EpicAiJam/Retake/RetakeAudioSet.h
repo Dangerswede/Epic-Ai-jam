@@ -110,6 +110,12 @@ public:
 	 * Puts the configured mesh, anim BP and helmet on a character. Returns false (and changes nothing)
 	 * if no mesh is configured. bPlayerSuit applies the stunt suit materials.
 	 */
+	// --- UI (F4) ---------------------------------------------------------------------------------
+
+	/** Display font face for the popping 70s text (stamps, rating popups, title cards). Empty = engine bold. */
+	UPROPERTY(Config, EditAnywhere, Category = "UI")
+	TSoftObjectPtr<class UFontFace> PopFontFace;
+
 	static bool ApplyCharacterLook(class ACharacter* Character, class UStaticMeshComponent* Placeholder,
 		class UStaticMeshComponent* Helmet, bool bPlayerSuit);
 };

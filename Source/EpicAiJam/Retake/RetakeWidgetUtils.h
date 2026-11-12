@@ -37,6 +37,23 @@ namespace RetakeUI
 		return T;
 	}
 
+	// F4: 70s popping text ----------------------------------------------------------------------
+	inline FLinearColor Mustard() { return FLinearColor(1.f, 0.62f, 0.08f, 1.f); }
+	inline FLinearColor Orange()  { return FLinearColor(0.95f, 0.32f, 0.04f, 1.f); }
+	inline FLinearColor Brown()   { return FLinearColor(0.16f, 0.06f, 0.02f, 1.f); }
+
+	/** The display font (URetakeSettings::PopFontFace, or the engine's bold) with a thick brown outline. */
+	EPICAIJAM_API FSlateFontInfo PopFont(int32 Size);
+
+	/** A text block in the display font with outline and a hard drop shadow, ready to pop. */
+	EPICAIJAM_API UTextBlock* PopText(UWidgetTree* Tree, const FString& Str, int32 Size, const FLinearColor& Color);
+
+	/** Overshoot scale for a pop that started T seconds ago: 0 -> 1.3 -> 1 in ~0.25 s. */
+	EPICAIJAM_API float PopScale(float T);
+
+	/** Tilt in degrees: settles from a wobble onto BaseAngle. */
+	EPICAIJAM_API float PopTilt(float T, float BaseAngle);
+
 	inline UBorder* Panel(UWidgetTree* Tree, const FLinearColor& Color, const FMargin& Padding)
 	{
 		UBorder* B = Tree->ConstructWidget<UBorder>(UBorder::StaticClass());

@@ -39,7 +39,7 @@ void UDirectorsCutOverlayWidget::BuildTree()
 	Bar(0.f, 0.12f);
 	Bar(0.88f, 1.f);
 
-	TitleText = Text(WidgetTree, TEXT(""), 64, Chalk(), ETextJustify::Center);
+	TitleText = PopText(WidgetTree, TEXT(""), 72, Mustard());
 	TitleText->SetRenderOpacity(0.f);
 	UCanvasPanelSlot* T = Canvas->AddChildToCanvas(TitleText);
 	T->SetAnchors(FAnchors(0.5f, 0.45f));
@@ -109,6 +109,8 @@ void UDirectorsCutOverlayWidget::NativeTick(const FGeometry& MyGeometry, float I
 	const float Out = FMath::Clamp((TitleDuration - TitleTime) / 0.4f, 0.f, 1.f);
 	const float Alpha = FMath::Min(In, Out);
 	TitleText->SetRenderOpacity(Alpha);
+	TitleText->SetRenderScale(FVector2D(RetakeUI::PopScale(TitleTime)));
+	TitleText->SetRenderTransformAngle(RetakeUI::PopTilt(TitleTime, -3.f));
 	SubtitleText->SetRenderOpacity(Alpha);
 	if (TitleTime >= TitleDuration)
 	{

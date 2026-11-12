@@ -69,7 +69,7 @@ void URetakeHUDWidget::BuildTree()
 
 	// Stamp, center.
 	{
-		StampText = Text(WidgetTree, TEXT(""), 96, Red(), ETextJustify::Center);
+		StampText = PopText(WidgetTree, TEXT(""), 96, Red()); // F4: 70s display font, outline + drop shadow
 		StampText->SetAutoWrapText(false);
 		StampText->SetRenderOpacity(0.f);
 		StampText->SetRenderTransformPivot(FVector2D(0.5f, 0.5f));
@@ -202,6 +202,7 @@ void URetakeHUDWidget::ShowStamp(const FString& Str, FLinearColor Color, float D
 	}
 	StampText->SetText(FText::FromString(Str));
 	StampText->SetColorAndOpacity(FSlateColor(Color));
+	StampTilt = (StampTilt < 0.f) ? 4.f : -6.f; // alternate the lean so back-to-back stamps feel hand-placed
 	StampTime = 0.f;
 	StampDuration = Duration;
 }
@@ -228,7 +229,7 @@ void URetakeHUDWidget::HandleStateChanged(ERetakeSceneState NewState, ERetakeSce
 		ShowStamp(TEXT("SCENE FAILED\nBack to Take 1"), RetakeUI::Red(), 2.8f);
 		break;
 	case ERetakeSceneState::Wrap:
-		ShowStamp(TEXT("THAT'S A WRAP!"), RetakeUI::Gold(), 2.f);
+		ShowStamp(TEXT("THAT'S A WRAP!"), RetakeUI::Mustard(), 2.f);
 		break;
 	default:
 		break;
@@ -239,7 +240,7 @@ void URetakeHUDWidget::HandleTakeStarted(int32 TakeNumber)
 {
 	RebuildTimeline();
 	RefreshStatic();
-	ShowStamp(TEXT("ACTION!"), RetakeUI::Gold(), 1.2f);
+	ShowStamp(TEXT("ACTION!"), RetakeUI::Mustard(), 1.2f);
 }
 
 void URetakeHUDWidget::HandleTakeCut(int32 TakeNumber, ERetakeCutReason Reason)
@@ -262,7 +263,7 @@ void URetakeHUDWidget::HandleTakeScrapped(int32 TakeNumber)
 
 void URetakeHUDWidget::HandleMarkHit(int32 MarkNumber)
 {
-	ShowStamp(FString::Printf(TEXT("ON MARK!\nMark %d is in the can"), MarkNumber), RetakeUI::Gold(), 1.3f);
+	ShowStamp(FString::Printf(TEXT("ON MARK!\nMark %d is in the can"), MarkNumber), RetakeUI::Orange(), 1.3f);
 }
 
 void URetakeHUDWidget::HandleOutOfFilm()
@@ -363,12 +364,12 @@ void URetakeHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime
 	{
 		StampTime += InDeltaTime;
 		const float T = StampTime / StampDuration;
-		// Slam in (scale 2 -> 1 in 0.15 s), hold, fade out over the last 30%.
-		const float Scale = FMath::Lerp(2.f, 1.f, FMath::Clamp(StampTime / 0.15f, 0.f, 1.f));
-		const float Opacity = T < 0.7f ? 1.f : FMath::Clamp(1.f - (T - 0.7f) / 0.3f, 0.f, 1.f);
+		// F4: pop in (0 -> 1.3 -> 1) with a settling wobble, hold, then shrink and fade over the last 25%.
+		const float Out = T < 0.75f ? 1.f : FMath::Clamp(1.f - (T - 0.75f) / 0.25f, 0.f, 1.f);
+		const float Scale = RetakeUI::PopScale(StampTime) * FMath::Lerp(0.85f, 1.f, Out);
 		StampText->SetRenderScale(FVector2D(Scale));
-		StampText->SetRenderOpacity(Opacity);
-		StampText->SetRenderTransformAngle(-6.f);
+		StampText->SetRenderOpacity(Out);
+		StampText->SetRenderTransformAngle(RetakeUI::PopTilt(StampTime, StampTilt));
 		if (T >= 1.f)
 		{
 			StampDuration = 0.f;

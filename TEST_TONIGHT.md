@@ -180,3 +180,6 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
 ## F3 – Explosions with punch
 97. **Scene 3**: light charge 1 and watch: an orange fireball, smoke and sparks, a white flash on the screen, the camera shakes, everything goes slow-mo for a split second and wall chunks fly. Check: is the white flash too strong or annoying, and do the chunks ever get in the way (they shouldn't block you)?
+
+## F4 – 70s popping text
+98. Stamps (ACTION!, CUT!, ON MARK!, THAT'S A WRAP!), the rating popups and PRINT IT! now pop in big with an overshoot, a little wobble and a lean, plus a thick brown outline and a drop shadow. Check that they're readable and don't cover the action for too long.

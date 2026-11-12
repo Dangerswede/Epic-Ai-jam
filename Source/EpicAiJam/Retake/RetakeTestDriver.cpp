@@ -247,6 +247,10 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 		const URetakeSaveGame* Save = URetakeSaveGame::LoadOrCreate();
 		return Director->GetState() == ERetakeSceneState::Results && Save && Save->IsWrapped(Scene);
 	});
+	if (FParse::Param(FCommandLine::Get(), TEXT("RetakeUiShots")))
+	{
+		Wait(3.f); // let the rating meter play out for the screenshots
+	}
 	Do(TEXT("Press P (pause)"), [this]() { Player->TogglePause(); });
 	Check(TEXT("game paused"), [this]() { return UGameplayStatics::IsGamePaused(this); });
 	Do(TEXT("Press P (resume)"), [this]() { Player->TogglePause(); });
@@ -701,7 +705,28 @@ void ARetakeTestDriver::Tick(float DeltaSeconds)
 		IdleTake = 0;
 	}
 	bActedThisTick = false;
-	// F3: -RetakeBlastShot takes 1080p screenshots just after the first explosion of a take (needs a renderer).
+	// F4: -RetakeUiShots: frames with the HUD in them (popping stamp on take 1, rating popups on the results).
+	if (UiShots < 3 && FParse::Param(FCommandLine::Get(), TEXT("RetakeUiShots")))
+	{
+		const double Now = FPlatformTime::Seconds();
+		const ERetakeSceneState S = Director->GetState();
+		// Results shots after the Director's Cut (the test watches it first), so the meter has time to fill.
+		const bool bArm = (UiShots == 0 && S == ERetakeSceneState::Rolling) || (UiShots >= 1 && S == ERetakeSceneState::Results && DirectorsCutRealSeconds > 1.f);
+		if (bArm && UiShotClock < 0.0)
+		{
+			UiShotClock = Now;
+		}
+		const double Delay = UiShots == 0 ? 0.2 : UiShots == 1 ? 0.5 : 2.6;
+		if (bArm && Now - UiShotClock >= Delay)
+		{
+			++UiShots;
+			if (UiShots != 2) { UiShotClock = -1.0; }
+			if (APlayerController* ShotPC = GetWorld()->GetFirstPlayerController())
+			{
+				ShotPC->ConsoleCommand(TEXT("Shot showui"));
+			}
+		}
+	}	// F3: -RetakeBlastShot takes 1080p screenshots just after the first explosion of a take (needs a renderer).
 	if (BlastShots < 2 && Director->GetState() == ERetakeSceneState::Rolling && FParse::Param(FCommandLine::Get(), TEXT("RetakeBlastShot")))
 	{
 		const double Now = FPlatformTime::Seconds();

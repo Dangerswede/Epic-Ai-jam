@@ -87,5 +87,6 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> HintText;
 
 	float StampTime = 0.f;
+	float StampTilt = -6.f;
 	float StampDuration = 0.f;
 };

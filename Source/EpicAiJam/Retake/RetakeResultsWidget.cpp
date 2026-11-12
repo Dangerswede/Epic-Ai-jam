@@ -70,11 +70,14 @@ void URetakeResultsWidget::BuildTree()
 	FillRow->AddChildToHorizontalBox(MeterFill);
 	MeterRow->AddChildToHorizontalBox(MeterBox)->SetVerticalAlignment(VAlign_Center);
 	RatingText = Text(WidgetTree, TEXT("0"), 22, Ink(), ETextJustify::Left, false);
-	MeterRow->AddChildToHorizontalBox(RatingText)->SetPadding(FMargin(12.f, 0.f, 0.f, 0.f));
+	USizeBox* NumberBox = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+	NumberBox->SetWidthOverride(64.f); // fixed width so the bar doesn't shift when the number grows
+	NumberBox->SetContent(RatingText);
+	MeterRow->AddChildToHorizontalBox(NumberBox)->SetPadding(FMargin(12.f, 0.f, 0.f, 0.f));
 	UVerticalBoxSlot* MeterSlot = Box->AddChildToVerticalBox(MeterRow);
 	MeterSlot->SetHorizontalAlignment(HAlign_Center);
 	MeterSlot->SetPadding(FMargin(0.f, 4.f));
-	PopupText = Text(WidgetTree, TEXT(""), 30, Red(), ETextJustify::Center, false);
+	PopupText = PopText(WidgetTree, TEXT(""), 34, Orange());
 	PopupText->SetRenderTransformPivot(FVector2D(0.5f, 0.5f));
 	PopupText->SetRenderOpacity(0.f);
 	Box->AddChildToVerticalBox(PopupText)->SetPadding(FMargin(0.f, 2.f));
@@ -198,23 +201,21 @@ void URetakeResultsWidget::NativeTick(const FGeometry& MyGeometry, float InDelta
 		SetMeter(Next);
 		while (MeterSteps.IsValidIndex(NextStep) && Next >= MeterSteps[NextStep].UpTo - 0.01f)
 		{
-			Popup(MeterSteps[NextStep].Label, RetakeUI::Ink());
+			Popup(MeterSteps[NextStep].Label, RetakeUI::Orange());
 			++NextStep;
 		}
 		if (Next >= TargetRating - 0.01f && PopupTime > 0.45f)
 		{
 			bMeterRunning = false;
-			Popup(GetFinalPopup(), TargetStars >= 3 ? RetakeUI::Red() : RetakeUI::Dim());
+			Popup(GetFinalPopup(), TargetStars >= 3 ? RetakeUI::Mustard() : RetakeUI::Dim());
 		}
 	}
 	// Pop: scale 0 -> 1.3 -> 1 in 0.25 s with a slight tilt, then hold.
 	PopupTime += InDeltaTime;
 	if (PopupText)
 	{
-		const float T = PopupTime;
-		const float Scale = T < 0.15f ? FMath::Lerp(0.f, 1.3f, T / 0.15f) : T < 0.25f ? FMath::Lerp(1.3f, 1.f, (T - 0.15f) / 0.1f) : 1.f;
-		PopupText->SetRenderScale(FVector2D(Scale, Scale));
-		PopupText->SetRenderTransformAngle(-4.f);
+		PopupText->SetRenderScale(FVector2D(RetakeUI::PopScale(PopupTime)));
+		PopupText->SetRenderTransformAngle(RetakeUI::PopTilt(PopupTime, -4.f));
 		PopupText->SetRenderOpacity(LastPopup.IsEmpty() ? 0.f : 1.f);
 	}
 }
