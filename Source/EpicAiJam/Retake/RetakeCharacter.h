@@ -41,6 +41,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeCharacterSignature OnScrapRequested;
 
+	/** Fired when the player presses Retake (Q): restart the current take from the top. */
+	UPROPERTY(BlueprintAssignable, Category = "Retake")
+	FRetakeCharacterSignature OnRetakeRequested;
+
 	/** Fired whenever Space/Jump is pressed, even when a jump isn't possible (used for "roll" / "skip"). */
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeCharacterSignature OnJumpPressed;
@@ -105,7 +109,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> CutAction;
 
-	/** Backspace / B: scrap the last take. */
+	/** Q / Backspace / B: scrap the last take. */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> ScrapAction;
 

@@ -136,7 +136,9 @@ void ARetakeCharacter::BuildDefaultInput()
 	MappingContext->MapKey(CutAction, EKeys::R);
 	MappingContext->MapKey(CutAction, EKeys::Gamepad_FaceButton_Top);
 
+	// Backspace is the editor's generic Delete command, so PIE never sees it: Q works there too.
 	MappingContext->MapKey(ScrapAction, EKeys::BackSpace);
+	MappingContext->MapKey(ScrapAction, EKeys::Q);
 	MappingContext->MapKey(ScrapAction, EKeys::Gamepad_FaceButton_Right);
 
 	// Esc stops PIE in the editor, so P works there too.

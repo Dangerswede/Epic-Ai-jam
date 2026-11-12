@@ -119,6 +119,7 @@ bool ARetakeSceneDirector::FindPlayer()
 		Player->OnCutRequested.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerCut);
 		Player->OnJumpPressed.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerJumpPressed);
 		Player->OnScrapRequested.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerScrap);
+		Player->OnRetakeRequested.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerRetake);
 	}
 	return Player != nullptr;
 }
@@ -327,28 +328,55 @@ void ARetakeSceneDirector::HandlePlayerScrap()
 	ScrapLastTake();
 }
 
-void ARetakeSceneDirector::ScrapLastTake()
+void ARetakeSceneDirector::HandlePlayerRetake()
 {
-	if (State != ERetakeSceneState::Rolling || !Player || Takes.Num() == 0 || bDying)
+	RetakeCurrentTake();
+}
+
+bool ARetakeSceneDirector::AbortRollingTake()
+{
+	if (State != ERetakeSceneState::Rolling || !Player || bDying)
 	{
-		return;
+		return false;
 	}
 	GetWorldTimerManager().ClearTimer(TakeTimer);
 
-	// Throw away the take being recorded right now AND the last finished take.
+	// Throw away what is being recorded right now (nothing is added to Takes).
 	if (URetakeRecorderComponent* Recorder = Player->GetRecorder())
 	{
 		Recorder->StopRecording();
 	}
 	bRecordingTrack = false;
-	++ScrapCount;
-	const int32 Scrapped = Takes.Last().TakeNumber;
-	Takes.Pop();
 	for (ATakeGhost* Ghost : Ghosts)
 	{
 		Ghost->Stop();
 	}
 	SetPlayerControl(false);
+	return true;
+}
+
+void ARetakeSceneDirector::RetakeCurrentTake()
+{
+	if (!AbortRollingTake())
+	{
+		return;
+	}
+	UE_LOG(LogRetakeDirector, Log, TEXT("Retake: take %d from the top."), CurrentTakeNumber);
+	SetState(ERetakeSceneState::Cut);
+	OnTakeRetaken.Broadcast(CurrentTakeNumber);
+	ScheduleState(ScrapPauseSeconds, [this]() { StartRolling(); });
+}
+
+void ARetakeSceneDirector::ScrapLastTake()
+{
+	if (Takes.Num() == 0 || !AbortRollingTake())
+	{
+		return;
+	}
+	// Also throw away the last finished take, so that take rolls again.
+	++ScrapCount;
+	const int32 Scrapped = Takes.Last().TakeNumber;
+	Takes.Pop();
 
 	UE_LOG(LogRetakeDirector, Log, TEXT("Take %d scrapped."), Scrapped);
 	SetState(ERetakeSceneState::Cut);

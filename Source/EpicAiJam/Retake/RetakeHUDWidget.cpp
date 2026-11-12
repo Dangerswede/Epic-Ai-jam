@@ -89,7 +89,7 @@ void URetakeHUDWidget::BuildTree()
 	{
 		UBorder* Hints = Panel(WidgetTree, Slate(), FMargin(14.f, 6.f));
 		Hints->SetContent(Text(WidgetTree,
-			TEXT("WASD Move   SPACE Jump   E Use   R Cut   BACKSPACE Scrap take   ESC Pause"), 14, Chalk(), ETextJustify::Left, false));
+			TEXT("WASD Move   SPACE Jump   E Use   R Cut   Q Scrap take   ESC Pause"), 14, Chalk(), ETextJustify::Left, false));
 		UCanvasPanelSlot* S = Canvas->AddChildToCanvas(Hints);
 		S->SetAnchors(FAnchors(0.f, 1.f));
 		S->SetAlignment(FVector2D(0.f, 1.f));
