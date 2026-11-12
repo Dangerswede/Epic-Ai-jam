@@ -2,7 +2,7 @@
 
 Numbered steps to try in the editor. Updated after each task.
 
-> **Automated playtests (T10b): all 6 pass** (solution + wrong solution for Scene01/02/03). They drive the real player with simulated input at a fixed 60 fps and check ghosts, plates, gates, lasers, explosive, crate, Wrap -> Director's Cut -> Results and save/unlock. Re-run: `powershell -File Scripts\run_playtests.ps1` (logs in `Saved/Playtests`; uses its own save slot). Not covered by tests: how it *looks* and *feels* (camera, readability, timing at real frame rates), the main menu UI, the Space-skip in the Director's Cut - that's what tonight is for.
+> **Automated playtests: all 8 pass** (solution + wrong solution for Scene01/02/03/04). They drive the real player with simulated input at a fixed 60 fps and check ghosts, plates, gates, lasers, explosive, crate, Wrap -> Director's Cut -> Results and save/unlock. Re-run: `powershell -File Scripts\run_playtests.ps1` (logs in `Saved/Playtests`; uses its own save slot). Not covered by tests: how it *looks* and *feels* (camera, readability, timing at real frame rates), the main menu UI, the Space-skip in the Director's Cut - that's what tonight is for.
 Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
 > Note: `lockable` was removed from `.uasset`/`.umap` in `.gitattributes` so maps/assets are no longer read-only after a commit. If the editor still says a file is read-only, right-click it in Windows → Properties → untick *Read-only*.
@@ -98,3 +98,11 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 56. Press **Space** during the Director's Cut: it skips straight to the Dailies report.
 57. Cameras are the `DC_Cam1..4` actors (folder *Cameras*) in each map; move them freely. A level with no tagged cameras gets one automatic wide camera.
 58. Packaged build: menu → Scene 1 → full loop incl. Director's Cut works outside the editor.
+
+## Scene04_Finale (stretch, par 4, max 6, 45 s per take)
+59. Open `Content/Retake/Maps/Scene04_Finale` (or menu → unlocked after Scene 3). One long run: sound stage → corridor → courtyard → back alley → rooftop.
+    - Take 1: stand on the plate in the start room (opens the corridor gate).
+    - Take 2: arm the barrel next to the wall in the corridor and get blown up.
+    - Take 3: wait for the bang, go through into the courtyard, let the guard spot you (front of its patrol, around the middle of the courtyard), run to the far south-east corner.
+    - Take 4: wait for the bang, enter the courtyard, wait ~2 s for ghost 3 to drag the guard away, pull the lever (north side), go through the laser door (east), push the long crate into the pit, run up the ramp to the rooftop goal.
+60. Check: whole scene doable in under ~2.5 min; the rooftop (water tower, billboard) reads as a finale; Director's Cut shows 4 ghosts.

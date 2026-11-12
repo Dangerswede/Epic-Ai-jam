@@ -17,7 +17,8 @@ namespace RetakeScenes
 		static const TArray<FSceneInfo> Scenes = {
 			{ TEXT("Scene01_Bridge"), TEXT("Scene 1: The Bridge"), TEXT("Two takes. Hold the gate, walk the bridge.") },
 			{ TEXT("Scene02_Heist"),  TEXT("Scene 2: The Heist"),  TEXT("Three takes. Distract, disable, grab.") },
-			{ TEXT("Scene03_Chase"),  TEXT("Scene 3: The Chase"),  TEXT("Big finale energy.") },
+			{ TEXT("Scene03_Chase"),  TEXT("Scene 3: The Chase"),  TEXT("Blow the wall, bridge the gap.") },
+			{ TEXT("Scene04_Finale"), TEXT("Scene 4: The Finale"), TEXT("Everything you've learned. Make it a classic.") },
 		};
 		return Scenes;
 	}

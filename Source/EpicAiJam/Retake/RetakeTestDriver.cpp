@@ -240,6 +240,69 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		WaitUntil(TEXT("crate dropped into the pit"), [Crate]() { return Crate->GetActorLocation().Z < -60.f; }, 8.f);
 		MoveTo(4350, 0);
 	}
+	else if (Scene == TEXT("Scene04_Finale"))
+	{
+		AGate* Gate = FindFirst<AGate>();
+		AExplosiveProp* Bomb = FindFirst<AExplosiveProp>();
+		APushCrate* Crate = FindFirst<APushCrate>();
+		AStuntGuard* Guard = FindFirst<AStuntGuard>();
+		ALever* Lever = FindFirst<ALever>();
+		auto LasersOff = [this]()
+		{
+			for (TActorIterator<ALaserBeam> It(GetWorld()); It; ++It) { if (It->IsBeamOn()) return false; }
+			return true;
+		};
+		auto CutIfRolling = [this]()
+		{
+			Do(TEXT("Press R (cut) if still rolling"), [this]()
+			{
+				if (Director->GetState() == ERetakeSceneState::Rolling) Player->Cut();
+			});
+		};
+
+		// Take 1: hold the plate.
+		MoveTo(200, -700, 40.f);
+		WaitUntil(TEXT("gate open"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 3.f);
+		Wait(0.5f);
+		Cut();
+		// Take 2: arm the explosive, get blown up.
+		NextTake(2);
+		MoveTo(700, 0);
+		WaitUntil(TEXT("ghost 1 holds the plate -> gate open"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 15.f);
+		MoveTo(1480, 40, 40.f);
+		Interact();
+		WaitUntil(TEXT("take 2 cut by the blast"), [this]() { return Director->GetState() == ERetakeSceneState::Cut; }, 5.f);
+		// Take 3: after ghost 2's blast, lure the guard away.
+		NextTake(3);
+		WaitUntil(TEXT("ghost 2's explosion"), [Bomb]() { return Bomb->HasExploded(); }, 25.f);
+		MoveTo(700, -110);
+		MoveTo(1900, -110);
+		MoveTo(2700, -600);
+		MoveTo(3500, 250);
+		WaitUntil(TEXT("guard spots the player"), [Guard]() { return Guard->GetGuardState() == EStuntGuardState::Chase; }, 8.f);
+		MoveTo(3800, -1400, 80.f);
+		Wait(1.f);
+		CutIfRolling();
+		// Take 4: lever, lasers, crate, rooftop.
+		NextTake(4);
+		Check(TEXT("three ghosts spawned"), [this]() { return Director->GetGhosts().Num() == 3; });
+		WaitUntil(TEXT("ghost 2's explosion"), [Bomb]() { return Bomb->HasExploded(); }, 25.f);
+		MoveTo(700, -110);
+		MoveTo(1900, -110);
+		WaitUntil(TEXT("ghost 3 lures the guard"), [Guard]() { return Guard->GetGuardState() != EStuntGuardState::Patrol; }, 15.f);
+		Wait(2.f);
+		MoveTo(2900, 960, 40.f);
+		Interact();
+		Check(TEXT("lever on"), [Lever]() { return Lever->IsActive(); });
+		Check(TEXT("lasers off"), LasersOff);
+		MoveTo(4200, 0);
+		MoveTo(4560, 0, 30.f);
+		MoveTo(5500, 0, 40.f, 15.f);
+		WaitUntil(TEXT("crate dropped into the pit"), [Crate]() { return Crate->GetActorLocation().Z < -60.f; }, 8.f);
+		MoveTo(6250, 0);
+		MoveTo(7150, 0);
+		MoveTo(7600, 0);
+	}
 	else
 	{
 		Finish(false, TEXT("no solution script for this scene"));
@@ -270,6 +333,11 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	{
 		MoveTo(200, -700, 40.f);
 		MoveTo(4350, 0, 60.f, 40.f); // gate closes behind the plate
+	}
+	else if (Scene == TEXT("Scene04_Finale"))
+	{
+		MoveTo(200, -700, 40.f);
+		MoveTo(7600, 0, 60.f, 40.f); // gate closes behind the plate
 	}
 	// The MoveTo above is expected to time out or the take to be cut; either way: no wrap.
 	Steps.Last().Fn = [Inner = Steps.Last().Fn, this](float Dt)

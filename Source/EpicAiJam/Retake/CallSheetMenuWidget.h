@@ -24,5 +24,6 @@ private:
 	UFUNCTION() void HandlePlay0();
 	UFUNCTION() void HandlePlay1();
 	UFUNCTION() void HandlePlay2();
+	UFUNCTION() void HandlePlay3();
 	UFUNCTION() void HandleQuit();
 };
