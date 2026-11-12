@@ -163,3 +163,6 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
 ## D2 – Scene 1 redesign (tutorial)
 90. **Scene 1: The Bridge** now teaches timed switches. Two gates on the bridge, each opened for 5 s by its own switch on the studio floor. TAKE 1 - GRIP: hit SWITCH A by the ramp, sprint under the bridge, hit SWITCH B, R. TAKE 2 - HERO: run up the ramp and through both gates while they're open. 15 s per take, par 2, director's note: final take under 9 s. Whole scene ~1 min. Check: is it obvious what to do from the shot list + role card alone?
+
+## D3 – Scene 2 redesign
+91. **Scene 2: The Heist** teaches roles (12 s per take, par 3, ~45 s total). The vault door is a gate that only opens while LOCK A, B and C (north wall) are all on (6 s each). TAKE 1 - DECOY: get spotted by the guard (it walks toward you), run to the south-west corner and then east along the south wall until the take ends. TAKE 2 - INSIDE MAN: go up the west side, along the north wall, hit the three locks quickly, R. TAKE 3 - HERO: wait a moment until the guard turns after the decoy, go south-east and into the vault while the locks are open, grab the bag. Lasers and the lever are gone from this scene. Director's note: nobody gets busted.

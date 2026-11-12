@@ -160,7 +160,7 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 	Check(TEXT("stars: 1 wrap, 2 par, 3 par + director's note"), [this, Scene]()
 	{
 		const int32 Stars = Director->GetStars();
-		const int32 Expected = Scene == TEXT("Scene02_Heist") ? 2 : 3; // Heist test lure gets caught -> note missed
+		const int32 Expected = 3; // every intended solution meets par and its director's note
 		const URetakeSaveGame* Save = URetakeSaveGame::LoadOrCreate();
 		const int32* Saved = Save ? Save->BestStars.Find(Scene) : nullptr;
 		UE_LOG(LogRetakeTest, Display, TEXT("  stars %d (expected %d), saved %d, note met: %d"), Stars, Expected, Saved ? *Saved : -1, Director->IsBonusMet() ? 1 : 0);
@@ -283,67 +283,40 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(2650, 0);
 	}	else if (Scene == TEXT("Scene02_Heist"))
 	{
-		ALever* Lever = FindFirst<ALever>();
-		// Take 1: get spotted by the guard, then run far away (lure).
+		// D3: DECOY / INSIDE MAN / HERO.
 		AStuntGuard* Guard = FindFirst<AStuntGuard>();
-		MoveTo(1200, -600);
-		MoveTo(2000, 250);
-		WaitUntil(TEXT("guard spots the player"), [Guard]() { return Guard->GetGuardState() == EStuntGuardState::Chase; }, 8.f);
-		MoveTo(2300, -1450, 80.f);
-		MoveTo(-650, -1450, 80.f); // keep running: the lure only lasts while this take plays (P4)
-		WaitUntil(TEXT("guard catches up (or 8 s)"), [this]() { return Director->GetState() != ERetakeSceneState::Rolling; }, 8.f);
-		Do(TEXT("Press R (cut) if still rolling"), [this]()
+		AGate* Vault = FindFirst<AGate>();
+		// Take 1: DECOY - get spotted, run the south wall to the east for the whole take.
+		MoveTo(500, 350);
+		WaitUntil(TEXT("guard spots the decoy"), [Guard]() { return Guard->GetGuardState() == EStuntGuardState::Chase; }, 3.f);
+		MoveTo(-600, -1300, 80.f);
+		// Keep running until the 12 s take ends (time up).
+		Steps.Add({ TEXT("run east until the take ends"), 20.f, [this](float)
 		{
-			if (Director->GetState() == ERetakeSceneState::Rolling) Player->Cut();
-		});
-		// Take 2: while the guard chases ghost 1, pull the lever.
+			if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Done;
+			Player->AddMovementInput(FVector(1.f, 0.f, 0.f), 1.f);
+			return EStepResult::Running;
+		} });
+		// Take 2: INSIDE MAN - three locks along the north wall.
 		NextTake(2);
-		WaitUntil(TEXT("ghost 1 drags the guard away from the lever"), [this]()
-		{
-			const AStuntGuard* G = FindFirst<AStuntGuard>();
-			const ALever* L = FindFirst<ALever>();
-			return G->GetGuardState() != EStuntGuardState::Patrol && FVector::Dist2D(G->GetActorLocation(), L->GetActorLocation()) > 1500.f;
-		}, 20.f);
-		MoveTo(1400, 960, 40.f);
-		Check(TEXT("margin: guard still busy and far from the lever"), [this]()
-		{
-			const AStuntGuard* G = FindFirst<AStuntGuard>();
-			const ALever* L = FindFirst<ALever>();
-			return G->GetGuardState() != EStuntGuardState::Patrol && FVector::Dist2D(G->GetActorLocation(), L->GetActorLocation()) > 1200.f;
-		});
+		MoveTo(-300, 900);
+		MoveTo(1000, 1180, 40.f);
 		Interact();
-		Check(TEXT("lever on"), [Lever]() { return Lever->IsActive(); });
-		Check(TEXT("lasers off"), [this]()
-		{
-			for (TActorIterator<ALaserBeam> It(GetWorld()); It; ++It) { if (It->IsBeamOn()) return false; }
-			return true;
-		});
-		MoveTo(600, 960);
-		Do(TEXT("Press R (cut) if still rolling"), [this]()
-		{
-			if (Director->GetState() == ERetakeSceneState::Rolling) Player->Cut();
-		});
-		// Take 3: wait for ghost 2 to pull the lever, walk into the vault.
+		MoveTo(1300, 1180, 40.f);
+		Interact();
+		MoveTo(1600, 1180, 40.f);
+		Interact();
+		WaitUntil(TEXT("all three locks on -> vault open"), [Vault]() { return Vault->ShouldBeOpen(); }, 1.f);
+		Cut();
+		// Take 3: HERO - through the vault window.
 		NextTake(3);
 		Check(TEXT("two ghosts spawned"), [this]() { return Director->GetGhosts().Num() == 2; });
-		// Stay out of sight until ghost 1 has dragged the guard south, then go along the north side.
-		WaitUntil(TEXT("ghost 1 drags the guard away"), [this]()
-		{
-			const AStuntGuard* G = FindFirst<AStuntGuard>();
-			const ALever* L = FindFirst<ALever>();
-			return G->GetGuardState() != EStuntGuardState::Patrol && FVector::Dist2D(G->GetActorLocation(), L->GetActorLocation()) > 1500.f;
-		}, 20.f);
-		MoveTo(1500, 350);
-		MoveTo(2150, 150);
-		WaitUntil(TEXT("ghost 2 pulled the lever -> lasers off"), [this]()
-		{
-			for (TActorIterator<ALaserBeam> It(GetWorld()); It; ++It) { if (It->IsBeamOn()) return false; }
-			return true;
-		}, 20.f);
-		MoveTo(2250, 0);
+		WaitUntil(TEXT("guard goes after the decoy"), [Guard]() { return Guard->GetGuardState() == EStuntGuardState::Chase; }, 3.f);
+		MoveTo(900, -300);
+		MoveTo(2300, -100);
+		WaitUntil(TEXT("ghost 2's locks open the vault"), [Vault]() { return Vault->GetOpenAlpha() > 0.95f; }, 3.f);
 		MoveTo(3000, 0);
-	}
-	else if (Scene == TEXT("Scene03_Chase"))
+	}	else if (Scene == TEXT("Scene03_Chase"))
 	{
 		AGate* Gate = FindFirst<AGate>();
 		AExplosiveProp* Bomb = FindFirst<AExplosiveProp>();
