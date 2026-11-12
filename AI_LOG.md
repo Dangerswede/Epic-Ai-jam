@@ -13,3 +13,4 @@ How AI tools were used during development.
 | 2026-11-12 | Claude Code | T0: CLAUDE.md, ARetakeCharacter (spring-arm camera, Enhanced Input move/look/jump/interact/Cut on R), ARetakeGameMode as default game mode | Jam content; build verified |
 | 2026-11-12 | Claude Code | T1: FTakeFrame/FTakeData, URetakeRecorderComponent (fixed 30 Hz, action bitflags), OnActionPerformed on character, Retake.DumpTake console command | Build verified |
 | 2026-11-12 | Claude Code | T2: ATakeGhost (30 Hz interpolated replay, action replay via shared Interact path, freeze at end, TAKE N label, dynamic ghost material), IRetakeInteractable, Retake.SpawnGhost debug command | Build verified (1 compile fix) |
+| 2026-11-12 | Claude Code | T3: ARetakeSceneDirector state machine (Briefing/Rolling/Cut/SceneFailed/Wrap/DirectorsCut/Results), IRetakeResettable, built-in fallback Director's Cut replay | Build verified |

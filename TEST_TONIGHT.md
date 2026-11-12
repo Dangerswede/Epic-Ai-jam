@@ -20,3 +20,10 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 7. In PIE, walk a short route, press **E** once, jump once, then press **R**.
 8. Console: `Retake.SpawnGhost`. Expected: a cylinder with floating "TAKE 1" (facing the camera) replays your route exactly and stops/freezes at the last position.
 9. Ghost tint: no ghost material exists yet, so the ghost looks like the player (grey). Known/expected until a translucent material `M_Ghost` (params `Tint`, `Opacity`) is created and assigned to `GhostMaterial`.
+
+## T3 – Scene director (take loop)
+10. In any test level: Place Actors panel → search **RetakeSceneDirector** → drag it in. (Optional: set *Take Duration Seconds* to 8 for faster testing.)
+11. Play. Expected Output Log: `State: None -> Briefing`, after 4 s `-> Rolling`, you can move.
+12. Walk somewhere, press **R**. Expected: `CUT! Take 1 (PlayerCut)`, control frozen ~2 s, then you are back at the start and a ghost "TAKE 1" replays your route while you play take 2.
+13. Do R a few more times: ghosts for every earlier take play at once. After take 5: `SceneFailed`, then restart at take 1 with no ghosts.
+14. Stand still and let the timer run out: cut reason should be `TimeUp`.

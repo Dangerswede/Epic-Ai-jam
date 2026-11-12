@@ -1,6 +1,8 @@
 #include "Retake/RetakeRecorderComponent.h"
 
 #include "Engine/World.h"
+#include "EngineUtils.h"
+#include "Retake/RetakeSceneDirector.h"
 #include "HAL/IConsoleManager.h"
 #include "Retake/RetakeCharacter.h"
 #include "UObject/UObjectIterator.h"
@@ -19,6 +21,13 @@ void URetakeRecorderComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// A scene director owns the take loop; debug auto-record is only for levels without one.
+	for (TActorIterator<ARetakeSceneDirector> It(GetWorld()); It; ++It)
+	{
+		bDebugAutoRecord = false;
+		break;
+	}
+
 	if (ARetakeCharacter* Character = Cast<ARetakeCharacter>(GetOwner()))
 	{
 		Character->OnActionPerformed.AddDynamic(this, &URetakeRecorderComponent::HandleOwnerAction);
@@ -34,8 +43,12 @@ void URetakeRecorderComponent::BeginPlay()
 	}
 }
 
-void URetakeRecorderComponent::StartRecording()
+void URetakeRecorderComponent::StartRecording(int32 TakeNumber)
 {
+	if (TakeNumber > 0)
+	{
+		NextTakeNumber = TakeNumber;
+	}
 	CurrentTake = FTakeData();
 	CurrentTake.TakeNumber = NextTakeNumber++;
 	CurrentTake.Frames.Reserve(static_cast<int32>(SampleRate * 60.f));

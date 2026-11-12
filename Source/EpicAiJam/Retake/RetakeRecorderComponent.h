@@ -21,8 +21,9 @@ public:
 
 	URetakeRecorderComponent();
 
+	/** TakeNumber <= 0 = auto-increment. */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
-	void StartRecording();
+	void StartRecording(int32 TakeNumber = -1);
 
 	/** Stops recording and returns the finished take (also kept as LastTake). */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
@@ -40,7 +41,7 @@ public:
 
 	/**
 	 * Debug until ARetakeSceneDirector exists: start recording on BeginPlay and
-	 * restart (new take) when the owning character presses Cut.
+	 * restart (new take) when the owning character presses Cut. Ignored if the level has an ARetakeSceneDirector.
 	 */
 	UPROPERTY(EditAnywhere, Category = "Retake|Debug")
 	bool bDebugAutoRecord = true;
