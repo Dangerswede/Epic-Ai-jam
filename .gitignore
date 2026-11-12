@@ -19,6 +19,7 @@ Plugins/**/Intermediate/
 
 # Paketerade byggen (laddas upp separat, inte i git)
 Packaged/
+Builds/
 Archive/
 *.zip
 

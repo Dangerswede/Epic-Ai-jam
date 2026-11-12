@@ -37,3 +37,12 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 20. A ghost that ended standing on the plate keeps it pressed (gate stays open).
 21. Walk into the GoalZone (blue disc): log shows `That's a wrap!` → `DirectorsCut` (all takes replay together, you're hidden) → `Results`.
 22. Walk into the KillVolume (red wireframe box, visible in editor): `CUT! ... (Killed)`. A ghost walking through it does nothing.
+
+## T5 – Scene01_Bridge (graybox)
+23. The editor now opens **Scene01_Bridge** by default (Content/Retake/Maps). Press Play.
+24. Briefing 4 s, then Take 1. Walk to the **red plate** on the floor (right side, near the far end of the bridge) and stand on it. The orange gate on the bridge should open. Press **R** (or wait for the timer).
+25. Take 2: a translucent sepia ghost "TAKE 1" walks to the plate and stays there. Go up the **ramp**, across the bridge through the open gate, into the **blue disc** at the far end.
+    Expected: `That's a wrap!` → Director's Cut (both takes replay together) → Results.
+26. Check it can't be done in 1 take: stand on the plate, then run for the gate. It should close long before you get there.
+27. Look check: lighting (sun + 2 spotlights), ghost is see-through and sepia. Note anything too dark/bright.
+28. Packaged build: run `Builds\Windows\EpicAiJam.exe`. It should start straight into Scene01_Bridge. Alt+F4 to quit (no menu yet).
