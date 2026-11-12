@@ -99,7 +99,7 @@ void URetakeResultsWidget::ShowResults(ARetakeSceneDirector* InDirector, bool bN
 	const int32 NumStars = ComputeStars(Used, Par);
 
 	TitleText->SetText(InDirector->SceneTitle);
-	TakesText->SetText(FText::FromString(FString::Printf(TEXT("Takes used: %d   (par %d)"), Used, Par)));
+	TakesText->SetText(FText::FromString(FString::Printf(TEXT("Takes in the cut: %d   (par %d)\nFilm shot: %d takes"), Used, Par, InDirector->GetTotalTakesShot())));
 	BestText->SetText(FText::FromString(bNewBest ? TEXT("NEW BEST!") : TEXT("")));
 	for (int32 i = 0; i < Stars.Num(); ++i)
 	{

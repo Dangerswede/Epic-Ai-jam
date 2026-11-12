@@ -103,6 +103,8 @@ void URetakeHUDWidget::SetDirector(ARetakeSceneDirector* InDirector)
 		Director->OnStateChanged.RemoveDynamic(this, &URetakeHUDWidget::HandleStateChanged);
 		Director->OnTakeStarted.RemoveDynamic(this, &URetakeHUDWidget::HandleTakeStarted);
 		Director->OnTakeCut.RemoveDynamic(this, &URetakeHUDWidget::HandleTakeCut);
+		Director->OnTakeScrapped.RemoveDynamic(this, &URetakeHUDWidget::HandleTakeScrapped);
+		Director->OnOutOfFilm.RemoveDynamic(this, &URetakeHUDWidget::HandleOutOfFilm);
 	}
 	Director = InDirector;
 	if (InDirector)
@@ -110,6 +112,8 @@ void URetakeHUDWidget::SetDirector(ARetakeSceneDirector* InDirector)
 		InDirector->OnStateChanged.AddDynamic(this, &URetakeHUDWidget::HandleStateChanged);
 		InDirector->OnTakeStarted.AddDynamic(this, &URetakeHUDWidget::HandleTakeStarted);
 		InDirector->OnTakeCut.AddDynamic(this, &URetakeHUDWidget::HandleTakeCut);
+		InDirector->OnTakeScrapped.AddDynamic(this, &URetakeHUDWidget::HandleTakeScrapped);
+		InDirector->OnOutOfFilm.AddDynamic(this, &URetakeHUDWidget::HandleOutOfFilm);
 		HandleStateChanged(InDirector->GetState(), ERetakeSceneState::None);
 	}
 	RefreshStatic();
@@ -183,6 +187,16 @@ void URetakeHUDWidget::HandleTakeCut(int32 TakeNumber, ERetakeCutReason Reason)
 	default: break;
 	}
 	ShowStamp(FString::Printf(TEXT("CUT! Take %d%s"), TakeNumber, Why), RetakeUI::Red(), 1.8f);
+}
+
+void URetakeHUDWidget::HandleTakeScrapped(int32 TakeNumber)
+{
+	ShowStamp(FString::Printf(TEXT("SCRAPPED!\nTake %d hits the cutting room floor"), TakeNumber), RetakeUI::Red(), 1.6f);
+}
+
+void URetakeHUDWidget::HandleOutOfFilm()
+{
+	ShowStamp(TEXT("OUT OF FILM!\nLast take scrapped"), RetakeUI::Red(), 1.9f);
 }
 
 void URetakeHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)

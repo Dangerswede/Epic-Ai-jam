@@ -114,6 +114,7 @@ bool ARetakeSceneDirector::FindPlayer()
 	{
 		Player->OnCutRequested.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerCut);
 		Player->OnJumpPressed.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerJumpPressed);
+		Player->OnScrapRequested.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerScrap);
 	}
 	return Player != nullptr;
 }
@@ -292,23 +293,51 @@ void ARetakeSceneDirector::CutTake(ERetakeCutReason Reason)
 	}
 	SetPlayerControl(false);
 
+	++TotalTakesShot;
 	UE_LOG(LogRetakeDirector, Log, TEXT("CUT! Take %d (%s)"), CurrentTakeNumber, *UEnum::GetValueAsString(Reason));
 	SetState(ERetakeSceneState::Cut);
 	OnTakeCut.Broadcast(CurrentTakeNumber, Reason);
 
 	if (Takes.Num() >= MaxTakes)
 	{
-		ScheduleState(CutPauseSeconds, [this]()
-		{
-			SetState(ERetakeSceneState::SceneFailed);
-			OnSceneFailed.Broadcast();
-			ScheduleState(SceneFailedSeconds, [this]() { RestartScene(); });
-		});
+		// Out of film: don't wipe everything, just throw away this last take and roll it again.
+		Takes.Pop();
+		UE_LOG(LogRetakeDirector, Log, TEXT("Out of film: take %d scrapped."), CurrentTakeNumber);
+		OnOutOfFilm.Broadcast();
 	}
-	else
+	ScheduleState(CutPauseSeconds, [this]() { StartRolling(); });
+}
+
+void ARetakeSceneDirector::HandlePlayerScrap()
+{
+	ScrapLastTake();
+}
+
+void ARetakeSceneDirector::ScrapLastTake()
+{
+	if (State != ERetakeSceneState::Rolling || !Player || Takes.Num() == 0)
 	{
-		ScheduleState(CutPauseSeconds, [this]() { StartRolling(); });
+		return;
 	}
+	GetWorldTimerManager().ClearTimer(TakeTimer);
+
+	// Throw away the take being recorded right now AND the last finished take.
+	if (URetakeRecorderComponent* Recorder = Player->GetRecorder())
+	{
+		Recorder->StopRecording();
+	}
+	const int32 Scrapped = Takes.Last().TakeNumber;
+	Takes.Pop();
+	for (ATakeGhost* Ghost : Ghosts)
+	{
+		Ghost->Stop();
+	}
+	SetPlayerControl(false);
+
+	UE_LOG(LogRetakeDirector, Log, TEXT("Take %d scrapped."), Scrapped);
+	SetState(ERetakeSceneState::Cut);
+	OnTakeScrapped.Broadcast(Scrapped);
+	ScheduleState(ScrapPauseSeconds, [this]() { StartRolling(); });
 }
 
 void ARetakeSceneDirector::NotifyPlayerKilled()
@@ -335,7 +364,8 @@ void ARetakeSceneDirector::NotifyGoalReached(AActor* Who)
 	}
 	SetPlayerControl(false);
 
-	UE_LOG(LogRetakeDirector, Log, TEXT("That's a wrap! %d takes."), Takes.Num());
+	++TotalTakesShot;
+	UE_LOG(LogRetakeDirector, Log, TEXT("That's a wrap! %d takes in the cut, %d shot."), Takes.Num(), TotalTakesShot);
 	SetState(ERetakeSceneState::Wrap);
 	OnWrap.Broadcast();
 	ScheduleState(WrapSeconds, [this]() { StartDirectorsCut(); });
@@ -412,6 +442,7 @@ void ARetakeSceneDirector::RestartScene()
 	{
 		Player->GetRecorder()->StopRecording();
 	}
+	TotalTakesShot = 0;
 	Takes.Reset();
 	DestroyGhosts();
 	StartRolling();

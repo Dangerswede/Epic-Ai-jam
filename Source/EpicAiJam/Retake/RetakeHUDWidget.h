@@ -42,6 +42,12 @@ private:
 	UFUNCTION()
 	void HandleTakeCut(int32 TakeNumber, ERetakeCutReason Reason);
 
+	UFUNCTION()
+	void HandleTakeScrapped(int32 TakeNumber);
+
+	UFUNCTION()
+	void HandleOutOfFilm();
+
 	TWeakObjectPtr<ARetakeSceneDirector> Director;
 
 	UPROPERTY(Transient) TObjectPtr<UWidget> Clapper;

@@ -39,7 +39,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRetakeSceneEvent);
 /**
  * One per level. Runs the take loop:
  * Briefing -> Rolling -> Cut -> Rolling ... -> Wrap -> DirectorsCut -> Results
- * (out of takes: Cut -> SceneFailed -> Rolling take 1).
+ * Backspace scraps the last take; out of film = the last take is scrapped automatically.
  * (Godot: an autoload-like "level manager" node with a state machine and signals.)
  */
 UCLASS()
@@ -89,6 +89,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Timing", meta = (ClampMin = "0.0"))
 	float SceneFailedSeconds = 3.f;
 
+	/** Pause after scrapping a take before rolling again. */
+	UPROPERTY(EditAnywhere, Category = "Timing", meta = (ClampMin = "0.0"))
+	float ScrapPauseSeconds = 1.f;
+
 	UPROPERTY(EditAnywhere, Category = "Timing", meta = (ClampMin = "0.0"))
 	float WrapSeconds = 2.f;
 
@@ -113,6 +117,14 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeSceneEvent OnSceneFailed;
 
+	/** A take was scrapped with Backspace (TakeNumber = the finished take that was thrown away). */
+	UPROPERTY(BlueprintAssignable, Category = "Retake")
+	FRetakeTakeStarted OnTakeScrapped;
+
+	/** Cut at MaxTakes: the last take was scrapped automatically. */
+	UPROPERTY(BlueprintAssignable, Category = "Retake")
+	FRetakeSceneEvent OnOutOfFilm;
+
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeSceneEvent OnWrap;
 
@@ -132,6 +144,14 @@ public:
 	/** Called by AKillVolume for the player. */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void NotifyPlayerKilled();
+
+	/** Backspace: throw away the current take and the last finished one, then roll that take again. Only while Rolling with at least one take. */
+	UFUNCTION(BlueprintCallable, Category = "Retake")
+	void ScrapLastTake();
+
+	/** Every take that was rolled to a cut or wrap since the scene (re)started, including scrapped ones. */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	int32 GetTotalTakesShot() const { return TotalTakesShot; }
 
 	/** Called by UDirectorsCutComponent when its sequence is done. */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
@@ -205,6 +225,11 @@ private:
 	TArray<FTakeData> Takes;
 	UFUNCTION()
 	void HandlePlayerJumpPressed();
+
+	UFUNCTION()
+	void HandlePlayerScrap();
+
+	int32 TotalTakesShot = 0;
 
 	bool bLastWrapNewBest = false;
 	ERetakeSceneState State = ERetakeSceneState::None;

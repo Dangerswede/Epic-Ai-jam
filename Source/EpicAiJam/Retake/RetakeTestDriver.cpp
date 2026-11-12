@@ -119,6 +119,14 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 	{
 		return Director->GetGhosts().Num() == Director->GetTakes().Num();
 	});
+	if (Scene == TEXT("Scene01_Bridge"))
+	{
+		// Take 1, scrapped take 2, take 2 again (wrap): 2 in the cut, 3 shot.
+		Check(TEXT("2 takes in the cut, 3 shot"), [this]()
+		{
+			return Director->GetTakes().Num() == 2 && Director->GetTotalTakesShot() == 3;
+		});
+	}
 	WaitState((uint8)ERetakeSceneState::Results, 90.f);
 	Check(TEXT("save has the scene wrapped and the next scene unlocked"), [this, Scene]()
 	{
@@ -173,7 +181,15 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		});
 		Do(TEXT("Press E during CUT"), [this]() { InteractCount = 0; Player->Interact(); });
 		Check(TEXT("E ignored during CUT"), [this]() { return InteractCount == 0; });
-		// Take 2: the ghost holds the plate; walk the bridge.
+		// P3: shoot a useless take 2, then scrap it from take 3 -> we get a fresh take 2.
+		NextTake(2);
+		MoveTo(300, -300);
+		Cut();
+		NextTake(3);
+		Check(TEXT("two ghosts in take 3"), [this]() { return Director->GetGhosts().Num() == 2; });
+		Do(TEXT("Press Backspace (scrap)"), [this]() { Player->Scrap(); });
+		Check(TEXT("scrapped: only take 1 kept"), [this]() { return Director->GetTakes().Num() == 1; });
+		// Take 2 (again): the ghost holds the plate; walk the bridge.
 		NextTake(2);
 		Check(TEXT("one ghost spawned"), [this]() { return Director->GetGhosts().Num() == 1; });
 		MoveTo(100, 0);
@@ -373,6 +389,25 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 		return Director->GetState() == ERetakeSceneState::Cut || Director->GetState() == ERetakeSceneState::Rolling;
 	}, 40.f);
 	Check(TEXT("never wrapped"), [this]() { return !bEverWrapped; });
+
+	if (Scene == TEXT("Scene01_Bridge"))
+	{
+		// P3 out of film: cut quickly until the last take, cut it too -> it is scrapped, nothing is wiped.
+		for (int32 Take = 2; Take <= 5; ++Take)
+		{
+			WaitUntil(FString::Printf(TEXT("take %d rolling"), Take), [this, Take]()
+			{
+				return Director->GetState() == ERetakeSceneState::Rolling && Director->GetCurrentTakeNumber() == Take;
+			}, 10.f);
+			Wait(0.3f);
+			Do(TEXT("Press R (cut)"), [this]() { Player->Cut(); });
+		}
+		Check(TEXT("out of film: take 5 scrapped, 4 kept"), [this]() { return Director->GetTakes().Num() == 4; });
+		WaitUntil(TEXT("take 5 rolls again"), [this]()
+		{
+			return Director->GetState() == ERetakeSceneState::Rolling && Director->GetCurrentTakeNumber() == 5;
+		}, 10.f);
+	}
 }
 
 void ARetakeTestDriver::StartScenario(const FString& Scenario)

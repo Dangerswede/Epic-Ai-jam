@@ -80,6 +80,7 @@ void ARetakeCharacter::BuildDefaultInput()
 	if (!JumpAction)     { JumpAction = MakeAction(TEXT("IA_Jump"), EInputActionValueType::Boolean); }
 	if (!InteractAction) { InteractAction = MakeAction(TEXT("IA_Interact"), EInputActionValueType::Boolean); }
 	if (!CutAction)      { CutAction = MakeAction(TEXT("IA_Cut"), EInputActionValueType::Boolean); }
+	if (!ScrapAction)    { ScrapAction = MakeAction(TEXT("IA_Scrap"), EInputActionValueType::Boolean); }
 	if (!PauseAction)
 	{
 		PauseAction = MakeAction(TEXT("IA_Pause"), EInputActionValueType::Boolean);
@@ -134,6 +135,9 @@ void ARetakeCharacter::BuildDefaultInput()
 	MappingContext->MapKey(CutAction, EKeys::R);
 	MappingContext->MapKey(CutAction, EKeys::Gamepad_FaceButton_Top);
 
+	MappingContext->MapKey(ScrapAction, EKeys::BackSpace);
+	MappingContext->MapKey(ScrapAction, EKeys::Gamepad_FaceButton_Right);
+
 	// Esc stops PIE in the editor, so P works there too.
 	MappingContext->MapKey(PauseAction, EKeys::Escape);
 	MappingContext->MapKey(PauseAction, EKeys::P);
@@ -175,6 +179,7 @@ void ARetakeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	Input->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 	Input->BindAction(InteractAction, ETriggerEvent::Started, this, &ARetakeCharacter::Interact);
 	Input->BindAction(CutAction, ETriggerEvent::Started, this, &ARetakeCharacter::Cut);
+	Input->BindAction(ScrapAction, ETriggerEvent::Started, this, &ARetakeCharacter::Scrap);
 	Input->BindAction(PauseAction, ETriggerEvent::Started, this, &ARetakeCharacter::TogglePause);
 }
 
@@ -226,6 +231,15 @@ void ARetakeCharacter::Interact()
 	RetakeInteraction::PerformInteract(this, InteractRadius);
 	OnInteract.Broadcast();
 	NotifyAction(ERetakeAction::Interact);
+}
+
+void ARetakeCharacter::Scrap()
+{
+	if (!bActionsEnabled)
+	{
+		return;
+	}
+	OnScrapRequested.Broadcast();
 }
 
 void ARetakeCharacter::TogglePause()

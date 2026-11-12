@@ -130,3 +130,6 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 ## Code-review fixes (12 Nov, afternoon)
 70. **P1 – actions only while Rolling:** In the briefing press Space: the take starts but the character does NOT jump. During the red "CUT!" pause press E next to a lever: nothing happens. During the Director's Cut, E/R do nothing (Space still skips).
 71. **P2 – key hints:** while a take is rolling, a dark bar bottom-left reads "WASD Move   SPACE Jump   E Use   R Cut   BACKSPACE Scrap take   ESC Pause" (hidden in briefing/cut/Director's Cut). Levers show a yellow "[E]" above them. Scene 1's shot list now ends with "Press R to call CUT when you're in position. Your take stays where you left it." Ideal check: let someone who hasn't played finish Scene 1 without telling them the keys.
+72. **P3 – scrap take:** in take 3 press **Backspace**: red stamp "SCRAPPED! Take 2 hits the cutting room floor", after ~1 s take 2 rolls again with only the take-1 ghost. Backspace in take 1 does nothing.
+73. **Out of film:** in Scene 1 press R five times quickly: on take 5 the stamp says "OUT OF FILM! Last take scrapped" and take 5 rolls again (takes 1-4 stay). No more wipe to Take 1 (use pause → RESTART SCENE for that).
+74. Results screen now shows "Takes in the cut: X (par Y)" and "Film shot: Z takes"; stars count takes in the cut.
