@@ -123,3 +123,6 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 ## Pause menu
 67. In a scene press **P** (in the editor; **Esc** stops PIE there) or **Esc** in the packaged game: dimmed screen, "PAUSED – The crew is on a coffee break.", buttons RESUME / RESTART SCENE / MAIN MENU, cursor visible, game frozen (ghosts and timer stop).
 68. RESUME (or P/Esc again) continues exactly where you were. RESTART SCENE starts again from Take 1. MAIN MENU goes to the call sheet.
+
+## Docs (drafts, please review)
+69. Read `README.md` (English: pitch, how to play, controls), `PREEXISTING.md` (fill in the TODOs: when the plan/prompts were written, other tools) and `DEVLOG.md` (glass-box devlog draft from AI_LOG + git history; add screenshots later).
