@@ -28,6 +28,7 @@ public:
 	ARetakeHUD();
 
 	URetakeHUDWidget* GetHUDWidget() const { return HUDWidget; }
+	URetakeResultsWidget* GetResultsWidget() const { return ResultsWidget; }
 
 	/** Esc: open/close the pause menu. */
 	void TogglePauseMenu();

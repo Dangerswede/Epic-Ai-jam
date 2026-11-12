@@ -5,6 +5,7 @@
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Retake/CameraMark.h"
 #include "Retake/DirectorsCutComponent.h"
 #include "Retake/RetakeCharacter.h"
 #include "Retake/RetakeRecorderComponent.h"
@@ -55,6 +56,12 @@ ARetakeSceneDirector* ARetakeSceneDirector::Get(const UObject* WorldContext)
 void ARetakeSceneDirector::BeginPlay()
 {
 	Super::BeginPlay();
+
+	for (TActorIterator<ACameraMark> It(GetWorld()); It; ++It)
+	{
+		Marks.Add(*It);
+	}
+	Marks.Sort([](const ACameraMark& A, const ACameraMark& B) { return A.MarkNumber < B.MarkNumber; });
 
 	// The player pawn may be spawned after level actors begin play; start next tick.
 	GetWorldTimerManager().SetTimerForNextTick([this]()
@@ -459,17 +466,39 @@ bool ARetakeSceneDirector::IsBonusMet() const
 	}
 }
 
+FDirectorRating ARetakeSceneDirector::GetRating() const
+{
+	FDirectorRating R;
+	const bool bWrapped = Takes.Num() > 0 && Takes.Last().EndReason == ERetakeCutReason::Wrapped;
+	if (!bWrapped)
+	{
+		return R;
+	}
+	R.Wrap = FDirectorRating::WrapPoints;
+	R.Par = Takes.Num() <= ParTakes ? FDirectorRating::ParPoints : 0;
+	R.Note = IsBonusMet() ? FDirectorRating::NotePoints : 0;
+	for (const ACameraMark* Mark : Marks)
+	{
+		const bool bHit = Mark && Takes.ContainsByPredicate([Mark](const FTakeData& T) { return Mark->IsHitBy(T); });
+		R.MarksHit += bHit ? 1 : 0;
+	}
+	R.Marks = FMath::Min(FDirectorRating::MaxMarkPoints, R.MarksHit * FDirectorRating::PointsPerMark);
+	return R;
+}
+
 int32 ARetakeSceneDirector::GetStars() const
 {
-	if (Takes.Num() == 0)
+	const bool bWrapped = Takes.Num() > 0 && Takes.Last().EndReason == ERetakeCutReason::Wrapped;
+	return FDirectorRating::StarsFor(GetRating().Total(), bWrapped);
+}
+
+void ARetakeSceneDirector::NotifyMarkHit(ACameraMark* Mark)
+{
+	if (Mark && State == ERetakeSceneState::Rolling)
 	{
-		return 0;
+		UE_LOG(LogRetakeDirector, Log, TEXT("Take %d hit mark %d"), CurrentTakeNumber, Mark->MarkNumber);
+		OnMarkHit.Broadcast(Mark->MarkNumber);
 	}
-	if (Takes.Num() > ParTakes)
-	{
-		return 1;
-	}
-	return IsBonusMet() ? 3 : 2;
 }
 
 void ARetakeSceneDirector::NotifyPlayerKilled()

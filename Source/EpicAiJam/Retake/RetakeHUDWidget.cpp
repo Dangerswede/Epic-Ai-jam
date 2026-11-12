@@ -133,6 +133,7 @@ void URetakeHUDWidget::SetDirector(ARetakeSceneDirector* InDirector)
 		Director->OnTakeCut.RemoveDynamic(this, &URetakeHUDWidget::HandleTakeCut);
 		Director->OnTakeScrapped.RemoveDynamic(this, &URetakeHUDWidget::HandleTakeScrapped);
 		Director->OnOutOfFilm.RemoveDynamic(this, &URetakeHUDWidget::HandleOutOfFilm);
+		Director->OnMarkHit.RemoveDynamic(this, &URetakeHUDWidget::HandleMarkHit);
 	}
 	Director = InDirector;
 	if (InDirector)
@@ -142,6 +143,7 @@ void URetakeHUDWidget::SetDirector(ARetakeSceneDirector* InDirector)
 		InDirector->OnTakeCut.AddDynamic(this, &URetakeHUDWidget::HandleTakeCut);
 		InDirector->OnTakeScrapped.AddDynamic(this, &URetakeHUDWidget::HandleTakeScrapped);
 		InDirector->OnOutOfFilm.AddDynamic(this, &URetakeHUDWidget::HandleOutOfFilm);
+	InDirector->OnMarkHit.AddDynamic(this, &URetakeHUDWidget::HandleMarkHit);
 		HandleStateChanged(InDirector->GetState(), ERetakeSceneState::None);
 	}
 	RefreshStatic();
@@ -237,6 +239,11 @@ void URetakeHUDWidget::HandleTakeCut(int32 TakeNumber, ERetakeCutReason Reason)
 void URetakeHUDWidget::HandleTakeScrapped(int32 TakeNumber)
 {
 	ShowStamp(FString::Printf(TEXT("SCRAPPED!\nTake %d hits the cutting room floor"), TakeNumber), RetakeUI::Red(), 1.6f);
+}
+
+void URetakeHUDWidget::HandleMarkHit(int32 MarkNumber)
+{
+	ShowStamp(FString::Printf(TEXT("ON MARK!\nMark %d is in the can"), MarkNumber), RetakeUI::Gold(), 1.3f);
 }
 
 void URetakeHUDWidget::HandleOutOfFilm()

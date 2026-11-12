@@ -55,5 +55,8 @@ L.director(start, "Scene 5: The Gap",
            "Mind the gap. A stunt double who stays standing makes a fine stepping stone.",
            par=3, max_takes=5, duration=25,
            bonus=("FINAL_TAKE_UNDER_SECONDS", 15, "Final take in under 15 seconds."))
+L.marks([(1, (900, 0, 0), (1.5, 3), (-400, 0, 350), "Over the edge"),
+         (2, (500, 0, 0), (4.5, 6.5), (-500, 0, 400), "Run-up"),
+         (3, (2250, 0, 0), (10, 14), (500, 0, 350), "Landing")])
 L.save_map(MAP)
 L.log("Saved " + MAP)

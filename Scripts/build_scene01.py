@@ -193,6 +193,9 @@ def build_level(ghost_class):
                        ("PlywoodFlat", (4100, 1300, 0), 260, 180), ("PlywoodFlat", (3900, -1100, 0), 260, 160),
                        ("StageCrate", (-900, -400, 0), 90, 20), ("StageCrate", (-900, -300, 90), 70, 50)])
 
+    L.marks([(1, (1170, -430, 0), (2, 4.5), (-500, -600, 350), "Under the bridge"),
+             (2, (1600, 0, 300), (3, 6), (-400, -700, 250), "Bridge run"),
+             (3, (2350, -480, 0), (5, 7.5), (300, -600, 300), "Switch B")])
     L.save_map(MAP_PATH)
     log("Saved " + MAP_PATH)
 

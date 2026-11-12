@@ -6,6 +6,7 @@
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Retake/CameraMark.h"
 #include "Retake/DirectorsCutOverlayWidget.h"
 #include "Retake/ExplosiveProp.h"
 #include "Retake/RetakeSceneDirector.h"
@@ -63,6 +64,20 @@ void UDirectorsCutComponent::BuildMoments()
 				All.Add({ F.Time - ActionLead, F.Time + ActionTail, F.Time, FReelMoment::EKind::Action, i });
 			}
 		}
+		if (const ARetakeSceneDirector* D = GetDirector())
+		{
+			for (int32 m = 0; m < D->GetMarks().Num(); ++m)
+			{
+				const ACameraMark* Mark = D->GetMarks()[m];
+				const float HitTime = Mark ? Mark->FindHitTime(T) : -1.f;
+				if (HitTime >= 0.f)
+				{
+					FReelMoment Moment{ HitTime - 0.8f, HitTime + 1.4f, HitTime, FReelMoment::EKind::Mark, i };
+					Moment.MarkIndex = m;
+					All.Add(Moment);
+				}
+			}
+		}
 		if (T.EndsInDeath())
 		{
 			// The launch happened ~0.6 s before the last frame (the recorded stunt tail).
@@ -82,7 +97,8 @@ void UDirectorsCutComponent::BuildMoments()
 	auto Cost = [this](const FReelMoment& M)
 	{
 		const float Len = M.End - M.Start;
-		return M.Kind == FReelMoment::EKind::Action ? Len : Len + 1.f / SlowMoDilation - 1.f;
+		const bool bSlow = M.Kind == FReelMoment::EKind::Death || M.Kind == FReelMoment::EKind::Goal;
+		return bSlow ? Len + 1.f / SlowMoDilation - 1.f : Len;
 	};
 	All.Sort([](const FReelMoment& A, const FReelMoment& B)
 	{
@@ -115,6 +131,10 @@ void UDirectorsCutComponent::BuildMoments()
 				Prev.Focus = M.Focus;
 				Prev.GhostIndex = M.GhostIndex;
 			}
+			if (Prev.MarkIndex == INDEX_NONE)
+			{
+				Prev.MarkIndex = M.MarkIndex; // still shoot it from the mark camera if one was hit
+			}
 			continue;
 		}
 		Moments.Add(M);
@@ -136,6 +156,8 @@ void UDirectorsCutComponent::Begin(const TArray<ATakeGhost*>& InGhosts, float Lo
 	CurrentDilation = 1.f;
 	CurrentMoment = INDEX_NONE;
 	LastShotOffset = FVector(NAN);
+	LastMarkCam.Reset();
+	MarkShotsUsed = 0;
 	bEndCardShown = false;
 	bRunning = true;
 	BuildMoments();
@@ -240,6 +262,42 @@ FVector UDirectorsCutComponent::ResolveCameraLocation(const FVector& Desired, co
 	return GetWorld()->LineTraceSingleByChannel(Hit, Target, Desired, ECC_Visibility, Params) ? FVector(NAN) : Desired;
 }
 
+const ACameraMark* UDirectorsCutComponent::PickMarkCamera(const FReelMoment& Moment, const FVector& LookAt) const
+{
+	const ARetakeSceneDirector* D = GetDirector();
+	if (!D)
+	{
+		return nullptr;
+	}
+	auto Clear = [&](const ACameraMark* Mark)
+	{
+		return Mark && FVector::Dist(Mark->GetCameraWorldLocation(), LookAt) < 2600.f
+			&& !ResolveCameraLocation(Mark->GetCameraWorldLocation(), LookAt).ContainsNaN();
+	};
+	// 1) The mark this moment is about. 2) Stay on the current mark camera while it sees the subject.
+	// 3) The nearest mark camera with a clear view. Otherwise the dynamic camera is the fallback.
+	if (D->GetMarks().IsValidIndex(Moment.MarkIndex) && Clear(D->GetMarks()[Moment.MarkIndex]))
+	{
+		return D->GetMarks()[Moment.MarkIndex];
+	}
+	if (Clear(LastMarkCam.Get()))
+	{
+		return LastMarkCam.Get();
+	}
+	const ACameraMark* Best = nullptr;
+	float BestDist = TNumericLimits<float>::Max();
+	for (const ACameraMark* Mark : D->GetMarks())
+	{
+		const float Dist = Mark ? FVector::Dist(Mark->GetCameraWorldLocation(), LookAt) : BestDist;
+		if (Dist < BestDist && Clear(Mark))
+		{
+			Best = Mark;
+			BestDist = Dist;
+		}
+	}
+	return Best;
+}
+
 void UDirectorsCutComponent::UpdateCamera(const FReelMoment* Moment, float RealDelta, bool bSnap)
 {
 	if (!ReelCamera || !Moment || !Ghosts.IsValidIndex(Moment->GhostIndex) || !IsValid(Ghosts[Moment->GhostIndex]))
@@ -247,6 +305,38 @@ void UDirectorsCutComponent::UpdateCamera(const FReelMoment* Moment, float RealD
 		return;
 	}
 	const ATakeGhost* Subject = Ghosts[Moment->GhostIndex];
+
+	// F1: cut between the fixed camera-mark cameras; they pan to follow the subject.
+	const FVector Aim = Subject->GetActorLocation() + FVector(0.f, 0.f, 60.f);
+	if (const ACameraMark* MarkCam = PickMarkCamera(*Moment, Aim))
+	{
+		const bool bNewShot = MarkCam != LastMarkCam.Get();
+		if (bNewShot)
+		{
+			++MarkShotsUsed;
+			if (Overlay)
+			{
+				Overlay->ShowShotLabel(CurrentShotLabel + FString::Printf(TEXT("   |   MARK %d%s%s"), MarkCam->MarkNumber,
+					MarkCam->ShotName.IsEmpty() ? TEXT("") : TEXT(": "), *MarkCam->ShotName.ToUpper()));
+			}
+		}
+		LastMarkCam = MarkCam;
+		LastShotOffset = FVector(NAN);
+		const FVector CamLoc = MarkCam->GetCameraWorldLocation();
+		const FRotator WantRot = (Aim - CamLoc).Rotation();
+		const bool bHard = bSnap || bNewShot;
+		ReelCamera->SetActorLocationAndRotation(CamLoc, bHard ? WantRot : FMath::RInterpTo(ReelCamera->GetActorRotation(), WantRot, RealDelta, 8.f));
+		return;
+	}
+	if (LastMarkCam.IsValid())
+	{
+		LastMarkCam.Reset();
+		bSnap = true;
+		if (Overlay)
+		{
+			Overlay->ShowShotLabel(CurrentShotLabel);
+		}
+	}
 	// Explosions slow the reel down (see Tick) but the camera stays on the actor: the blast throws them.
 	const bool bExplosionShot = false;
 	const bool bFinalWide = Moment->Kind == FReelMoment::EKind::Goal && Elapsed > Moment->End - 1.4f;
@@ -364,9 +454,11 @@ void UDirectorsCutComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			const ATakeGhost* G = Ghosts.IsValidIndex(M->GhostIndex) ? Ghosts[M->GhostIndex].Get() : nullptr;
 			const ARetakeSceneDirector* D = GetDirector();
 			const FText Role = (G && D) ? D->GetRoleName(G->GetTakeNumber()) : FText::GetEmpty();
-			Overlay->ShowShotLabel(!G ? FString(TEXT("ALL TAKES")) : Role.IsEmpty()
+			CurrentShotLabel = !G ? FString(TEXT("ALL TAKES")) : Role.IsEmpty()
 				? FString::Printf(TEXT("TAKE %d"), G->GetTakeNumber())
-				: FString::Printf(TEXT("TAKE %d - %s"), G->GetTakeNumber(), *Role.ToString().ToUpper()));
+				: FString::Printf(TEXT("TAKE %d - %s"), G->GetTakeNumber(), *Role.ToString().ToUpper());
+			Overlay->ShowShotLabel(CurrentShotLabel);
+			LastMarkCam.Reset(); // new moment = new shot
 		}
 		UpdateCamera(M, RealDelta, bCut);
 	}

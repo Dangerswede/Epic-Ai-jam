@@ -8,6 +8,7 @@
 class ARetakeCharacter;
 class ATakeGhost;
 class UDirectorsCutComponent;
+class ACameraMark;
 
 UENUM(BlueprintType)
 enum class ERetakeSceneState : uint8
@@ -35,6 +36,23 @@ struct EPICAIJAM_API FTakeRole
 	FText Task;
 };
 
+/** F1: the Director's rating (0-100) that gives the stars: 1 for the wrap, 2 at 65+, 3 at 85+. */
+struct FDirectorRating
+{
+	static constexpr int32 WrapPoints = 45;
+	static constexpr int32 ParPoints = 20;
+	static constexpr int32 NotePoints = 20;
+	static constexpr int32 PointsPerMark = 10;
+	static constexpr int32 MaxMarkPoints = 20;
+	int32 Wrap = 0;
+	int32 Par = 0;
+	int32 Note = 0;
+	int32 Marks = 0;     // points
+	int32 MarksHit = 0;
+	int32 Total() const { return FMath::Min(100, Wrap + Par + Note + Marks); }
+	static int32 StarsFor(int32 Rating, bool bWrapped) { return !bWrapped ? 0 : Rating >= 85 ? 3 : Rating >= 65 ? 2 : 1; }
+};
+
 /** One 30 Hz sample of a world actor (guard, crate) for the Director's Cut world track. */
 struct FWorldTrackFrame
 {
@@ -46,6 +64,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FRetakeStateChanged, ERetakeSceneSt
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FRetakeTakeStarted, int32, TakeNumber);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FRetakeTakeCut, int32, TakeNumber, ERetakeCutReason, Reason);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRetakeSceneEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FRetakeMarkHit, int32, MarkNumber);
 
 /**
  * One per level. Runs the take loop:
@@ -173,6 +192,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeSceneEvent OnWrap;
 
+	/** F1: the player stood on a camera mark inside its window this take. */
+	UPROPERTY(BlueprintAssignable, Category = "Retake")
+	FRetakeMarkHit OnMarkHit;
+
 	// --- API ------------------------------------------------------------------
 
 	/** First director in the world (there should be exactly one). */
@@ -224,6 +247,15 @@ public:
 	/** Stars for the current result: 1 wrap, 2 at/under par, 3 at/under par + director's note. */
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	int32 GetStars() const;
+
+	/** F1: rating breakdown for the kept takes (wrap, par, note, camera marks). */
+	FDirectorRating GetRating() const;
+
+	/** Camera marks in the level, sorted by MarkNumber. */
+	const TArray<TObjectPtr<ACameraMark>>& GetMarks() const { return Marks; }
+
+	/** Called by a mark when the live player hits it. */
+	void NotifyMarkHit(ACameraMark* Mark);
 
 	/** Called by UDirectorsCutComponent when its sequence is done. */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
@@ -313,6 +345,7 @@ private:
 	bool AbortRollingTake();
 
 	int32 TotalTakesShot = 0;
+	UPROPERTY(Transient) TArray<TObjectPtr<ACameraMark>> Marks;
 	int32 ScrapCount = 0;
 	bool bAnyCaught = false;
 	bool bAnyDied = false;

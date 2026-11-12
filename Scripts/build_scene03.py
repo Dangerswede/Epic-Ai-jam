@@ -92,5 +92,8 @@ d = L.director(start, "Scene 3: The Chase",
 L.set_roles(d, [("Pyro", "Light charge 1, get clear, then light charge 2 - and take the fall."),
                 ("Grip", "Run the north corridor and hit the EXIT switch at the far end."),
                 ("Hero", "Follow the blasts and make the exit while the gate is open.")])
+L.marks([(1, (1300, 30, 0), (1.5, 3.5), (-500, 0, 250), "Light the fuse"),
+         (2, (1900, 500, 0), (4, 6), (-600, 0, 250), "North corridor"),
+         (3, (3150, -70, 0), (11, 13.5), (600, 0, 250), "Through the smoke")])
 L.save_map(MAP)
 L.log("Saved " + MAP)

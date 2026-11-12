@@ -132,5 +132,9 @@ L.set_roles(d, [("Grip", "Push the prop crate onto the north mark and stand on t
                 ("Inside Man", "Pull the lever by the north wall - it kills the lasers."),
                 ("Hero", "Lasers, crate bridge, rooftop. Make it a classic.")])
 d.set_editor_property("roles_any_order", True)
+L.marks([(1, (3200, -1300, 0), (11, 14), (-900, 600, 450), "Chase scene"),
+         (2, (2650, 980, 0), (11, 14), (300, -700, 400), "Inside man"),
+         (3, (4800, 0, 0), (17, 19), (-300, 0, 500), "Bridge push"),
+         (4, (7250, 0, 300), (23, 27), (400, 600, 300), "Rooftop")])
 L.save_map(MAP)
 L.log("Saved " + MAP)

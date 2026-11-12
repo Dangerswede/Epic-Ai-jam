@@ -13,13 +13,6 @@
 #include "Retake/RetakeScenes.h"
 #include "Retake/RetakeWidgetUtils.h"
 
-int32 URetakeResultsWidget::ComputeStars(int32 TakesUsed, int32 Par, bool bBonusMet)
-{
-	// 1 for the wrap, 2 at/under par, 3 at/under par AND the director's note.
-	if (TakesUsed > Par) return 1;
-	return bBonusMet ? 3 : 2;
-}
-
 TSharedRef<SWidget> URetakeResultsWidget::RebuildWidget()
 {
 	if (WidgetTree && !WidgetTree->RootWidget)
@@ -60,6 +53,31 @@ void URetakeResultsWidget::BuildTree()
 	}
 	UVerticalBoxSlot* StarSlot = Box->AddChildToVerticalBox(StarRow);
 	StarSlot->SetHorizontalAlignment(HAlign_Center);
+
+	// F1: Director's rating meter (fills up and lights the stars at 45 / 65 / 85).
+	Box->AddChildToVerticalBox(Text(WidgetTree, TEXT("DIRECTOR'S RATING"), 14, Red(), ETextJustify::Center));
+	UHorizontalBox* MeterRow = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+	USizeBox* MeterBox = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+	MeterBox->SetWidthOverride(360.f);
+	MeterBox->SetHeightOverride(20.f);
+	UBorder* MeterBack = Panel(WidgetTree, FLinearColor(0.15f, 0.13f, 0.11f), FMargin(2.f));
+	MeterBox->SetContent(MeterBack);
+	UHorizontalBox* FillRow = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+	MeterBack->SetContent(FillRow);
+	MeterFill = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+	MeterFill->SetWidthOverride(0.f);
+	MeterFill->SetContent(Panel(WidgetTree, Gold(), FMargin(0.f)));
+	FillRow->AddChildToHorizontalBox(MeterFill);
+	MeterRow->AddChildToHorizontalBox(MeterBox)->SetVerticalAlignment(VAlign_Center);
+	RatingText = Text(WidgetTree, TEXT("0"), 22, Ink(), ETextJustify::Left, false);
+	MeterRow->AddChildToHorizontalBox(RatingText)->SetPadding(FMargin(12.f, 0.f, 0.f, 0.f));
+	UVerticalBoxSlot* MeterSlot = Box->AddChildToVerticalBox(MeterRow);
+	MeterSlot->SetHorizontalAlignment(HAlign_Center);
+	MeterSlot->SetPadding(FMargin(0.f, 4.f));
+	PopupText = Text(WidgetTree, TEXT(""), 30, Red(), ETextJustify::Center, false);
+	PopupText->SetRenderTransformPivot(FVector2D(0.5f, 0.5f));
+	PopupText->SetRenderOpacity(0.f);
+	Box->AddChildToVerticalBox(PopupText)->SetPadding(FMargin(0.f, 2.f));
 
 	TakesText = Text(WidgetTree, TEXT(""), 22, Ink(), ETextJustify::Center, false);
 	Box->AddChildToVerticalBox(TakesText)->SetPadding(FMargin(0.f, 6.f));
@@ -105,7 +123,20 @@ void URetakeResultsWidget::ShowResults(ARetakeSceneDirector* InDirector, bool bN
 	const int32 Used = InDirector->GetTakes().Num();
 	const int32 Par = InDirector->ParTakes;
 	const bool bBonus = InDirector->IsBonusMet();
-	const int32 NumStars = ComputeStars(Used, Par, bBonus);
+	const FDirectorRating Rating = InDirector->GetRating();
+	TargetRating = Rating.Total();
+	TargetStars = InDirector->GetStars();
+	MeterSteps.Reset();
+	float Sum = Rating.Wrap;
+	MeterSteps.Add({ Sum, FString::Printf(TEXT("WRAP +%d"), Rating.Wrap) });
+	if (Rating.Par > 0) { Sum += Rating.Par; MeterSteps.Add({ Sum, FString::Printf(TEXT("ON PAR +%d"), Rating.Par) }); }
+	if (Rating.Note > 0) { Sum += Rating.Note; MeterSteps.Add({ Sum, FString::Printf(TEXT("NOTE +%d"), Rating.Note) }); }
+	if (Rating.Marks > 0) { MeterSteps.Add({ TargetRating, FString::Printf(TEXT("ON MARK x%d +%d"), Rating.MarksHit, Rating.Marks) }); }
+	NextStep = 0;
+	PopupTime = 10.f;
+	LastPopup.Reset();
+	bMeterRunning = true;
+	SetMeter(0.f);
 	if (!InDirector->BonusText.IsEmpty())
 	{
 		NoteText->SetText(FText::FromString(FString::Printf(TEXT("%s DIRECTOR'S NOTE: %s"), bBonus ? TEXT("[X]") : TEXT("[  ]"), *InDirector->BonusText.ToString())));
@@ -119,10 +150,6 @@ void URetakeResultsWidget::ShowResults(ARetakeSceneDirector* InDirector, bool bN
 	TitleText->SetText(InDirector->SceneTitle);
 	TakesText->SetText(FText::FromString(FString::Printf(TEXT("Takes in the cut: %d   (par %d)\nFilm shot: %d takes"), Used, Par, InDirector->GetTotalTakesShot())));
 	BestText->SetText(FText::FromString(bNewBest ? TEXT("NEW BEST!") : TEXT("")));
-	for (int32 i = 0; i < Stars.Num(); ++i)
-	{
-		Stars[i]->SetBrushColor(i < NumStars ? RetakeUI::Gold() : RetakeUI::Dim());
-	}
 
 	const int32 Current = RetakeScenes::IndexOf(InDirector->GetSceneId());
 	NextSceneIndex = (Current != INDEX_NONE && RetakeScenes::All().IsValidIndex(Current + 1)) ? Current + 1 : INDEX_NONE;
@@ -135,6 +162,60 @@ void URetakeResultsWidget::ShowResults(ARetakeSceneDirector* InDirector, bool bN
 		FInputModeGameAndUI Mode;
 		Mode.SetWidgetToFocus(TakeWidget());
 		PC->SetInputMode(Mode);
+	}
+}
+
+void URetakeResultsWidget::SetMeter(float Rating)
+{
+	DisplayedRating = Rating;
+	if (MeterFill) MeterFill->SetWidthOverride(356.f * FMath::Clamp(Rating / 100.f, 0.f, 1.f));
+	if (RatingText) RatingText->SetText(FText::AsNumber(FMath::RoundToInt(Rating)));
+	// Stars light as the needle passes their thresholds.
+	const int32 Lit = FMath::Min(TargetStars, FDirectorRating::StarsFor(FMath::RoundToInt(Rating), Rating >= FDirectorRating::WrapPoints - 0.5f));
+	for (int32 i = 0; i < Stars.Num(); ++i)
+	{
+		Stars[i]->SetBrushColor(i < Lit ? RetakeUI::Gold() : RetakeUI::Dim());
+	}
+}
+
+void URetakeResultsWidget::Popup(const FString& Str, const FLinearColor& Color)
+{
+	LastPopup = Str;
+	if (PopupText)
+	{
+		PopupText->SetText(FText::FromString(Str));
+		PopupText->SetColorAndOpacity(FSlateColor(Color));
+	}
+	PopupTime = 0.f;
+}
+
+void URetakeResultsWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+	if (bMeterRunning)
+	{
+		const float Next = FMath::Min(TargetRating, DisplayedRating + 55.f * InDeltaTime);
+		SetMeter(Next);
+		while (MeterSteps.IsValidIndex(NextStep) && Next >= MeterSteps[NextStep].UpTo - 0.01f)
+		{
+			Popup(MeterSteps[NextStep].Label, RetakeUI::Ink());
+			++NextStep;
+		}
+		if (Next >= TargetRating - 0.01f && PopupTime > 0.45f)
+		{
+			bMeterRunning = false;
+			Popup(GetFinalPopup(), TargetStars >= 3 ? RetakeUI::Red() : RetakeUI::Dim());
+		}
+	}
+	// Pop: scale 0 -> 1.3 -> 1 in 0.25 s with a slight tilt, then hold.
+	PopupTime += InDeltaTime;
+	if (PopupText)
+	{
+		const float T = PopupTime;
+		const float Scale = T < 0.15f ? FMath::Lerp(0.f, 1.3f, T / 0.15f) : T < 0.25f ? FMath::Lerp(1.3f, 1.f, (T - 0.15f) / 0.1f) : 1.f;
+		PopupText->SetRenderScale(FVector2D(Scale, Scale));
+		PopupText->SetRenderTransformAngle(-4.f);
+		PopupText->SetRenderOpacity(LastPopup.IsEmpty() ? 0.f : 1.f);
 	}
 }
 

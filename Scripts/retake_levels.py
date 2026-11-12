@@ -215,3 +215,13 @@ def film_crew(cam_loc, cam_yaw, chair_loc, chair_yaw, lights=(), extra=()):
         prop("StudioSpotlight", loc, 230, yaw)
     for name, loc, height, yaw in extra:
         prop(name, loc, height, yaw)
+
+def marks(items):
+    """F1 camera marks: (number, (x, y, floor z), (window start, end), (camera dx, dy, dz), shot name)."""
+    for n, loc, win, cam, name in items:
+        m = spawn(unreal.CameraMark, loc, label="CameraMark%d" % n, folder="Marks")
+        m.set_editor_property("mark_number", n)
+        m.set_editor_property("window_start", float(win[0]))
+        m.set_editor_property("window_end", float(win[1]))
+        m.set_editor_property("camera_location", unreal.Vector(*[float(v) for v in cam]))
+        m.set_editor_property("shot_name", name)

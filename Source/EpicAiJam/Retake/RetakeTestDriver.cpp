@@ -11,7 +11,10 @@
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
+#include "Retake/CameraMark.h"
+#include "Retake/DirectorsCutComponent.h"
 #include "Retake/ExplosiveProp.h"
+#include "Retake/RetakeResultsWidget.h"
 #include "Retake/Gate.h"
 #include "Retake/LaserBeam.h"
 #include "Retake/Lever.h"
@@ -155,9 +158,40 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 			return Director->GetTakes().Num() == 2 && Director->GetTotalTakesShot() == 3;
 		});
 	}
+	// F1 helper: dump every kept take's path once a second (used to place camera marks).
+	Do(TEXT("log take paths"), [this]()
+	{
+		for (const FTakeData& T : Director->GetTakes())
+		{
+			FString Line;
+			float Next = 0.f;
+			for (const FTakeFrame& F : T.Frames)
+			{
+				if (F.Time >= Next)
+				{
+					Line += FString::Printf(TEXT(" %.0f:(%.0f,%.0f,%.0f)"), F.Time, F.Location.X, F.Location.Y, F.Location.Z);
+					Next += 1.f;
+				}
+			}
+			UE_LOG(LogRetakeTest, Display, TEXT("  path take %d:%s"), T.TakeNumber, *Line);
+		}
+	});
+	// F1: the intended solution hits at least one camera mark (if the scene has marks).
+	Check(TEXT("solution hits at least one camera mark"), [this]()
+	{
+		const FDirectorRating R = Director->GetRating();
+		UE_LOG(LogRetakeTest, Display, TEXT("  rating %d (wrap %d, par %d, note %d, marks %d = %d of %d hit)"), R.Total(), R.Wrap, R.Par, R.Note, R.Marks, R.MarksHit, Director->GetMarks().Num());
+		return Director->GetMarks().Num() == 0 || R.MarksHit >= 1;
+	});
 	// R1: no automatic Director's Cut - straight to the results.
 	WaitState((uint8)ERetakeSceneState::Results, 10.f);
-	Check(TEXT("stars: 1 wrap, 2 par, 3 par + director's note"), [this, Scene]()
+	WaitUntil(TEXT("rating meter heads for the rating and ends on PRINT IT!"), [this]()
+	{
+		const APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		const ARetakeHUD* Hud = PC ? PC->GetHUD<ARetakeHUD>() : nullptr;
+		const URetakeResultsWidget* W = Hud ? Hud->GetResultsWidget() : nullptr;
+		return W && W->GetTargetRating() == Director->GetRating().Total() && W->GetFinalPopup() == TEXT("PRINT IT!");
+	}, 6.f);	Check(TEXT("stars: 1 wrap, 2 par, 3 par + director's note"), [this, Scene]()
 	{
 		const int32 Stars = Director->GetStars();
 		const int32 Expected = 3; // every intended solution meets par and its director's note
@@ -203,7 +237,9 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 	Check(TEXT("Director's Cut is a short highlight reel"), [this]()
 	{
 		UE_LOG(LogRetakeTest, Display, TEXT("  Director's Cut took %.1f s real time"), DirectorsCutRealSeconds);
-		return DirectorsCutRealSeconds > 2.f && DirectorsCutRealSeconds < 14.f;
+		const int32 MarkShots = Director->DirectorsCut ? Director->DirectorsCut->GetMarkShotsUsed() : 0;
+		UE_LOG(LogRetakeTest, Display, TEXT("  camera-mark shots in the reel: %d"), MarkShots);
+		return DirectorsCutRealSeconds > 2.f && DirectorsCutRealSeconds < 20.f && (Director->GetMarks().Num() == 0 || MarkShots >= 1);
 	});
 	Check(TEXT("back on the results, save written once"), [this, Scene]()
 	{

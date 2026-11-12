@@ -85,5 +85,8 @@ d = L.director(start, "Scene 2: The Heist",
 L.set_roles(d, [("Decoy", "Get the guard's attention and keep running - south wall, all the way east."),
                 ("Inside Man", "Sneak along the north wall and hit LOCK A, B and C - fast, each lasts 6 s."),
                 ("Hero", "Run for the vault while the locks are open and grab the bag.")])
+L.marks([(1, (1200, -1260, 0), (8, 11), (0, 700, 500), "Decoy run"),
+         (2, (800, 1130, 0), (3.5, 6), (0, -700, 500), "Inside job"),
+         (3, (2350, -100, 0), (7, 10), (-600, -600, 450), "The vault")])
 L.save_map(MAP)
 L.log("Saved " + MAP)

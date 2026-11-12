@@ -48,6 +48,9 @@ private:
 	UFUNCTION()
 	void HandleOutOfFilm();
 
+	UFUNCTION()
+	void HandleMarkHit(int32 MarkNumber);
+
 	TWeakObjectPtr<ARetakeSceneDirector> Director;
 
 	UPROPERTY(Transient) TObjectPtr<UWidget> Clapper;

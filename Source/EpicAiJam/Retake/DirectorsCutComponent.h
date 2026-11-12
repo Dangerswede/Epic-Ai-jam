@@ -13,12 +13,13 @@ class UDirectorsCutOverlayWidget;
 /** One highlight in the reel: a window on the shared replay timeline. */
 struct FReelMoment
 {
-	enum class EKind : uint8 { Action, Death, Goal };
+	enum class EKind : uint8 { Action, Mark, Death, Goal };
 	float Start = 0.f;
 	float End = 0.f;
 	float Focus = 0.f;            // the moment itself (for slow-mo)
 	EKind Kind = EKind::Action;
 	int32 GhostIndex = INDEX_NONE;
+	int32 MarkIndex = INDEX_NONE; // F1: a camera mark this take hit (shot from that mark's camera)
 };
 
 /**
@@ -59,7 +60,7 @@ public:
 
 	/** Target length of the reel in real seconds (lower-priority moments are dropped to fit). */
 	UPROPERTY(EditAnywhere, Category = "Directors Cut|Reel")
-	float MaxReelSeconds = 11.f;
+	float MaxReelSeconds = 15.f;
 
 	/** Time scale for dead time between moments (hidden behind a black frame). */
 	UPROPERTY(EditAnywhere, Category = "Directors Cut|Reel")
@@ -91,6 +92,9 @@ public:
 	/** Real seconds the last reel took (for tests). */
 	float GetLastReelRealSeconds() const { return RealElapsed; }
 
+	/** F1: how many shots in the last reel came from camera-mark cameras (for tests). */
+	int32 GetMarkShotsUsed() const { return MarkShotsUsed; }
+
 private:
 	ARetakeSceneDirector* GetDirector() const;
 	void BuildMoments();
@@ -98,6 +102,7 @@ private:
 	const FReelMoment* MomentAt(float Time) const;
 	void UpdateCamera(const FReelMoment* Moment, float RealDelta, bool bSnap);
 	FVector ResolveCameraLocation(const FVector& Desired, const FVector& Target) const;
+	const class ACameraMark* PickMarkCamera(const FReelMoment& Moment, const FVector& LookAt) const;
 
 	UFUNCTION()
 	void HandleExploded(AExplosiveProp* Prop);
@@ -118,4 +123,7 @@ private:
 	float CurrentDilation = 1.f;
 	bool bEndCardShown = false;
 	bool bRunning = false;
+	int32 MarkShotsUsed = 0;
+	FString CurrentShotLabel;
+	TWeakObjectPtr<const class ACameraMark> LastMarkCam;
 };
