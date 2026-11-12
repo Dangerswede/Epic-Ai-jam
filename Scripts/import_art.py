@@ -198,9 +198,15 @@ else:
         base, ext = os.path.splitext(fname)
         if ext.lower() not in MESH_EXT:
             continue
-        short = strip_prefix(base, "SM_")
+        if base.startswith("SM_"):
+            short = base[3:]
+        else:
+            # Tool-generated names ("a canvas money bag tied with..."): make a safe CamelCase asset name.
+            import re as _re
+            short = "".join(w.capitalize() for w in _re.findall(r"[A-Za-z0-9]+", base))[:32] or "Prop"
+            log("  %s has no SM_ prefix - importing as SM_%s (better: rename the file)" % (fname, short))
         name = "SM_" + short
-        existed = eal.does_asset_exist(MESH_DIR + "/" + name)
+        existed = eal.does_asset_exist(MESH_DIR + "/" + name) or eal.does_directory_exist(MESH_DIR + "/" + name)
         meshes = [a for a in import_file(os.path.join(SRC, fname), MESH_DIR, name) if isinstance(a, unreal.StaticMesh)]
         if not meshes:
             log("FAILED mesh " + fname + " (no static mesh produced)")

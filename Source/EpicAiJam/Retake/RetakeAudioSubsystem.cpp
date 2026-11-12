@@ -1,6 +1,13 @@
 #include "Retake/RetakeAudioSubsystem.h"
 
+#include "Animation/AnimInstance.h"
 #include "Components/AudioComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
+#include "Engine/StaticMesh.h"
+#include "GameFramework/Character.h"
+#include "Materials/MaterialInterface.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
@@ -21,6 +28,52 @@ URetakeAudioSet* URetakeSettings::LoadAudioSet()
 {
 	const URetakeSettings* Settings = GetDefault<URetakeSettings>();
 	return Settings ? Settings->AudioSet.LoadSynchronous() : nullptr;
+}
+
+bool URetakeSettings::ApplyCharacterLook(ACharacter* Character, UStaticMeshComponent* Placeholder, UStaticMeshComponent* Helmet, bool bPlayerSuit)
+{
+	const URetakeSettings* S = GetDefault<URetakeSettings>();
+	USkeletalMesh* Mesh = S ? S->CharacterMesh.LoadSynchronous() : nullptr;
+	if (!Character || !Mesh)
+	{
+		return false;
+	}
+	USkeletalMeshComponent* Skel = Character->GetMesh();
+	Skel->SetSkeletalMesh(Mesh);
+	// Mannequin convention: feet at the capsule bottom, facing +X.
+	Skel->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -96.f), FRotator(0.f, -90.f, 0.f));
+	if (UClass* Anim = S->CharacterAnimClass.LoadSynchronous())
+	{
+		Skel->SetAnimInstanceClass(Anim);
+	}
+	if (bPlayerSuit)
+	{
+		for (int32 i = 0; i < S->StuntSuitMaterials.Num(); ++i)
+		{
+			if (UMaterialInterface* M = S->StuntSuitMaterials[i].LoadSynchronous())
+			{
+				Skel->SetMaterial(i, M);
+			}
+		}
+	}
+	if (Helmet)
+	{
+		Helmet->AttachToComponent(Skel, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("head"));
+		UStaticMesh* HelmetAsset = S->HelmetMesh.LoadSynchronous();
+		Helmet->SetStaticMesh(HelmetAsset);
+		if (HelmetAsset)
+		{
+			const FVector Size = HelmetAsset->GetBoundingBox().GetSize();
+			const float Scale = S->HelmetSize / FMath::Max(1.f, Size.GetMax());
+			Helmet->SetRelativeScale3D(FVector(Scale));
+			Helmet->SetRelativeLocationAndRotation(S->HelmetOffset, S->HelmetRotation);
+		}
+	}
+	if (Placeholder)
+	{
+		Placeholder->SetVisibility(false);
+	}
+	return true;
 }
 
 bool URetakeAudioSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const

@@ -32,8 +32,10 @@ L.box_span("VaultWall_W2", 2385, 2415, -515, -170, 0, H, folder="Vault")
 L.box_span("VaultDoorLintel", 2385, 2415, -170, 170, 230, H, folder="Vault")
 
 # Money bag (visual) + goal zone.
-bag = L.box("MoneyBag", (3000, 0, 40), (80, 80, 80), folder="Vault", mesh=L.SPHERE)
-L.no_collision(bag)
+bag = L.prop("MoneyBag", (3000, 0, 0), 70, 20, label="MoneyBag")
+if not bag:
+    bag = L.box("MoneyBag", (3000, 0, 40), (80, 80, 80), folder="Vault", mesh=L.SPHERE)
+    L.no_collision(bag)
 L.spawn(unreal.GoalZone, (3000, 0, 100), label="GoalZone_MoneyBag")
 
 # Lever and lasers across the vault door (beam runs along local +X -> yaw 90 = world +Y).

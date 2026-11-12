@@ -13,6 +13,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
+#include "Retake/RetakeAudioSet.h"
 #include "Retake/RetakeInteractable.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -59,6 +60,12 @@ ATakeGhost::ATakeGhost()
 	TakeLabel->SetTextRenderColor(FColor(255, 220, 160));
 	TakeLabel->SetText(FText::FromString(TEXT("TAKE ?")));
 	TakeLabel->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void ATakeGhost::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	URetakeSettings::ApplyCharacterLook(this, BodyMesh, nullptr, false);
 }
 
 void ATakeGhost::BeginPlay()
@@ -266,16 +273,30 @@ float ATakeGhost::GetTimeToNextAction() const
 void ATakeGhost::SetCinematicLook(FLinearColor Color)
 {
 	TakeLabel->SetVisibility(false);
-	if (OpaqueMaterial && BodyMesh)
+	// Prefer the project's opaque master material (works on skeletal meshes), else the engine basic shape material.
+	const URetakeSettings* S = GetDefault<URetakeSettings>();
+	UMaterialInterface* Cine = S ? S->CinematicMaterial.LoadSynchronous() : nullptr;
+	auto Paint = [this, Color, Cine](UMeshComponent* Target)
 	{
-		UMaterialInstanceDynamic* MID = UMaterialInstanceDynamic::Create(OpaqueMaterial, this);
-		MID->SetVectorParameterValue(TEXT("Color"), Color);
-		for (int32 i = 0; i < BodyMesh->GetNumMaterials(); ++i)
+		if (!Target || !Target->IsVisible())
 		{
-			BodyMesh->SetMaterial(i, MID);
+			return;
 		}
-		BodyMesh->SetCastShadow(true);
-	}
+		UMaterialInterface* Base = Cine ? Cine : OpaqueMaterial.Get();
+		if (!Base)
+		{
+			return;
+		}
+		UMaterialInstanceDynamic* MID = UMaterialInstanceDynamic::Create(Base, this);
+		MID->SetVectorParameterValue(Cine ? TEXT("BaseColorTint") : TEXT("Color"), Color);
+		for (int32 i = 0; i < Target->GetNumMaterials(); ++i)
+		{
+			Target->SetMaterial(i, MID);
+		}
+		Target->SetCastShadow(true);
+	};
+	Paint(BodyMesh);
+	Paint(GetMesh());
 }
 
 void ATakeGhost::Finish()

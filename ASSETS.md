@@ -14,3 +14,7 @@ All third-party assets used in this project, with source and license.
 | ArtSource/SM_StageCrate.glb | AI-generated with Tripo3D by Markus during the jam (12 Nov 2026) | TODO: Tripo plan + license | Push crates / cover crates |
 | ArtSource/SM_StudioSpotlight.glb | AI-generated with Tripo3D by Markus during the jam (12 Nov 2026) | TODO: Tripo plan + license | Set dressing (studio lights) |
 | ArtSource/SM_WallLever.glb | AI-generated with Tripo3D by Markus during the jam (12 Nov 2026) | TODO: Tripo plan + license | Lever mesh |
+| ArtSource/SM_MoneyBag.glb | AI-generated with Tripo3D by Markus during the jam (12 Nov 2026) | TODO: Tripo plan + license | Money bag (Scene 2 goal) |
+| ArtSource/SM_StuntHelmet.glb | AI-generated with Tripo3D by Markus during the jam (12 Nov 2026) | TODO: Tripo plan + license | Stunt double's helmet |
+| ArtSource/SM_FilmReels.glb | AI-generated with Tripo3D by Markus during the jam (12 Nov 2026) | TODO: Tripo plan + license | Set dressing (film reel cans) |
+| Content/Characters/Mannequins (SKM_Manny_Simple, SK_Mannequin, ABP_Unarmed + unarmed locomotion/jump anims, materials, rigs) | Epic Games - Unreal Engine 5.9 Third Person template content (ships with the engine) | Unreal Engine EULA (engine content) | Player and ghost character |

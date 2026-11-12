@@ -67,6 +67,7 @@ public:
 	FTakeGhostSignature OnFinished;
 
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 protected:
 	virtual void BeginPlay() override;

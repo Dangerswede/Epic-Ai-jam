@@ -199,6 +199,7 @@ def film_crew(cam_loc, cam_yaw, chair_loc, chair_yaw, lights=(), extra=()):
     prop("CinemaCamera", cam_loc, 170, cam_yaw)
     prop("DirectorChair", chair_loc, 100, chair_yaw)
     prop("Clapperboard", (chair_loc[0] + 70, chair_loc[1], chair_loc[2]), 35, chair_yaw + 30)
+    prop("FilmReels", (chair_loc[0] - 80, chair_loc[1] + 40, chair_loc[2]), 45, chair_yaw)
     for loc, yaw in lights:
         prop("StudioSpotlight", loc, 230, yaw)
     for name, loc, height, yaw in extra:

@@ -1,5 +1,6 @@
 #include "Retake/RetakeCharacter.h"
 
+#include "Retake/RetakeAudioSet.h"
 #include "Retake/RetakeHUD.h"
 #include "Retake/RetakeInteractable.h"
 #include "Retake/RetakeRecorderComponent.h"
@@ -49,6 +50,10 @@ ARetakeCharacter::ARetakeCharacter()
 
 	Recorder = CreateDefaultSubobject<URetakeRecorderComponent>(TEXT("Recorder"));
 
+	HelmetMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HelmetMesh"));
+	HelmetMesh->SetupAttachment(GetMesh());
+	HelmetMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	BodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BodyMesh"));
 	BodyMesh->SetupAttachment(RootComponent);
 	BodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -59,6 +64,13 @@ ARetakeCharacter::ARetakeCharacter()
 		// Engine cylinder is 100x100x100 centered; scale to roughly match the capsule.
 		BodyMesh->SetRelativeScale3D(FVector(0.8f, 0.8f, 1.9f));
 	}
+}
+
+void ARetakeCharacter::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	// Mannequin in a stunt suit if configured, otherwise the grey cylinder stays.
+	URetakeSettings::ApplyCharacterLook(this, BodyMesh, HelmetMesh, true);
 }
 
 void ARetakeCharacter::BeginPlay()

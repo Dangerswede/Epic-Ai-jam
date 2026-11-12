@@ -14,6 +14,7 @@ in-game content were created during the jam (12–15 Nov 2026).
 ## Engine, plugins and tools (not made by us)
 - Unreal Engine 5.9 Preview (Epic Games) with built-in plugins/modules: Enhanced Input, UMG, Niagara,
   AIModule, CinematicCamera, DeveloperSettings, Python Editor Script Plugin, Editor Scripting Utilities.
+- Engine content: the UE5 mannequin from the Third Person template that ships with the engine (`/Game/Characters/Mannequins`: SKM_Manny_Simple, skeleton, ABP_Unarmed and its unarmed locomotion/jump animations, materials, rigs), used for the stunt double and ghosts (stunt suit materials are ours).
 - Engine content used as placeholders: `/Engine/BasicShapes` meshes and `BasicShapeMaterial`,
   engine default textures (white square, flat normal) as material defaults.
 - Tools: Claude Code (Anthropic) for code generation, level scripting and testing; Unreal MCP plugin

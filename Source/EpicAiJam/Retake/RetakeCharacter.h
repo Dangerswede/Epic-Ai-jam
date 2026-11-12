@@ -68,6 +68,7 @@ public:
 	void PlayStuntShake(float Duration = 0.3f, float Amplitude = 14.f);
 
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 	URetakeRecorderComponent* GetRecorder() const { return Recorder; }
 	USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -89,6 +90,10 @@ protected:
 	/** Placeholder body so the character is visible without art assets. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
 	TObjectPtr<UStaticMeshComponent> BodyMesh;
+
+	/** Helmet slot on the "head" socket (mesh from Project Settings → Retake → Character). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
+	TObjectPtr<UStaticMeshComponent> HelmetMesh;
 
 	// Optional asset overrides (set in a Blueprint child). If null, defaults are built in C++.
 	UPROPERTY(EditDefaultsOnly, Category = "Input")

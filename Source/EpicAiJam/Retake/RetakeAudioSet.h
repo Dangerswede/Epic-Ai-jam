@@ -73,4 +73,43 @@ public:
 	TSoftObjectPtr<URetakeAudioSet> AudioSet;
 
 	static URetakeAudioSet* LoadAudioSet();
+
+	// --- Character look (C1). Empty = the grey cylinder placeholder. ---------------------------
+
+	/** Skeletal mesh for the stunt double and the ghosts (e.g. the engine mannequin). */
+	UPROPERTY(Config, EditAnywhere, Category = "Character")
+	TSoftObjectPtr<class USkeletalMesh> CharacterMesh;
+
+	/** Anim blueprint class for that mesh (locomotion + jump). */
+	UPROPERTY(Config, EditAnywhere, Category = "Character")
+	TSoftClassPtr<class UAnimInstance> CharacterAnimClass;
+
+	/** Stunt suit materials for the player, per mesh material slot (e.g. red body, white accents). */
+	UPROPERTY(Config, EditAnywhere, Category = "Character")
+	TArray<TSoftObjectPtr<class UMaterialInterface>> StuntSuitMaterials;
+
+	/** Opaque material with a vector parameter BaseColorTint, used for Director's Cut colours. */
+	UPROPERTY(Config, EditAnywhere, Category = "Character")
+	TSoftObjectPtr<class UMaterialInterface> CinematicMaterial;
+
+	/** Optional helmet attached to the "head" socket. */
+	UPROPERTY(Config, EditAnywhere, Category = "Character")
+	TSoftObjectPtr<class UStaticMesh> HelmetMesh;
+
+	/** Helmet fit on the head socket: largest dimension in cm, offset and rotation in socket space. */
+	UPROPERTY(Config, EditAnywhere, Category = "Character")
+	float HelmetSize = 30.f;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Character")
+	FVector HelmetOffset = FVector(-14.f, 2.f, 0.f);
+
+	UPROPERTY(Config, EditAnywhere, Category = "Character")
+	FRotator HelmetRotation = FRotator(0.f, 90.f, -90.f);
+
+	/**
+	 * Puts the configured mesh, anim BP and helmet on a character. Returns false (and changes nothing)
+	 * if no mesh is configured. bPlayerSuit applies the stunt suit materials.
+	 */
+	static bool ApplyCharacterLook(class ACharacter* Character, class UStaticMeshComponent* Placeholder,
+		class UStaticMeshComponent* Helmet, bool bPlayerSuit);
 };
