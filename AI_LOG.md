@@ -17,3 +17,4 @@ How AI tools were used during development.
 | 2026-11-12 | Claude Code | T4: ARetakeActivator base, APressurePlate, ALever, AGate, AGoalZone, AKillVolume (engine basic shapes, swappable mesh slots) | Build verified |
 | 2026-11-12 | Claude Code | T5: Scene01_Bridge graybox level, M_Ghost material and BP_TakeGhost generated via editor Python script (Scripts/build_scene01.py); default map set | Level contents verified by script |
 | 2026-11-12 | Claude Code | T6: AStuntGuard (patrol/chase/stuck state machine, sight cone + line trace), ALaserBeam (activator-disabled), Caught cut reason | Build verified |
+| 2026-11-12 | Claude Code | T7: AExplosiveProp (fuse, breaks BreakableWall-tagged actors, player cut, OnExploded, optional Niagara), APushCrate (kinematic sweep push, ghost push follows recorded position, kinematic fall) | Build verified |

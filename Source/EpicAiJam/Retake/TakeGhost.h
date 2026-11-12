@@ -48,6 +48,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	int32 GetTakeNumber() const { return Take.TakeNumber; }
 
+	/** True if the recording has the given action flag on the frames around the current playback time. */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	bool IsActionActiveNow(ERetakeAction Action) const;
+
+	/** Playback time of the most recent frame (any action) that was fired, or -1. */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	float GetLastActionTime() const { return LastActionTime; }
+
 	/** Fired once when the take runs out; the ghost then freezes in its last pose. */
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FTakeGhostSignature OnFinished;
@@ -101,7 +109,9 @@ private:
 
 	FTakeData Take;
 	float PlaybackTime = 0.f;
+	float LastActionTime = -1.f;
 	int32 NextActionFrame = 0;
+	int32 CurrentFrame = 0;
 	bool bPlaying = false;
 	bool bFinished = false;
 };

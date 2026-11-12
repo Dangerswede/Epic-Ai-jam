@@ -97,6 +97,7 @@ void ATakeGhost::Init(const FTakeData& InTake)
 {
 	Take = InTake;
 	PlaybackTime = 0.f;
+	LastActionTime = -1.f;
 	NextActionFrame = 0;
 	bPlaying = false;
 	bFinished = false;
@@ -175,6 +176,7 @@ void ATakeGhost::ApplyFrameAt(float Time)
 	const float Index = Time * 30.f;
 	const int32 A = FMath::Clamp(FMath::FloorToInt(Index), 0, Frames.Num() - 1);
 	const int32 B = FMath::Min(A + 1, Frames.Num() - 1);
+	CurrentFrame = A;
 	const float Alpha = (A == B) ? 0.f : FMath::Clamp(Index - A, 0.f, 1.f);
 
 	const FTakeFrame& FA = Frames[A];
@@ -206,6 +208,10 @@ void ATakeGhost::FireActionsUpTo(float Time)
 	while (NextActionFrame < Frames.Num() && Frames[NextActionFrame].Time <= Time + KINDA_SMALL_NUMBER)
 	{
 		const FTakeFrame& Frame = Frames[NextActionFrame];
+		if (Frame.ActionFlags != 0)
+		{
+			LastActionTime = Frame.Time;
+		}
 		if (Frame.HasAction(ERetakeAction::Interact))
 		{
 			// Same code path as the player's Interact.
@@ -215,6 +221,18 @@ void ATakeGhost::FireActionsUpTo(float Time)
 		// recorded movement, nothing extra to fire.
 		++NextActionFrame;
 	}
+}
+
+bool ATakeGhost::IsActionActiveNow(ERetakeAction Action) const
+{
+	if (!bPlaying || Take.Frames.Num() == 0)
+	{
+		return false;
+	}
+	const int32 Last = Take.Frames.Num() - 1;
+	const int32 A = FMath::Clamp(CurrentFrame, 0, Last);
+	const int32 B = FMath::Min(A + 1, Last);
+	return Take.Frames[A].HasAction(Action) || Take.Frames[B].HasAction(Action);
 }
 
 void ATakeGhost::Finish()

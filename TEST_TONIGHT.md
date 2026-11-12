@@ -53,3 +53,11 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 31. Take 2: let your take-1 ghost walk past the guard. Guard chases the ghost, says "GOTCHA!", stays glued to it ~3 s while the ghost keeps walking, then returns to patrolling.
 32. Place a **LaserBeam** (red line, length = *Beam Length*). Walk into it: `CUT! (Killed)`. Ghosts walk through it.
 33. Add a Lever/PressurePlate to the laser's *Linked Activators*: when active the beam disappears and is safe.
+
+## T7 – Explosive and crate
+34. Place an **ExplosiveProp** (red barrel, "[E] ARM") and a cube StaticMeshActor next to it. On the cube: Details → *Actor → Tags* → add `BreakableWall`.
+35. Press **E** at the barrel: countdown 3-2-1 with blinking, then a yellow flash. The wall within 4 m disappears. If you stood within 4 m: `CUT! (Killed)`.
+36. Next take: the wall is back. Your ghost arms the barrel at the same time as you did; the explosion breaks the wall again but doesn't hurt you unless you're near.
+37. Place a **PushCrate** (brown cube). Walk into one side and keep holding the key: it slides away from you slowly. It stops at walls. It doesn't rotate or tumble.
+38. Push it over a ledge/gap: it drops straight down. In the next take the ghost pushes the crate along exactly the same path.
+39. Push the crate onto a PressurePlate: the plate activates.
