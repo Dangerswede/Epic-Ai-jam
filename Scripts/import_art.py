@@ -215,16 +215,23 @@ else:
         else:
             mi = tools.create_asset("MI_" + short, MAT_DIR, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
         mel.set_material_instance_parent(mi, master)
+        found = 0
         for kind, param in (("base_color", "BaseColor"), ("normal", "Normal"), ("orm", "ORM")):
             tex = find_texture(short, kind)
             if tex:
                 mel.set_material_instance_texture_parameter_value(mi, param, tex)
+                found += 1
         eal.save_loaded_asset(mi)
 
         for mesh in meshes:
             size = normalize_scale(mesh)
-            for i in range(len(mesh.static_materials)):
-                mesh.set_material(i, mi)
+            # GLBs with embedded textures (e.g. Tripo exports) keep their imported materials
+            # unless separate T_<Name>_* textures were provided.
+            if found:
+                for i in range(len(mesh.static_materials)):
+                    mesh.set_material(i, mi)
+            else:
+                log("  no T_%s_* textures: keeping the mesh's own (embedded) materials" % short)
             eal.save_loaded_asset(mesh)
             log("Mesh %s -> %s (MI_%s, ~%.0f cm)" % (fname, mesh.get_name(), short, size))
 
