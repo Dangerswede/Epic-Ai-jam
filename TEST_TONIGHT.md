@@ -155,3 +155,8 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 ## D1 – Roles and timing windows (mechanics; scenes follow in D2-D5)
 85. New gameplay piece **TimedSwitch** (post with a bar on top and a label): press E (or a ghost does) and it stays on for 5 s, the bar shrinks, the label counts down; press again to restart. A gate linked to several timed switches with "require all" is only open while all of them are on at once. Not placed in any scene yet (D2+).
 86. Scenes can now give each take a **role** ("TAKE 2 - INSIDE MAN: Hit all three locks inside 6 seconds."): shown on the briefing card, again on the card during the CUT pause (for the next take), in gold under the clapperboard while rolling, and on the ghosts' labels. No scene has roles yet (D2+).
+
+## R1 – Optional highlight reel
+87. After the wrap you now go straight to the **Dailies report**. It has a **WATCH DIRECTOR'S CUT [SPACE]** button; the reel then plays and returns to the report.
+88. The reel is a highlight cut (tests: Scene 1 ~5 s, 2 ~7 s, 3 ~8 s, 4 ~11 s): only moments where something happens (E presses, stunt deaths, the hero's arrival). Dead time is skipped behind a black frame. Slow-mo around stunt deaths, explosions and the hero's last second.
+89. Camera: one moving camera that follows the actor of each moment: chase cam behind them, low side angle for stunt deaths, a final wide shot on the hero. If a wall is in the way it picks another angle (side, then overhead). The placed DC_Cam actors are no longer used. Small "TAKE N - ROLE" label at each moment. Space skips. Judge: is it worth watching now?

@@ -48,6 +48,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	int32 GetTakeNumber() const { return Take.TakeNumber; }
 
+	const FTakeData& GetTakeData() const { return Take; }
+
 	/** True if the recording has the given action flag on the frames around the current playback time. */
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	bool IsActionActiveNow(ERetakeAction Action) const;

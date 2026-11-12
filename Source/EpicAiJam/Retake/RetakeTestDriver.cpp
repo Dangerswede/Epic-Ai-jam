@@ -147,26 +147,6 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 		}
 		return bOk || Director->Roles.Num() == 0;
 	});
-	WaitState((uint8)ERetakeSceneState::DirectorsCut, 10.f);
-	if (Scene == TEXT("Scene03_Chase") || Scene == TEXT("Scene04_Finale"))
-	{
-		WaitUntil(TEXT("all ghosts finished in the Director's Cut"), [this]()
-		{
-			for (const ATakeGhost* G : Director->GetGhosts()) { if (!G->HasFinished()) return false; }
-			return Director->GetGhosts().Num() > 0;
-		}, 60.f);
-		Check(TEXT("crate ends exactly where it did in the winning take"), [this]()
-		{
-			const float D = FVector::Dist(FindCrate(true)->GetActorLocation(), WrapCrateLocation);
-			UE_LOG(LogRetakeTest, Display, TEXT("  crate replay error: %.2f cm"), D);
-			return D < 1.f;
-		});
-	}
-	WaitUntil(TEXT("Director's Cut uses a cine camera"), [this]() { return bSawCineCamera; }, 10.f);
-	Check(TEXT("all takes replay as ghosts"), [this]()
-	{
-		return Director->GetGhosts().Num() == Director->GetTakes().Num();
-	});
 	if (Scene == TEXT("Scene01_Bridge"))
 	{
 		// Take 1, scrapped take 2, take 2 again (wrap): 2 in the cut, 3 shot.
@@ -175,15 +155,8 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 			return Director->GetTakes().Num() == 2 && Director->GetTotalTakesShot() == 3;
 		});
 	}
-	Check(TEXT("Director's Cut actors: opaque colours, no TAKE labels"), [this]()
-	{
-		for (const ATakeGhost* G : Director->GetGhosts())
-		{
-			if (const UTextRenderComponent* L = G->FindComponentByClass<UTextRenderComponent>()) { if (L->IsVisible()) return false; }
-		}
-		return true;
-	});
-	WaitState((uint8)ERetakeSceneState::Results, 90.f);
+	// R1: no automatic Director's Cut - straight to the results.
+	WaitState((uint8)ERetakeSceneState::Results, 10.f);
 	Check(TEXT("stars: 1 wrap, 2 par, 3 par + director's note"), [this, Scene]()
 	{
 		const int32 Stars = Director->GetStars();
@@ -193,11 +166,6 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 		UE_LOG(LogRetakeTest, Display, TEXT("  stars %d (expected %d), saved %d, note met: %d"), Stars, Expected, Saved ? *Saved : -1, Director->IsBonusMet() ? 1 : 0);
 		return Stars == Expected && Saved && *Saved == Stars;
 	});
-	Check(TEXT("Director's Cut length"), [this, Scene]()
-	{
-		UE_LOG(LogRetakeTest, Display, TEXT("  Director's Cut took %.1f s real time"), DirectorsCutRealSeconds);
-		return Scene != TEXT("Scene04_Finale") || DirectorsCutRealSeconds < 25.f;
-	});
 	Check(TEXT("save has the scene wrapped and the next scene unlocked"), [this, Scene]()
 	{
 		const URetakeSaveGame* Save = URetakeSaveGame::LoadOrCreate();
@@ -205,12 +173,48 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 		const bool bNextOk = !RetakeScenes::All().IsValidIndex(Index + 1) || Save->IsUnlocked(Index + 1);
 		return Save && Save->IsWrapped(Scene) && bNextOk;
 	});
+	// Watch the optional Director's Cut: Space on the results screen (same as the button).
+	Wait(0.5f);
+	Do(TEXT("Press Space on the results (watch Director's Cut)"), [this]() { DirectorsCutRealSeconds = 0.f; Player->StartJump(); });
+	WaitState((uint8)ERetakeSceneState::DirectorsCut, 3.f);
+	WaitUntil(TEXT("Director's Cut uses a cine camera"), [this]() { return bSawCineCamera; }, 10.f);
+	Check(TEXT("all takes replay as ghosts"), [this]()
+	{
+		return Director->GetGhosts().Num() == Director->GetTakes().Num();
+	});
+	Check(TEXT("Director's Cut actors: opaque colours, no TAKE labels"), [this]()
+	{
+		for (const ATakeGhost* G : Director->GetGhosts())
+		{
+			if (const UTextRenderComponent* L = G->FindComponentByClass<UTextRenderComponent>()) { if (L->IsVisible()) return false; }
+		}
+		return true;
+	});
+	WaitState((uint8)ERetakeSceneState::Results, 60.f);
+	if (Scene == TEXT("Scene03_Chase") || Scene == TEXT("Scene04_Finale"))
+	{
+		Check(TEXT("crate ends exactly where it did in the winning take"), [this]()
+		{
+			const float D = FVector::Dist(FindCrate(true)->GetActorLocation(), WrapCrateLocation);
+			UE_LOG(LogRetakeTest, Display, TEXT("  crate replay error: %.2f cm"), D);
+			return D < 1.f;
+		});
+	}
+	Check(TEXT("Director's Cut is a short highlight reel"), [this]()
+	{
+		UE_LOG(LogRetakeTest, Display, TEXT("  Director's Cut took %.1f s real time"), DirectorsCutRealSeconds);
+		return DirectorsCutRealSeconds > 2.f && DirectorsCutRealSeconds < 14.f;
+	});
+	Check(TEXT("back on the results, save written once"), [this, Scene]()
+	{
+		const URetakeSaveGame* Save = URetakeSaveGame::LoadOrCreate();
+		return Director->GetState() == ERetakeSceneState::Results && Save && Save->IsWrapped(Scene);
+	});
 	Do(TEXT("Press P (pause)"), [this]() { Player->TogglePause(); });
 	Check(TEXT("game paused"), [this]() { return UGameplayStatics::IsGamePaused(this); });
 	Do(TEXT("Press P (resume)"), [this]() { Player->TogglePause(); });
 	Check(TEXT("game resumed"), [this]() { return !UGameplayStatics::IsGamePaused(this); });
 }
-
 void ARetakeTestDriver::BuildSolution(const FString& Scene)
 {
 	auto Roll = [this]() { Do(TEXT("Press Space (roll)"), [this]() { Player->StartJump(); }); };
@@ -668,6 +672,16 @@ void ARetakeTestDriver::Tick(float DeltaSeconds)
 			bSawCineCamera |= Cast<ACineCameraActor>(PC->GetViewTarget()) != nullptr;
 		}
 		DirectorsCutRealSeconds += FApp::GetDeltaTime(); // undilated
+		// Optional: screenshots of the reel for visual checks (-RetakeReelShots, needs a renderer).
+		static float NextShot = 0.f;
+		if (FParse::Param(FCommandLine::Get(), TEXT("RetakeReelShots")) && DirectorsCutRealSeconds >= NextShot)
+		{
+			NextShot = DirectorsCutRealSeconds + 1.f;
+			if (APlayerController* ShotPC = GetWorld()->GetFirstPlayerController())
+			{
+				ShotPC->ConsoleCommand(TEXT("HighResShot 1"));
+			}
+		}
 	}
 
 	if (!Steps.IsValidIndex(StepIndex))

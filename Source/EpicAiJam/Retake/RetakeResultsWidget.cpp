@@ -69,6 +69,12 @@ void URetakeResultsWidget::BuildTree()
 	Box->AddChildToVerticalBox(BestText);
 
 	UHorizontalBox* Buttons = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+	UButton* Watch = Button(WidgetTree, TEXT("WATCH DIRECTOR'S CUT  [SPACE]"), 18);
+	Watch->OnClicked.AddDynamic(this, &URetakeResultsWidget::HandleWatch);
+	UVerticalBoxSlot* WatchSlot = Box->AddChildToVerticalBox(Watch);
+	WatchSlot->SetHorizontalAlignment(HAlign_Center);
+	WatchSlot->SetPadding(FMargin(0.f, 14.f, 0.f, 0.f));
+
 	NextButton = Button(WidgetTree, TEXT("NEXT SCENE"), 18);
 	UButton* Retry = Button(WidgetTree, TEXT("RETRY"), 18);
 	UButton* Menu = Button(WidgetTree, TEXT("MAIN MENU"), 18);
@@ -158,6 +164,15 @@ void URetakeResultsWidget::HandleRetry()
 	if (ARetakeSceneDirector* D = Director.Get())
 	{
 		D->RestartScene();
+	}
+}
+
+void URetakeResultsWidget::HandleWatch()
+{
+	CloseAndRestoreInput();
+	if (ARetakeSceneDirector* D = Director.Get())
+	{
+		D->WatchDirectorsCut();
 	}
 }
 

@@ -221,6 +221,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void FinishDirectorsCut();
 
+	/** From the results screen: watch the optional Director's Cut highlight reel. */
+	UFUNCTION(BlueprintCallable, Category = "Retake")
+	void WatchDirectorsCut();
+
 	/** Restart the whole scene from Take 1 (e.g. from the Results screen). */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void RestartScene();
@@ -305,6 +309,7 @@ private:
 	bool bAnyCaught = false;
 	bool bAnyDied = false;
 	bool bDying = false;
+	bool bResultsRecorded = false;
 
 	// World track (P6): guard/crate transforms of the current take, and of the winning take for the Director's Cut.
 	void BeginWorldTrack();

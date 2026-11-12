@@ -19,6 +19,15 @@ void UDirectorsCutOverlayWidget::BuildTree()
 	UCanvasPanel* Canvas = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass());
 	WidgetTree->RootWidget = Canvas;
 
+	// Black frame behind everything else (shown while skipping between highlights).
+	BlackFrame = Panel(WidgetTree, FLinearColor::Black, FMargin(0.f));
+	BlackFrame->SetVisibility(ESlateVisibility::Collapsed);
+	{
+		UCanvasPanelSlot* BS = Canvas->AddChildToCanvas(BlackFrame);
+		BS->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
+		BS->SetOffsets(FMargin(0.f));
+	}
+
 	// 2.39:1-ish letterbox: 12% bars top and bottom.
 	auto Bar = [&](float Top, float Bottom)
 	{
@@ -76,6 +85,14 @@ void UDirectorsCutOverlayWidget::ShowShotLabel(const FString& Label)
 	if (ShotLabel)
 	{
 		ShotLabel->SetText(FText::FromString(Label));
+	}
+}
+
+void UDirectorsCutOverlayWidget::ShowBlack(bool bBlack)
+{
+	if (BlackFrame)
+	{
+		BlackFrame->SetVisibility(bBlack ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	}
 }
 

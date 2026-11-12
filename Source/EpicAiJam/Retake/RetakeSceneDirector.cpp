@@ -96,6 +96,18 @@ void ARetakeSceneDirector::HandleRollOrSkipInput()
 	{
 		FinishDirectorsCut();
 	}
+	else if (State == ERetakeSceneState::Results)
+	{
+		WatchDirectorsCut();
+	}
+}
+
+void ARetakeSceneDirector::WatchDirectorsCut()
+{
+	if (State == ERetakeSceneState::Results && Takes.Num() > 0)
+	{
+		StartDirectorsCut();
+	}
 }
 
 void ARetakeSceneDirector::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -245,6 +257,7 @@ void ARetakeSceneDirector::StartRolling()
 	GetWorldTimerManager().ClearTimer(StateTimer);
 	GetWorldTimerManager().ClearTimer(DeathTimer);
 	bDying = false;
+	bResultsRecorded = false;
 	UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
 	CurrentTakeNumber = Takes.Num() + 1;
 
@@ -508,7 +521,8 @@ void ARetakeSceneDirector::NotifyGoalReached(AActor* Who)
 	UE_LOG(LogRetakeDirector, Log, TEXT("That's a wrap! %d takes in the cut, %d shot."), Takes.Num(), TotalTakesShot);
 	SetState(ERetakeSceneState::Wrap);
 	OnWrap.Broadcast();
-	ScheduleState(WrapSeconds, [this]() { StartDirectorsCut(); });
+	// R1: straight to the results; the Director's Cut is optional (button / Space there).
+	ScheduleState(WrapSeconds, [this]() { EnterResults(); });
 }
 
 void ARetakeSceneDirector::StartDirectorsCut()
@@ -583,7 +597,12 @@ void ARetakeSceneDirector::FinishDirectorsCut()
 
 void ARetakeSceneDirector::EnterResults()
 {
-	bLastWrapNewBest = URetakeSaveGame::RecordWrap(GetSceneId(), Takes.Num(), GetStars());
+	// Save once per wrap (the results come back after watching the Director's Cut).
+	if (!bResultsRecorded)
+	{
+		bResultsRecorded = true;
+		bLastWrapNewBest = URetakeSaveGame::RecordWrap(GetSceneId(), Takes.Num(), GetStars());
+	}
 	GetWorldTimerManager().ClearTimer(StateTimer);
 	for (ATakeGhost* Ghost : Ghosts)
 	{

@@ -5,16 +5,29 @@
 #include "DirectorsCutComponent.generated.h"
 
 class ACineCameraActor;
+class AExplosiveProp;
 class ARetakeSceneDirector;
 class ATakeGhost;
-class AExplosiveProp;
 class UDirectorsCutOverlayWidget;
 
+/** One highlight in the reel: a window on the shared replay timeline. */
+struct FReelMoment
+{
+	enum class EKind : uint8 { Action, Death, Goal };
+	float Start = 0.f;
+	float End = 0.f;
+	float Focus = 0.f;            // the moment itself (for slow-mo)
+	EKind Kind = EKind::Action;
+	int32 GhostIndex = INDEX_NONE;
+};
+
 /**
- * Plays the final cinematic: all takes replay together while the view cuts between placed
- * cine cameras (tag "DirectorsCutCam"), preferring the camera nearest the ghost that just did
- * something. Letterbox, grain, sepia and title cards. Space skips (via the director).
- * (Godot: a node that switches Camera3D.current between placed cameras on a Timer.)
+ * Optional Director's Cut (watched from the results screen): a ~10-12 s highlight reel.
+ * All takes replay together, but only the moments with something happening are shown (interacts,
+ * stunt deaths, explosions, the hero reaching the goal); dead time between them fast-forwards at
+ * 20x behind a black frame. A single dynamic cine camera frames the action: chase cam behind the
+ * actor, low angle for deaths/explosions, a final wide on the hero; line traces keep the subject visible.
+ * (Godot: like an AnimationPlayer jumping between markers, with a Camera3D that follows the active node.)
  */
 UCLASS(ClassGroup = (Retake), meta = (BlueprintSpawnableComponent))
 class EPICAIJAM_API UDirectorsCutComponent : public UActorComponent
@@ -24,7 +37,7 @@ class EPICAIJAM_API UDirectorsCutComponent : public UActorComponent
 public:
 	UDirectorsCutComponent();
 
-	/** Start the cinematic for already-spawned, already-playing ghosts. */
+	/** Start the reel for already-spawned, already-playing ghosts (the last ghost is the winning take). */
 	void Begin(const TArray<ATakeGhost*>& InGhosts, float LongestTakeSeconds);
 
 	/** Stop and restore the normal view (called by the director on finish or skip). */
@@ -34,41 +47,35 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(EditAnywhere, Category = "Directors Cut")
-	FName CameraTag = TEXT("DirectorsCutCam");
+	/** Seconds shown around an action / before a stunt death / before the hero's wrap. */
+	UPROPERTY(EditAnywhere, Category = "Directors Cut|Reel")
+	float ActionLead = 0.9f;
+
+	UPROPERTY(EditAnywhere, Category = "Directors Cut|Reel")
+	float ActionTail = 0.9f;
+
+	UPROPERTY(EditAnywhere, Category = "Directors Cut|Reel")
+	float GoalLead = 2.2f;
+
+	/** Target length of the reel in real seconds (lower-priority moments are dropped to fit). */
+	UPROPERTY(EditAnywhere, Category = "Directors Cut|Reel")
+	float MaxReelSeconds = 11.f;
+
+	/** Time scale for dead time between moments (hidden behind a black frame). */
+	UPROPERTY(EditAnywhere, Category = "Directors Cut|Reel")
+	float SkipDilation = 20.f;
+
+	/** Time scale around deaths, explosions and the hero's last second. */
+	UPROPERTY(EditAnywhere, Category = "Directors Cut|Reel")
+	float SlowMoDilation = 0.4f;
 
 	UPROPERTY(EditAnywhere, Category = "Directors Cut")
-	FName WideCameraTag = TEXT("WideCam");
-
-	UPROPERTY(EditAnywhere, Category = "Directors Cut")
-	float MinShotSeconds = 2.5f;
-
-	UPROPERTY(EditAnywhere, Category = "Directors Cut")
-	float MaxShotSeconds = 4.f;
-
-	/** A ghost counts as "interesting" for this long after it performed an action. */
-	UPROPERTY(EditAnywhere, Category = "Directors Cut")
-	float ActionInterestSeconds = 1.5f;
-
-	UPROPERTY(EditAnywhere, Category = "Directors Cut")
-	float TitleCardSeconds = 2.f;
+	float TitleCardSeconds = 1.5f;
 
 	UPROPERTY(EditAnywhere, Category = "Directors Cut")
 	TSubclassOf<UDirectorsCutOverlayWidget> OverlayClass;
 
-	/** Time scale for explosions and the hero's last second. */
-	UPROPERTY(EditAnywhere, Category = "Directors Cut|Pacing")
-	float SlowMoDilation = 0.35f;
-
-	/** Time scale when nobody moves and no action is coming up. */
-	UPROPERTY(EditAnywhere, Category = "Directors Cut|Pacing")
-	float FastForwardDilation = 3.f;
-
-	/** Time scale while people walk but no action is coming up within 1.5 s. */
-	UPROPERTY(EditAnywhere, Category = "Directors Cut|Pacing")
-	float CruiseDilation = 2.2f;
-
-	/** Post-process look applied to every Director's Cut camera. */
+	/** Post-process look of the reel camera. */
 	UPROPERTY(EditAnywhere, Category = "Directors Cut|Look")
 	float FilmGrain = 0.45f;
 
@@ -81,35 +88,34 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Directors Cut|Look")
 	float Vignette = 0.6f;
 
+	/** Real seconds the last reel took (for tests). */
+	float GetLastReelRealSeconds() const { return RealElapsed; }
+
 private:
 	ARetakeSceneDirector* GetDirector() const;
-	void GatherCameras();
+	void BuildMoments();
 	void ApplyLook(ACineCameraActor* Camera) const;
-	ATakeGhost* PickInterestingGhost() const;
-	void CutTo(ACineCameraActor* Camera);
-	void ChooseShot();
-	ACineCameraActor* NearestCamera(const FVector& Location, bool bAvoidCurrent) const;
-	float ComputeTargetDilation() const;
+	const FReelMoment* MomentAt(float Time) const;
+	void UpdateCamera(const FReelMoment* Moment, float RealDelta, bool bSnap);
+	FVector ResolveCameraLocation(const FVector& Desired, const FVector& Target) const;
 
 	UFUNCTION()
 	void HandleExploded(AExplosiveProp* Prop);
 
-	UPROPERTY(Transient) TArray<TObjectPtr<ACineCameraActor>> Cameras;
-	UPROPERTY(Transient) TObjectPtr<ACineCameraActor> WideCamera;
-	UPROPERTY(Transient) TObjectPtr<ACineCameraActor> SpawnedFallback;
-	UPROPERTY(Transient) TObjectPtr<ACineCameraActor> CurrentCamera;
+	UPROPERTY(Transient) TObjectPtr<ACineCameraActor> ReelCamera;
 	UPROPERTY(Transient) TArray<TObjectPtr<ATakeGhost>> Ghosts;
 	UPROPERTY(Transient) TObjectPtr<UDirectorsCutOverlayWidget> Overlay;
 
-	TWeakObjectPtr<ATakeGhost> Subject;
-	FRandomStream Rng;
-	float Elapsed = 0.f;
-	float NextCutAt = 0.f;
-	float ReplayLength = 0.f;
-	bool bEndCardShown = false;
+	TArray<FReelMoment> Moments;
+	int32 CurrentMoment = INDEX_NONE;
+	FVector ExplosionAt = FVector::ZeroVector;
+	FVector LastShotOffset = FVector(NAN);
+	float ExplosionRealTime = -100.f;
+	float Elapsed = 0.f;        // replay (game) time
 	float RealElapsed = 0.f;
+	float ReplayLength = 0.f;
 	float EndCardAtReal = 0.f;
-	float SlowMoUntilReal = -1.f;
 	float CurrentDilation = 1.f;
+	bool bEndCardShown = false;
 	bool bRunning = false;
 };

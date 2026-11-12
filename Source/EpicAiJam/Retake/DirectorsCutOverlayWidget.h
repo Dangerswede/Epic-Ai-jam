@@ -18,6 +18,9 @@ public:
 	/** Small slate text bottom-left (e.g. "TAKE 2") shown at each cut. */
 	void ShowShotLabel(const FString& Label);
 
+	/** Full-screen black frame used while the reel skips dead time. */
+	void ShowBlack(bool bBlack);
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
@@ -28,6 +31,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TitleText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> SubtitleText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> ShotLabel;
+	UPROPERTY(Transient) TObjectPtr<class UBorder> BlackFrame;
 
 	float TitleTime = 0.f;
 	float TitleDuration = 0.f;

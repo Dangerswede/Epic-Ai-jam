@@ -34,6 +34,7 @@ private:
 	UFUNCTION() void HandleNext();
 	UFUNCTION() void HandleRetry();
 	UFUNCTION() void HandleMenu();
+	UFUNCTION() void HandleWatch();
 
 	TWeakObjectPtr<ARetakeSceneDirector> Director;
 	int32 NextSceneIndex = INDEX_NONE;
