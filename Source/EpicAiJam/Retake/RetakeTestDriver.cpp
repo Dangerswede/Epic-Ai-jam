@@ -6,6 +6,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -447,7 +448,61 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(6250, 0);
 		MoveTo(7150, 0);
 		MoveTo(7600, 0);
-	}	else
+	}	else if (Scene == TEXT("Scene05_TheGap"))
+	{
+		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
+		auto GhostX = [this](int32 Index) { return Director->GetGhosts().IsValidIndex(Index) ? Director->GetGhosts()[Index]->GetActorLocation().X : 0.f; };
+		auto RunJumpOnto = [this](const FString& Name, TFunction<float()> TargetX)
+		{
+			TSharedPtr<int32> Phase = MakeShared<int32>(0);
+			Steps.Add({ Name, 8.f, [this, TargetX, Phase](float)
+			{
+				if (Director->GetState() == ERetakeSceneState::Wrap) return EStepResult::Done;
+				if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Failed;
+				UCharacterMovementComponent* Move = Player->GetCharacterMovement();
+				Player->AddMovementInput(FVector(1.f, 0.f, 0.f), 0.5f); // half speed (250 cm/s) -> ~306 cm jumps
+				const float JumpAt = TargetX() - 306.f;
+				if (*Phase == 0 && Move->IsMovingOnGround() && Player->GetActorLocation().X >= JumpAt && Move->Velocity.Size2D() > 220.f)
+				{
+					Player->StartJump();
+					*Phase = 1;
+				}
+				else if (*Phase == 1 && Move->IsFalling())
+				{
+					*Phase = 2;
+				}
+				else if (*Phase == 2 && Move->IsMovingOnGround())
+				{
+					return EStepResult::Done;
+				}
+				return EStepResult::Running;
+			} });
+		};
+		// Take 1: drop in, stand at the far end of the pit.
+		MoveTo(1550, 0, 30.f);
+		Wait(0.5f);
+		Cut();
+		// Take 2: drop in, stand at the near end.
+		NextTake(2);
+		MoveTo(1250, 0, 30.f);
+		Wait(0.5f);
+		Cut();
+		// Take 3: wait until both ghosts are frozen, then hop across their heads.
+		NextTake(3);
+		WaitUntil(TEXT("both ghosts frozen (heads are platforms now)"), [this]()
+		{
+			for (const ATakeGhost* G : Director->GetGhosts()) { if (!G->HasFinished()) return false; }
+			return Director->GetGhosts().Num() == 2;
+		}, 10.f);
+		MoveTo(600, 0);
+		RunJumpOnto(TEXT("RunJump onto ghost 2's head"), [GhostX]() { return GhostX(1); });
+		Check(TEXT("standing on a ghost's head"), [this]() { return Player->GetActorLocation().Z > 50.f; });
+		RunJumpOnto(TEXT("RunJump onto ghost 1's head"), [GhostX]() { return GhostX(0); });
+		Check(TEXT("standing on the other ghost's head"), [this]() { return Player->GetActorLocation().Z > 50.f; });
+		RunJumpOnto(TEXT("RunJump to the far side"), []() { return 1830.f + 30.f; });
+		MoveTo(2600, 0);
+	}
+	else
 	{
 		Finish(false, TEXT("no solution script for this scene"));
 		return;
@@ -482,6 +537,10 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	{
 		MoveTo(200, -700, 40.f);
 		MoveTo(7600, 0, 60.f, 40.f); // gate closes behind the plate
+	}
+	else if (Scene == TEXT("Scene05_TheGap"))
+	{
+		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
 	}
 	// The MoveTo above is expected to time out or the take to be cut; either way: no wrap.
 	Steps.Last().Fn = [Inner = Steps.Last().Fn, this](float Dt)

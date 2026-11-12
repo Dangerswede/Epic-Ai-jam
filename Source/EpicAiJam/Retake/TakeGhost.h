@@ -78,6 +78,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
 	TObjectPtr<UTextRenderComponent> TakeLabel;
 
+	/** Flat box on the head: once the take has finished (and the stunt double is still standing) you can stand on it. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Retake")
+	TObjectPtr<class UBoxComponent> HeadPlatform;
+
 	/**
 	 * Translucent ghost material. Should have a vector parameter named TintParameterName
 	 * and a scalar named OpacityParameterName. If null, the meshes keep their own materials

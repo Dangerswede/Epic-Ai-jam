@@ -30,3 +30,4 @@ Recordings/
 .DS_Store
 Thumbs.db
 desktop.ini
+Scripts/__pycache__/

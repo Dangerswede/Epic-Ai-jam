@@ -25,6 +25,7 @@ private:
 	UFUNCTION() void HandlePlay1();
 	UFUNCTION() void HandlePlay2();
 	UFUNCTION() void HandlePlay3();
+	UFUNCTION() void HandlePlay4();
 	UFUNCTION() void HandleQuit();
 	UFUNCTION() void HandleVolumeChanged(float Value);
 

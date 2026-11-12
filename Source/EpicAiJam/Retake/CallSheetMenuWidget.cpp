@@ -71,7 +71,7 @@ void UCallSheetMenuWidget::BuildTree()
 	Box->AddChildToVerticalBox(Row(TEXT("SCENE"), TEXT("NOTES"), TEXT("STATUS"), 14, Red()));
 
 	const TArray<RetakeScenes::FSceneInfo>& Scenes = RetakeScenes::All();
-	for (int32 i = 0; i < Scenes.Num() && i < 4; ++i)
+	for (int32 i = 0; i < Scenes.Num() && i < 5; ++i)
 	{
 		const bool bUnlocked = Save && Save->IsUnlocked(i);
 		const int32* Best = Save ? Save->BestTakes.Find(Scenes[i].MapName) : nullptr;
@@ -89,7 +89,8 @@ void UCallSheetMenuWidget::BuildTree()
 		case 0: Play->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandlePlay0); break;
 		case 1: Play->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandlePlay1); break;
 		case 2: Play->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandlePlay2); break;
-		default: Play->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandlePlay3); break;
+		case 3: Play->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandlePlay3); break;
+		default: Play->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandlePlay4); break;
 		}
 		Box->AddChildToVerticalBox(H)->SetPadding(FMargin(0.f, 8.f));
 	}
@@ -154,6 +155,7 @@ void UCallSheetMenuWidget::HandlePlay0() { PlayScene(0); }
 void UCallSheetMenuWidget::HandlePlay1() { PlayScene(1); }
 void UCallSheetMenuWidget::HandlePlay2() { PlayScene(2); }
 void UCallSheetMenuWidget::HandlePlay3() { PlayScene(3); }
+void UCallSheetMenuWidget::HandlePlay4() { PlayScene(4); }
 
 void UCallSheetMenuWidget::HandleVolumeChanged(float)
 {

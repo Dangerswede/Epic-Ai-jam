@@ -1,6 +1,7 @@
 #include "Retake/TakeGhost.h"
 
 #include "Camera/PlayerCameraManager.h"
+#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -39,6 +40,15 @@ ATakeGhost::ATakeGhost()
 		BodyMesh->SetStaticMesh(CylinderMesh.Object);
 		BodyMesh->SetRelativeScale3D(FVector(0.8f, 0.8f, 1.9f));
 	}
+
+	HeadPlatform = CreateDefaultSubobject<UBoxComponent>(TEXT("HeadPlatform"));
+	HeadPlatform->SetupAttachment(RootComponent);
+	HeadPlatform->SetRelativeLocation(FVector(0.f, 0.f, 96.f));
+	HeadPlatform->SetBoxExtent(FVector(40.f, 40.f, 2.5f)); // 80 x 80 x 5 cm
+	HeadPlatform->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+	HeadPlatform->SetCanEverAffectNavigation(false);
+	HeadPlatform->CanCharacterStepUpOn = ECB_Yes;
+	HeadPlatform->SetCollisionEnabled(ECollisionEnabled::NoCollision); // only once the take has finished
 
 	TakeLabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TakeLabel"));
 	TakeLabel->SetupAttachment(RootComponent);
@@ -286,6 +296,11 @@ void ATakeGhost::Finish()
 
 	// A take that ended in a stunt death: the stunt double stays down. No collision, so it
 	// doesn't weigh down plates and the guard can't see it.
+	if (!Take.EndsInDeath())
+	{
+		// P11: a frozen, standing stunt double is a stepping stone.
+		HeadPlatform->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
 	if (Take.EndsInDeath())
 	{
 		BodyMesh->SetRelativeRotation(FRotator(90.f, 0.f, 0.f));
