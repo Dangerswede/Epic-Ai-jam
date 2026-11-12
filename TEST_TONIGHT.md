@@ -3,6 +3,8 @@
 Numbered steps to try in the editor. Updated after each task.
 Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
+> Note: `lockable` was removed from `.uasset`/`.umap` in `.gitattributes` so maps/assets are no longer read-only after a commit. If the editor still says a file is read-only, right-click it in Windows → Properties → untick *Read-only*.
+
 ## T0 – Character
 1. Open any level (e.g. a new *Basic* level), press **Play** (PIE).
 2. You spawn as a grey cylinder. WASD moves, mouse looks, Space jumps.
