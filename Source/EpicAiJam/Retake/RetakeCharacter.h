@@ -88,6 +88,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input", meta = (ClampMin = "0.0"))
 	float MouseLookSensitivity = 1.0f;
 
+	/** Interact reach in cm (ghosts use the same value). */
+	UPROPERTY(EditAnywhere, Category = "Retake")
+	float InteractRadius = 175.f;
+
 private:
 	void BuildDefaultInput();
 	void AddMappingContext();

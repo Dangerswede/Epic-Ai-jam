@@ -1,5 +1,6 @@
 #include "Retake/RetakeCharacter.h"
 
+#include "Retake/RetakeInteractable.h"
 #include "Retake/RetakeRecorderComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -198,6 +199,7 @@ void ARetakeCharacter::StartJump()
 
 void ARetakeCharacter::Interact()
 {
+	RetakeInteraction::PerformInteract(this, InteractRadius);
 	OnInteract.Broadcast();
 	NotifyAction(ERetakeAction::Interact);
 }

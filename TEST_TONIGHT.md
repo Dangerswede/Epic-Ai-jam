@@ -15,3 +15,8 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 5. Open the console with **`** (backtick / § key on Swedish keyboard) and type `Retake.DumpTake`.
    Expected: `[RetakeCharacter_0] Take 1: N frames, X s (jump J, interact I, push 0)`; J and I match your presses.
 6. Press R again, then `Retake.DumpTake` again. Expected: now says Take 2.
+
+## T2 – Ghosts
+7. In PIE, walk a short route, press **E** once, jump once, then press **R**.
+8. Console: `Retake.SpawnGhost`. Expected: a cylinder with floating "TAKE 1" (facing the camera) replays your route exactly and stops/freezes at the last position.
+9. Ghost tint: no ghost material exists yet, so the ghost looks like the player (grey). Known/expected until a translucent material `M_Ghost` (params `Tint`, `Opacity`) is created and assigned to `GhostMaterial`.
