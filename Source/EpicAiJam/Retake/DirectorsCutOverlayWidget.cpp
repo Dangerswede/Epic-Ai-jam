@@ -44,6 +44,13 @@ void UDirectorsCutOverlayWidget::BuildTree()
 	ST->SetAlignment(FVector2D(0.5f, 0.5f));
 	ST->SetAutoSize(true);
 
+	ShotLabel = Text(WidgetTree, TEXT(""), 16, Chalk(), ETextJustify::Left);
+	UCanvasPanelSlot* SL = Canvas->AddChildToCanvas(ShotLabel);
+	SL->SetAnchors(FAnchors(0.f, 0.94f));
+	SL->SetAlignment(FVector2D(0.f, 0.5f));
+	SL->SetPosition(FVector2D(32.f, 0.f));
+	SL->SetAutoSize(true);
+
 	UTextBlock* Skip = Text(WidgetTree, TEXT("SPACE: skip"), 14, Dim(), ETextJustify::Right);
 	UCanvasPanelSlot* SS = Canvas->AddChildToCanvas(Skip);
 	SS->SetAnchors(FAnchors(1.f, 0.94f));
@@ -62,6 +69,14 @@ void UDirectorsCutOverlayWidget::ShowTitle(const FString& Title, const FString& 
 	SubtitleText->SetText(FText::FromString(Subtitle));
 	TitleTime = 0.f;
 	TitleDuration = Duration;
+}
+
+void UDirectorsCutOverlayWidget::ShowShotLabel(const FString& Label)
+{
+	if (ShotLabel)
+	{
+		ShotLabel->SetText(FText::FromString(Label));
+	}
 }
 
 void UDirectorsCutOverlayWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)

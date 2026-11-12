@@ -447,6 +447,16 @@ void ARetakeSceneDirector::StartDirectorsCut()
 	}
 	SpawnGhosts(Takes);
 
+	// Ghosts become "actors": opaque, one colour per take, the winning take in hero red.
+	static const FLinearColor Palette[] = {
+		FLinearColor(0.25f, 0.35f, 0.55f), FLinearColor(0.45f, 0.5f, 0.25f), FLinearColor(0.2f, 0.5f, 0.5f),
+		FLinearColor(0.6f, 0.5f, 0.2f), FLinearColor(0.45f, 0.3f, 0.5f) };
+	for (int32 i = 0; i < Ghosts.Num(); ++i)
+	{
+		const bool bWinner = (i == Ghosts.Num() - 1);
+		Ghosts[i]->SetCinematicLook(bWinner ? FLinearColor(0.85f, 0.08f, 0.06f) : Palette[i % UE_ARRAY_COUNT(Palette)]);
+	}
+
 	// World actors follow the winning take's recorded track instead of re-simulating.
 	SetWorldReplayMode(true);
 	ReplayTime = 0.f;

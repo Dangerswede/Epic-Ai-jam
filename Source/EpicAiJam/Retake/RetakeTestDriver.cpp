@@ -1,6 +1,8 @@
 #include "Retake/RetakeTestDriver.h"
 
 #include "CineCameraActor.h"
+#include "Components/TextRenderComponent.h"
+#include "Misc/App.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -147,7 +149,20 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 			return Director->GetTakes().Num() == 2 && Director->GetTotalTakesShot() == 3;
 		});
 	}
+	Check(TEXT("Director's Cut actors: opaque colours, no TAKE labels"), [this]()
+	{
+		for (const ATakeGhost* G : Director->GetGhosts())
+		{
+			if (const UTextRenderComponent* L = G->FindComponentByClass<UTextRenderComponent>()) { if (L->IsVisible()) return false; }
+		}
+		return true;
+	});
 	WaitState((uint8)ERetakeSceneState::Results, 90.f);
+	Check(TEXT("Director's Cut length"), [this, Scene]()
+	{
+		UE_LOG(LogRetakeTest, Display, TEXT("  Director's Cut took %.1f s real time"), DirectorsCutRealSeconds);
+		return Scene != TEXT("Scene04_Finale") || DirectorsCutRealSeconds < 25.f;
+	});
 	Check(TEXT("save has the scene wrapped and the next scene unlocked"), [this, Scene]()
 	{
 		const URetakeSaveGame* Save = URetakeSaveGame::LoadOrCreate();
@@ -525,6 +540,7 @@ void ARetakeTestDriver::Tick(float DeltaSeconds)
 		{
 			bSawCineCamera |= Cast<ACineCameraActor>(PC->GetViewTarget()) != nullptr;
 		}
+		DirectorsCutRealSeconds += FApp::GetDeltaTime(); // undilated
 	}
 
 	if (!Steps.IsValidIndex(StepIndex))

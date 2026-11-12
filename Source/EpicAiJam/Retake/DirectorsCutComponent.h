@@ -7,6 +7,7 @@
 class ACineCameraActor;
 class ARetakeSceneDirector;
 class ATakeGhost;
+class AExplosiveProp;
 class UDirectorsCutOverlayWidget;
 
 /**
@@ -55,12 +56,24 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Directors Cut")
 	TSubclassOf<UDirectorsCutOverlayWidget> OverlayClass;
 
+	/** Time scale for explosions and the hero's last second. */
+	UPROPERTY(EditAnywhere, Category = "Directors Cut|Pacing")
+	float SlowMoDilation = 0.35f;
+
+	/** Time scale when nobody moves and no action is coming up. */
+	UPROPERTY(EditAnywhere, Category = "Directors Cut|Pacing")
+	float FastForwardDilation = 3.f;
+
+	/** Time scale while people walk but no action is coming up within 1.5 s. */
+	UPROPERTY(EditAnywhere, Category = "Directors Cut|Pacing")
+	float CruiseDilation = 2.2f;
+
 	/** Post-process look applied to every Director's Cut camera. */
 	UPROPERTY(EditAnywhere, Category = "Directors Cut|Look")
 	float FilmGrain = 0.45f;
 
 	UPROPERTY(EditAnywhere, Category = "Directors Cut|Look")
-	float Saturation = 0.45f;
+	float Saturation = 0.85f;
 
 	UPROPERTY(EditAnywhere, Category = "Directors Cut|Look")
 	FLinearColor SepiaTint = FLinearColor(1.f, 0.88f, 0.7f);
@@ -75,6 +88,11 @@ private:
 	ATakeGhost* PickInterestingGhost() const;
 	void CutTo(ACineCameraActor* Camera);
 	void ChooseShot();
+	ACineCameraActor* NearestCamera(const FVector& Location, bool bAvoidCurrent) const;
+	float ComputeTargetDilation() const;
+
+	UFUNCTION()
+	void HandleExploded(AExplosiveProp* Prop);
 
 	UPROPERTY(Transient) TArray<TObjectPtr<ACineCameraActor>> Cameras;
 	UPROPERTY(Transient) TObjectPtr<ACineCameraActor> WideCamera;
@@ -89,5 +107,9 @@ private:
 	float NextCutAt = 0.f;
 	float ReplayLength = 0.f;
 	bool bEndCardShown = false;
+	float RealElapsed = 0.f;
+	float EndCardAtReal = 0.f;
+	float SlowMoUntilReal = -1.f;
+	float CurrentDilation = 1.f;
 	bool bRunning = false;
 };

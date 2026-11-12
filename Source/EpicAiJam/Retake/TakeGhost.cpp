@@ -31,6 +31,8 @@ ATakeGhost::ATakeGhost()
 	BodyMesh->SetupAttachment(RootComponent);
 	BodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	BodyMesh->SetCastShadow(false);
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> BasicMat(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+	OpaqueMaterial = BasicMat.Succeeded() ? BasicMat.Object : nullptr;
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
 	if (CylinderMesh.Succeeded())
 	{
@@ -233,6 +235,37 @@ bool ATakeGhost::IsActionActiveNow(ERetakeAction Action) const
 	const int32 A = FMath::Clamp(CurrentFrame, 0, Last);
 	const int32 B = FMath::Min(A + 1, Last);
 	return Take.Frames[A].HasAction(Action) || Take.Frames[B].HasAction(Action);
+}
+
+float ATakeGhost::GetTimeToNextAction() const
+{
+	if (!bPlaying)
+	{
+		return 1e6f;
+	}
+	for (int32 i = NextActionFrame; i < Take.Frames.Num(); ++i)
+	{
+		if (Take.Frames[i].ActionFlags != 0)
+		{
+			return FMath::Max(0.f, Take.Frames[i].Time - PlaybackTime);
+		}
+	}
+	return 1e6f;
+}
+
+void ATakeGhost::SetCinematicLook(FLinearColor Color)
+{
+	TakeLabel->SetVisibility(false);
+	if (OpaqueMaterial && BodyMesh)
+	{
+		UMaterialInstanceDynamic* MID = UMaterialInstanceDynamic::Create(OpaqueMaterial, this);
+		MID->SetVectorParameterValue(TEXT("Color"), Color);
+		for (int32 i = 0; i < BodyMesh->GetNumMaterials(); ++i)
+		{
+			BodyMesh->SetMaterial(i, MID);
+		}
+		BodyMesh->SetCastShadow(true);
+	}
 }
 
 void ATakeGhost::Finish()

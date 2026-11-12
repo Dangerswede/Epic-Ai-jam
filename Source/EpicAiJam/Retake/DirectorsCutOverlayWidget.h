@@ -15,6 +15,9 @@ class EPICAIJAM_API UDirectorsCutOverlayWidget : public UUserWidget
 public:
 	void ShowTitle(const FString& Title, const FString& Subtitle, float Duration);
 
+	/** Small slate text bottom-left (e.g. "TAKE 2") shown at each cut. */
+	void ShowShotLabel(const FString& Label);
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
@@ -24,6 +27,7 @@ private:
 
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TitleText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> SubtitleText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> ShotLabel;
 
 	float TitleTime = 0.f;
 	float TitleDuration = 0.f;

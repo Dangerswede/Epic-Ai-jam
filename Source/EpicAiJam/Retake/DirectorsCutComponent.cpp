@@ -5,7 +5,9 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 #include "Retake/DirectorsCutOverlayWidget.h"
+#include "Retake/ExplosiveProp.h"
 #include "Retake/RetakeSceneDirector.h"
 #include "Retake/TakeGhost.h"
 
@@ -96,6 +98,14 @@ void UDirectorsCutComponent::Begin(const TArray<ATakeGhost*>& InGhosts, float Lo
 	bEndCardShown = false;
 	bRunning = true;
 	Rng.Initialize(1337);
+	RealElapsed = 0.f;
+	EndCardAtReal = 0.f;
+	SlowMoUntilReal = -1.f;
+	CurrentDilation = 1.f;
+	for (TActorIterator<AExplosiveProp> It(GetWorld()); It; ++It)
+	{
+		It->OnExploded.AddUniqueDynamic(this, &UDirectorsCutComponent::HandleExploded);
+	}
 
 	GatherCameras();
 	for (ACineCameraActor* Cam : Cameras)
@@ -122,7 +132,7 @@ void UDirectorsCutComponent::Begin(const TArray<ATakeGhost*>& InGhosts, float Lo
 
 	// Open on the wide shot.
 	CutTo(WideCamera);
-	NextCutAt = Rng.FRandRange(MinShotSeconds, MaxShotSeconds);
+	NextCutAt = Rng.FRandRange(MinShotSeconds, MaxShotSeconds); // real seconds
 	SetComponentTickEnabled(true);
 }
 
@@ -134,6 +144,12 @@ void UDirectorsCutComponent::End()
 	}
 	bRunning = false;
 	SetComponentTickEnabled(false);
+	UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
+	CurrentDilation = 1.f;
+	for (TActorIterator<AExplosiveProp> It(GetWorld()); It; ++It)
+	{
+		It->OnExploded.RemoveDynamic(this, &UDirectorsCutComponent::HandleExploded);
+	}
 
 	if (Overlay)
 	{
@@ -200,6 +216,31 @@ void UDirectorsCutComponent::CutTo(ACineCameraActor* Camera)
 	{
 		PC->SetViewTarget(Camera); // hard cut
 	}
+	if (Overlay)
+	{
+		const ATakeGhost* S = Subject.Get();
+		Overlay->ShowShotLabel(S ? FString::Printf(TEXT("TAKE %d"), S->GetTakeNumber()) : FString(TEXT("ALL TAKES")));
+	}
+}
+
+ACineCameraActor* UDirectorsCutComponent::NearestCamera(const FVector& Location, bool bAvoidCurrent) const
+{
+	ACineCameraActor* Best = nullptr;
+	float BestDist = TNumericLimits<float>::Max();
+	for (ACineCameraActor* Cam : Cameras)
+	{
+		if (bAvoidCurrent && Cam == CurrentCamera && Cameras.Num() > 1)
+		{
+			continue;
+		}
+		const float D = FVector::DistSquared(Cam->GetActorLocation(), Location);
+		if (D < BestDist)
+		{
+			BestDist = D;
+			Best = Cam;
+		}
+	}
+	return Best ? Best : WideCamera.Get();
 }
 
 void UDirectorsCutComponent::ChooseShot()
@@ -212,22 +253,50 @@ void UDirectorsCutComponent::ChooseShot()
 		return;
 	}
 	// Nearest camera to the subject, avoiding the current one so every cut is visible.
-	ACineCameraActor* Best = nullptr;
-	float BestDist = TNumericLimits<float>::Max();
-	for (ACineCameraActor* Cam : Cameras)
+	CutTo(NearestCamera(Target->GetActorLocation(), true));
+}
+
+void UDirectorsCutComponent::HandleExploded(AExplosiveProp* Prop)
+{
+	if (!bRunning || !Prop)
 	{
-		if (Cam == CurrentCamera)
+		return;
+	}
+	SlowMoUntilReal = RealElapsed + 1.2f;
+	// Always cut to the camera nearest the blast.
+	Subject = nullptr;
+	CutTo(NearestCamera(Prop->GetActorLocation(), false));
+	NextCutAt = RealElapsed + MaxShotSeconds;
+}
+
+float UDirectorsCutComponent::ComputeTargetDilation() const
+{
+	if (RealElapsed < SlowMoUntilReal)
+	{
+		return SlowMoDilation; // explosion: slow-mo
+	}
+	const ATakeGhost* Winner = Ghosts.Num() > 0 ? Ghosts.Last().Get() : nullptr;
+	if (IsValid(Winner) && Winner->IsPlaying() && ReplayLength - Winner->GetPlaybackTime() < 1.f)
+	{
+		return SlowMoDilation; // the hero's final second
+	}
+	bool bAnyMoving = false;
+	float NextAction = TNumericLimits<float>::Max();
+	for (const ATakeGhost* Ghost : Ghosts)
+	{
+		if (!IsValid(Ghost) || !Ghost->IsPlaying())
 		{
 			continue;
 		}
-		const float D = FVector::DistSquared(Cam->GetActorLocation(), Target->GetActorLocation());
-		if (D < BestDist)
-		{
-			BestDist = D;
-			Best = Cam;
-		}
+		bAnyMoving |= Ghost->GetVelocity().Size() > 20.f;
+		NextAction = FMath::Min(NextAction, Ghost->GetTimeToNextAction());
 	}
-	CutTo(Best ? Best : WideCamera.Get());
+	if (NextAction > 1.5f)
+	{
+		// Nothing about to happen: fast-forward if everyone stands still, otherwise a brisk "cruise".
+		return bAnyMoving ? CruiseDilation : FastForwardDilation;
+	}
+	return 1.f;
 }
 
 void UDirectorsCutComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -237,32 +306,44 @@ void UDirectorsCutComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	{
 		return;
 	}
+	// DeltaTime is dilated game time; cut timing and title cards run in real time.
+	const float RealDelta = DeltaTime / FMath::Max(0.01f, CurrentDilation);
+	RealElapsed += RealDelta;
 	Elapsed += DeltaTime;
 
-	if (Elapsed >= NextCutAt && Elapsed < ReplayLength)
+	// Pacing: slow-mo for big moments, fast-forward through dead time.
+	const float Target = bEndCardShown ? 1.f : ComputeTargetDilation();
+	CurrentDilation = FMath::FInterpTo(CurrentDilation, Target, RealDelta, 6.f);
+	UGameplayStatics::SetGlobalTimeDilation(this, CurrentDilation);
+
+	if (!bEndCardShown && RealElapsed >= NextCutAt)
 	{
 		ChooseShot();
-		NextCutAt = Elapsed + Rng.FRandRange(MinShotSeconds, MaxShotSeconds);
+		NextCutAt = RealElapsed + Rng.FRandRange(MinShotSeconds, MaxShotSeconds);
 	}
 
 	// Gently keep the subject framed (the wide shot stays locked).
-	ATakeGhost* Target = Subject.Get();
-	if (CurrentCamera && CurrentCamera != WideCamera && IsValid(Target))
+	ATakeGhost* Subj = Subject.Get();
+	if (CurrentCamera && CurrentCamera != WideCamera && IsValid(Subj))
 	{
-		const FRotator Want = (Target->GetActorLocation() - CurrentCamera->GetActorLocation()).Rotation();
-		CurrentCamera->SetActorRotation(FMath::RInterpTo(CurrentCamera->GetActorRotation(), Want, DeltaTime, 3.f));
+		const FRotator Want = (Subj->GetActorLocation() - CurrentCamera->GetActorLocation()).Rotation();
+		CurrentCamera->SetActorRotation(FMath::RInterpTo(CurrentCamera->GetActorRotation(), Want, RealDelta, 3.f));
 	}
 
 	if (!bEndCardShown && Elapsed >= ReplayLength)
 	{
 		bEndCardShown = true;
-		CutTo(WideCamera);
+		EndCardAtReal = RealElapsed;
+		// End on the hero.
+		ATakeGhost* Winner = Ghosts.Num() > 0 ? Ghosts.Last().Get() : nullptr;
+		Subject = Winner;
+		CutTo(Winner ? NearestCamera(Winner->GetActorLocation(), false) : WideCamera.Get());
 		if (Overlay)
 		{
 			Overlay->ShowTitle(TEXT("THAT'S A WRAP"), FString::Printf(TEXT("%d takes"), Ghosts.Num()), TitleCardSeconds);
 		}
 	}
-	if (Elapsed >= ReplayLength + TitleCardSeconds)
+	if (bEndCardShown && RealElapsed >= EndCardAtReal + TitleCardSeconds)
 	{
 		if (ARetakeSceneDirector* D = GetDirector())
 		{

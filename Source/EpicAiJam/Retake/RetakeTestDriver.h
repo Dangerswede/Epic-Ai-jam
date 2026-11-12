@@ -66,6 +66,7 @@ private:
 	bool bEverWrapped = false;
 	int32 InteractCount = 0;
 	FVector WrapCrateLocation = FVector::ZeroVector;
+	float DirectorsCutRealSeconds = 0.f;
 
 	UFUNCTION()
 	void HandlePlayerInteract() { ++InteractCount; }

@@ -56,6 +56,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	float GetLastActionTime() const { return LastActionTime; }
 
+	/** Seconds of playback until the next recorded action (huge if none / not playing). */
+	float GetTimeToNextAction() const;
+
+	/** Director's Cut look: opaque actor in a solid colour, no TAKE label. */
+	void SetCinematicLook(FLinearColor Color);
+
 	/** Fired once when the take runs out; the ghost then freezes in its last pose. */
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FTakeGhostSignature OnFinished;
@@ -99,6 +105,10 @@ protected:
 
 private:
 	void ApplyGhostMaterial();
+
+	/** Engine BasicShapeMaterial (opaque, has a Color parameter) for the cinematic look. */
+	UPROPERTY(Transient)
+	TObjectPtr<UMaterialInterface> OpaqueMaterial;
 	void ApplyFrameAt(float Time);
 	void FireActionsUpTo(float Time);
 	void FaceLabelToCamera();
