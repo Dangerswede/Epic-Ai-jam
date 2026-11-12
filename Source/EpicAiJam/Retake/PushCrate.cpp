@@ -172,6 +172,10 @@ void APushCrate::ApplyFall(float DeltaSeconds)
 void APushCrate::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	if (bReplayMode)
+	{
+		return; // the director plays back the recorded track
+	}
 	StillTime += DeltaSeconds;
 
 	for (TActorIterator<ARetakeCharacter> It(GetWorld()); It; ++It)

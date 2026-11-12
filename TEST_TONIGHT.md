@@ -137,3 +137,4 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
 ## Stunt feel + Director's Cut edit (12 Nov, P5-P7)
 76. **P5 – stunt death:** in Scene 3 arm the barrel and stay close: brief slow-mo, camera shakes, you're thrown ~6 m through the air, then "CUT!". Same for lasers and getting caught by a guard (thrown away from the guard). Next take your ghost flies the same arc and then **stays lying down** (it doesn't press plates and the guard ignores it). Falling into a pit still cuts instantly.
+77. **P6 – faithful Director's Cut:** in Scene 3 and 4 the Director's Cut now plays back what the guard and the crate actually did in the winning take (no re-simulation). Check: the crate drops into the pit at the same moment and spot as when you played, and no ghost walks on air over the pit; the guard's sign (SECURITY / HEY! STOP! / GOTCHA!) matches. Optional: console `t.MaxFPS 20` before wrapping and check the same.

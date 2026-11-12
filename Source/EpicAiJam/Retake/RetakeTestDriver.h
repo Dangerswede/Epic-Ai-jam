@@ -65,6 +65,7 @@ private:
 	bool bSawCineCamera = false;
 	bool bEverWrapped = false;
 	int32 InteractCount = 0;
+	FVector WrapCrateLocation = FVector::ZeroVector;
 
 	UFUNCTION()
 	void HandlePlayerInteract() { ++InteractCount; }

@@ -9,6 +9,7 @@
 #include "Retake/RetakeCharacter.h"
 #include "Retake/RetakeRecorderComponent.h"
 #include "Retake/RetakeResettable.h"
+#include "Retake/RetakeWorldReplayable.h"
 #include "Retake/RetakeSaveGame.h"
 #include "Retake/TakeGhost.h"
 #include "TimerManager.h"
@@ -18,7 +19,9 @@ DEFINE_LOG_CATEGORY_STATIC(LogRetakeDirector, Log, All);
 
 ARetakeSceneDirector::ARetakeSceneDirector()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+	// Sample the world track after movement, like the take recorder.
+	PrimaryActorTick.TickGroup = TG_PostPhysics;
 
 	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
@@ -248,6 +251,8 @@ void ARetakeSceneDirector::StartRolling()
 	{
 		Recorder->StartRecording(CurrentTakeNumber);
 	}
+	SetWorldReplayMode(false);
+	BeginWorldTrack();
 	for (ATakeGhost* Ghost : Ghosts)
 	{
 		Ghost->Play(0.f);
@@ -292,6 +297,7 @@ void ARetakeSceneDirector::CutTake(ERetakeCutReason Reason)
 		Takes.Add(Recorder->StopRecording());
 		Takes.Last().EndReason = Reason;
 	}
+	bRecordingTrack = false;
 	for (ATakeGhost* Ghost : Ghosts)
 	{
 		Ghost->Stop();
@@ -331,6 +337,7 @@ void ARetakeSceneDirector::ScrapLastTake()
 	{
 		Recorder->StopRecording();
 	}
+	bRecordingTrack = false;
 	const int32 Scrapped = Takes.Last().TakeNumber;
 	Takes.Pop();
 	for (ATakeGhost* Ghost : Ghosts)
@@ -408,6 +415,10 @@ void ARetakeSceneDirector::NotifyGoalReached(AActor* Who)
 		Takes.Add(Recorder->StopRecording());
 		Takes.Last().EndReason = ERetakeCutReason::Wrapped;
 	}
+	// Keep the winning take's world track for the Director's Cut.
+	SampleWorldTrack();
+	bRecordingTrack = false;
+	WinningTrack = CurrentTrack;
 	for (ATakeGhost* Ghost : Ghosts)
 	{
 		Ghost->Stop();
@@ -435,6 +446,12 @@ void ARetakeSceneDirector::StartDirectorsCut()
 		Player->GetCharacterMovement()->DisableMovement();
 	}
 	SpawnGhosts(Takes);
+
+	// World actors follow the winning take's recorded track instead of re-simulating.
+	SetWorldReplayMode(true);
+	ReplayTime = 0.f;
+	bReplayingTrack = WinningTrack.Num() > 0;
+	ApplyWorldTrack(0.f);
 
 	float Longest = 0.f;
 	for (ATakeGhost* Ghost : Ghosts)
@@ -466,6 +483,8 @@ void ARetakeSceneDirector::FinishDirectorsCut()
 	{
 		return;
 	}
+	bReplayingTrack = false;
+	SetWorldReplayMode(false);
 	if (DirectorsCut)
 	{
 		DirectorsCut->End();
@@ -493,7 +512,99 @@ void ARetakeSceneDirector::RestartScene()
 		Player->GetRecorder()->StopRecording();
 	}
 	TotalTakesShot = 0;
+	bReplayingTrack = false;
+	SetWorldReplayMode(false);
 	Takes.Reset();
 	DestroyGhosts();
 	StartRolling();
+}
+
+
+// ------------------------------------------------------------------------------------ world track (P6)
+
+void ARetakeSceneDirector::BeginWorldTrack()
+{
+	CurrentTrack.Reset();
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	{
+		if (Cast<IRetakeWorldReplayable>(*It))
+		{
+			CurrentTrack.Add(*It);
+		}
+	}
+	TrackAccumulator = 0.f;
+	bRecordingTrack = true;
+	SampleWorldTrack(); // frame 0, same moment as the recorder's frame 0
+}
+
+void ARetakeSceneDirector::SampleWorldTrack()
+{
+	for (auto& Pair : CurrentTrack)
+	{
+		if (AActor* Actor = Pair.Key.Get())
+		{
+			FWorldTrackFrame& Frame = Pair.Value.AddDefaulted_GetRef();
+			Frame.Transform = Actor->GetActorTransform();
+			if (const IRetakeWorldReplayable* Replayable = Cast<IRetakeWorldReplayable>(Actor))
+			{
+				Frame.Extra = Replayable->GetReplayExtra();
+			}
+		}
+	}
+}
+
+void ARetakeSceneDirector::ApplyWorldTrack(float Time)
+{
+	for (auto& Pair : WinningTrack)
+	{
+		AActor* Actor = Pair.Key.Get();
+		const TArray<FWorldTrackFrame>& Frames = Pair.Value;
+		if (!Actor || Frames.Num() == 0)
+		{
+			continue;
+		}
+		const float Index = Time * URetakeRecorderComponent::SampleRate;
+		const int32 A = FMath::Clamp(FMath::FloorToInt(Index), 0, Frames.Num() - 1);
+		const int32 B = FMath::Min(A + 1, Frames.Num() - 1);
+		const float Alpha = (A == B) ? 0.f : FMath::Clamp(Index - A, 0.f, 1.f);
+		FTransform Xf;
+		Xf.Blend(Frames[A].Transform, Frames[B].Transform, Alpha);
+		Actor->SetActorTransform(Xf, false, nullptr, ETeleportType::TeleportPhysics);
+		if (IRetakeWorldReplayable* Replayable = Cast<IRetakeWorldReplayable>(Actor))
+		{
+			Replayable->ApplyReplayExtra(Frames[A].Extra);
+		}
+	}
+}
+
+void ARetakeSceneDirector::SetWorldReplayMode(bool bReplay)
+{
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	{
+		if (IRetakeWorldReplayable* Replayable = Cast<IRetakeWorldReplayable>(*It))
+		{
+			Replayable->SetReplayMode(bReplay);
+		}
+	}
+}
+
+void ARetakeSceneDirector::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (bRecordingTrack && State == ERetakeSceneState::Rolling)
+	{
+		// Same fixed 30 Hz scheme as URetakeRecorderComponent.
+		TrackAccumulator += DeltaSeconds;
+		while (TrackAccumulator >= URetakeRecorderComponent::SampleInterval)
+		{
+			TrackAccumulator -= URetakeRecorderComponent::SampleInterval;
+			SampleWorldTrack();
+		}
+	}
+	if (bReplayingTrack && State == ERetakeSceneState::DirectorsCut)
+	{
+		ReplayTime += DeltaSeconds; // the same (dilated) game time the ghosts play in
+		ApplyWorldTrack(ReplayTime);
+	}
 }

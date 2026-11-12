@@ -74,6 +74,32 @@ void AStuntGuard::ResetForTake()
 	SetGuardState(EStuntGuardState::Patrol);
 }
 
+void AStuntGuard::SetReplayMode(bool bReplay)
+{
+	bReplayMode = bReplay;
+	if (UCharacterMovementComponent* Move = GetCharacterMovement())
+	{
+		Move->StopMovementImmediately();
+		if (bReplay)
+		{
+			Move->DisableMovement();
+		}
+		else
+		{
+			Move->SetMovementMode(MOVE_Walking);
+		}
+	}
+}
+
+void AStuntGuard::ApplyReplayExtra(uint8 Extra)
+{
+	const EStuntGuardState Recorded = static_cast<EStuntGuardState>(Extra);
+	if (Recorded != GuardState)
+	{
+		SetGuardState(Recorded);
+	}
+}
+
 void AStuntGuard::SetGuardState(EStuntGuardState NewState)
 {
 	GuardState = NewState;
@@ -181,6 +207,11 @@ void AStuntGuard::Tick(float DeltaSeconds)
 		{
 			IgnoredGhost.Reset();
 		}
+	}
+
+	if (bReplayMode)
+	{
+		return; // the director plays back the recorded track
 	}
 
 	// Only act while a take is rolling (or the Director's Cut replays).

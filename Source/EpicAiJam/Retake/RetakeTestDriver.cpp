@@ -113,7 +113,27 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 {
 	const uint8 Wrap = (uint8)ERetakeSceneState::Wrap;
 	WaitState(Wrap, 10.f);
+	// P6: remember where the crate ended in the winning take.
+	Do(TEXT("remember crate position at wrap"), [this]()
+	{
+		const APushCrate* Crate = FindFirst<APushCrate>();
+		WrapCrateLocation = Crate ? Crate->GetActorLocation() : FVector::ZeroVector;
+	});
 	WaitState((uint8)ERetakeSceneState::DirectorsCut, 10.f);
+	if (Scene == TEXT("Scene03_Chase") || Scene == TEXT("Scene04_Finale"))
+	{
+		WaitUntil(TEXT("all ghosts finished in the Director's Cut"), [this]()
+		{
+			for (const ATakeGhost* G : Director->GetGhosts()) { if (!G->HasFinished()) return false; }
+			return Director->GetGhosts().Num() > 0;
+		}, 60.f);
+		Check(TEXT("crate ends exactly where it did in the winning take"), [this]()
+		{
+			const float D = FVector::Dist(FindFirst<APushCrate>()->GetActorLocation(), WrapCrateLocation);
+			UE_LOG(LogRetakeTest, Display, TEXT("  crate replay error: %.2f cm"), D);
+			return D < 1.f;
+		});
+	}
 	WaitUntil(TEXT("Director's Cut uses a cine camera"), [this]() { return bSawCineCamera; }, 10.f);
 	Check(TEXT("all takes replay as ghosts"), [this]()
 	{

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Retake/RetakeResettable.h"
+#include "Retake/RetakeWorldReplayable.h"
 #include "StuntGuard.generated.h"
 
 class UStaticMeshComponent;
@@ -25,7 +26,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FStuntGuardSignature, AStuntGuard*,
  * (Godot: a CharacterBody3D with a small match-statement state machine in _physics_process.)
  */
 UCLASS()
-class EPICAIJAM_API AStuntGuard : public ACharacter, public IRetakeResettable
+class EPICAIJAM_API AStuntGuard : public ACharacter, public IRetakeResettable, public IRetakeWorldReplayable
 {
 	GENERATED_BODY()
 
@@ -34,6 +35,9 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void ResetForTake() override;
+	virtual void SetReplayMode(bool bReplay) override;
+	virtual uint8 GetReplayExtra() const override { return static_cast<uint8>(GuardState); }
+	virtual void ApplyReplayExtra(uint8 Extra) override;
 
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	EStuntGuardState GetGuardState() const { return GuardState; }
@@ -96,6 +100,7 @@ private:
 	void SetGuardState(EStuntGuardState NewState);
 
 	EStuntGuardState GuardState = EStuntGuardState::Patrol;
+	bool bReplayMode = false;
 	FTransform StartTransform;
 	bool bHeadingToB = true;
 

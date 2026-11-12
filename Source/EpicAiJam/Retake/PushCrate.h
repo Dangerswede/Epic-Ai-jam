@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Retake/RetakeResettable.h"
+#include "Retake/RetakeWorldReplayable.h"
 #include "PushCrate.generated.h"
 
 class UStaticMeshComponent;
@@ -17,7 +18,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPushCrateSignature, APushCrate*, Cr
  * (Godot: an AnimatableBody3D moved with move_and_collide instead of a RigidBody3D.)
  */
 UCLASS()
-class EPICAIJAM_API APushCrate : public AActor, public IRetakeResettable
+class EPICAIJAM_API APushCrate : public AActor, public IRetakeResettable, public IRetakeWorldReplayable
 {
 	GENERATED_BODY()
 
@@ -26,6 +27,7 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void ResetForTake() override;
+	virtual void SetReplayMode(bool bReplay) override { bReplayMode = bReplay; }
 
 	/** Crate size in cm (X length, Y width, Z height), in the crate's local space. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Retake")
@@ -58,4 +60,5 @@ private:
 
 	FTransform StartTransform;
 	float StillTime = 1.f;
+	bool bReplayMode = false;
 };

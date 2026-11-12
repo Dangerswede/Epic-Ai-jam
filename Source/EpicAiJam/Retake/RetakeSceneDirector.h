@@ -22,6 +22,13 @@ enum class ERetakeSceneState : uint8
 	Results,
 };
 
+/** One 30 Hz sample of a world actor (guard, crate) for the Director's Cut world track. */
+struct FWorldTrackFrame
+{
+	FTransform Transform;
+	uint8 Extra = 0;
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FRetakeStateChanged, ERetakeSceneState, NewState, ERetakeSceneState, OldState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FRetakeTakeStarted, int32, TakeNumber);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FRetakeTakeCut, int32, TakeNumber, ERetakeCutReason, Reason);
@@ -207,6 +214,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void Tick(float DeltaSeconds) override;
 
 private:
 	void SetState(ERetakeSceneState NewState);
@@ -237,6 +245,18 @@ private:
 
 	int32 TotalTakesShot = 0;
 	bool bDying = false;
+
+	// World track (P6): guard/crate transforms of the current take, and of the winning take for the Director's Cut.
+	void BeginWorldTrack();
+	void SampleWorldTrack();
+	void ApplyWorldTrack(float Time);
+	void SetWorldReplayMode(bool bReplay);
+	TMap<TWeakObjectPtr<AActor>, TArray<FWorldTrackFrame>> CurrentTrack;
+	TMap<TWeakObjectPtr<AActor>, TArray<FWorldTrackFrame>> WinningTrack;
+	float TrackAccumulator = 0.f;
+	float ReplayTime = 0.f;
+	bool bRecordingTrack = false;
+	bool bReplayingTrack = false;
 	FTimerHandle DeathTimer;
 
 	bool bLastWrapNewBest = false;
