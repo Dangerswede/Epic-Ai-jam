@@ -176,6 +176,14 @@ def build_level(ghost_class):
         ((3100, 300, 600), (2300, 0, 300), 28),      # goal end looking back
     ])
 
+    # Art pass: Tripo props (outside the play paths).
+    L.set_art(plate, "PressurePlate")
+    L.film_crew((-450, -700, 0), 30, (-600, -1000, 0), 60,
+                lights=[((600, -1600, 0), 60), ((3200, 1700, 0), -120), ((-700, 900, 0), -30)],
+                extra=[("Scaffolding", (1500, -1700, 0), 600, 0), ("Scaffolding", (3600, -1700, 0), 600, 0),
+                       ("PlywoodFlat", (4100, 1300, 0), 260, 180), ("PlywoodFlat", (3900, -1100, 0), 260, 160),
+                       ("StageCrate", (-900, -400, 0), 90, 20), ("StageCrate", (-900, -300, 90), 70, 50)])
+
     L.save_map(MAP_PATH)
     log("Saved " + MAP_PATH)
 

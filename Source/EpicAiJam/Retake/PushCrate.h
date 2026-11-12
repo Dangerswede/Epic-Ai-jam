@@ -41,6 +41,17 @@ public:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
+	/** Art pass: optional prop mesh shown instead of the graybox (which stays as the collision). Pivot bottom-centre. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Art")
+	TObjectPtr<UStaticMesh> ArtMeshAsset;
+
+	/** Size (cm) the art mesh is scaled to; zero = the crate's Size. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Art")
+	FVector ArtSize = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Art")
+	TObjectPtr<UStaticMeshComponent> ArtMesh;
+
 	/** Fired when the crate starts moving after standing still (for audio). */
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FPushCrateSignature OnPushStarted;

@@ -51,8 +51,8 @@ guard.set_editor_property("patrol_point_b", unreal.Vector(700, 0, 0))
 guard.set_editor_property("lose_sight_multiplier", 3.0)
 
 # Some cover crates (static) for flavour.
-L.box("CoverCrate1", (600, 450, 60), (120, 120, 120))
-L.box("CoverCrate2", (-300, -1100, 60), (120, 120, 120))
+cover1 = L.box("CoverCrate1", (600, 450, 60), (120, 120, 120))
+cover2 = L.box("CoverCrate2", (-300, -1100, 60), (120, 120, 120))
 
 start = L.spawn(unreal.PlayerStart, (0, 0, 100), label="PlayerStart")
 
@@ -63,6 +63,15 @@ L.cameras([
     ((2150, -600, 250), (2700, 0, 120), 30),     # vault door / lasers
     ((300, 300, 250), (1100, 700, 100), 40),     # guard close-up
 ])
+
+# Art pass: Tripo props (keep the south side free - the lure runs there).
+L.set_art(lever, "WallLever")
+L.overlay_static(cover1, "StageCrate")
+L.overlay_static(cover2, "StageCrate")
+L.film_crew((-550, 900, 0), -40, (-650, 1250, 0), -60,
+            lights=[((3400, 1450, 0), -140), ((-700, 400, 0), 0)],
+            extra=[("Scaffolding", (2500, 1450, 0), 600, 0), ("PlywoodFlat", (900, 1500, 0), 260, 180),
+                   ("StageCrate", (3350, 700, 0), 100, 10), ("StageCrate", (3350, -700, 0), 100, 35)])
 
 L.director(start, "Scene 2: The Heist",
            "Three takes. Distract, disable, grab. Make it look easy.",

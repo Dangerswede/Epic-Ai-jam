@@ -53,8 +53,8 @@ L.box_span("CourtyardWall_W2", 1985, 2015, -1530, -W - 30, 0, H)
 L.box_span("CourtyardWall_E1", 4385, 4415, W, 1530, 0, H)
 L.box_span("CourtyardWall_E2", 4385, 4415, -1530, -W, 0, H)
 L.box_span("LaserDoorLintel", 4385, 4415, -W, W, 230, H)
-L.box("CourtyardCrate1", (4050, 1200, 60), (120, 120, 120))
-L.box("CourtyardCrate2", (2400, -1100, 90), (180, 180, 180))
+court1 = L.box("CourtyardCrate1", (4050, 1200, 60), (120, 120, 120))
+court2 = L.box("CourtyardCrate2", (2400, -1100, 90), (180, 180, 180))
 
 lever = L.spawn(unreal.Lever, (2900, 1100, 15), label="Lever")
 for i, z in enumerate((40, 110, 180)):
@@ -108,6 +108,19 @@ L.cameras([
     ((4900, -900, 900), (5800, 0, -50), 24),     # alley + pit (looking over the south wall)
     ((8300, -900, 900), (7300, 0, 350), 30),     # rooftop finale
 ])
+
+# Art pass: Tripo props (keep the courtyard's south side free - the lure runs there).
+L.set_art(plate_n, "PressurePlate")
+L.set_art(plate_s, "PressurePlate")
+L.set_art(prop_crate, "StageCrate")
+L.set_art(lever, "WallLever")
+L.overlay_static(court1, "StageCrate")
+L.overlay_static(court2, "StageCrate")
+L.film_crew((-450, -350, 0), 20, (-500, 400, 0), -40,
+            lights=[((-500, 900, 0), -50), ((-500, -900, 0), 50), ((7850, -420, 300), 140)],
+            extra=[("Scaffolding", (3600, 1350, 0), 600, 0), ("Scaffolding", (2200, 1350, 0), 600, 0),
+                   ("PlywoodFlat", (650, 950, 0), 260, 180), ("DirectorChair", (7400, -380, 300), 100, 120),
+                   ("Clapperboard", (7300, 380, 300), 40, -30), ("CinemaCamera", (7200, 300, 300), 170, -60)])
 
 L.director(start, "Scene 4: The Finale",
            "Two marks, one gate. Props can hit a mark too.",

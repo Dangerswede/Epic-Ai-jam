@@ -25,6 +25,13 @@ APressurePlate::APressurePlate()
 	// Crates (WorldDynamic) slide over the ~10 cm plate instead of catching on its edge.
 	PlateMesh->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
 	PlateMesh->SetCanEverAffectNavigation(false);
+	ArtMesh = RetakeVisuals::CreateArtComponent(this, PlateMesh);
+}
+
+void APressurePlate::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	RetakeVisuals::ApplyArt(PlateMesh, ArtMesh, ArtMeshAsset, ArtSize);
 }
 
 void APressurePlate::BeginPlay()

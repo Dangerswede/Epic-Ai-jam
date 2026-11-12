@@ -21,6 +21,8 @@ AExplosiveProp::AExplosiveProp()
 	BarrelMesh->SetCollisionProfileName(TEXT("BlockAll"));
 	BarrelMesh->SetMobility(EComponentMobility::Movable);
 
+	ArtMesh = RetakeVisuals::CreateArtComponent(this, BarrelMesh);
+
 	FlashMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FlashMesh"));
 	FlashMesh->SetupAttachment(BarrelMesh);
 	FlashMesh->SetStaticMesh(RetakeVisuals::LoadBasicShape(TEXT("Sphere")));
@@ -36,6 +38,12 @@ AExplosiveProp::AExplosiveProp()
 	FuseLabel->SetWorldSize(40.f);
 	FuseLabel->SetTextRenderColor(FColor(255, 200, 0));
 	FuseLabel->SetText(FText::FromString(TEXT("[E] ARM")));
+}
+
+void AExplosiveProp::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	RetakeVisuals::ApplyArt(BarrelMesh, ArtMesh, ArtMeshAsset, ArtSize);
 }
 
 void AExplosiveProp::BeginPlay()
@@ -127,6 +135,7 @@ void AExplosiveProp::Explode()
 	FlashLeft = 0.35f;
 
 	BarrelMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ArtMesh->SetVisibility(false);
 	RetakeVisuals::Tint(BarrelMesh, FLinearColor(0.05f, 0.05f, 0.05f));
 	FuseLabel->SetText(FText::GetEmpty());
 
@@ -149,6 +158,7 @@ void AExplosiveProp::ResetForTake()
 	FuseLeft = 0.f;
 	FlashLeft = 0.f;
 	FlashMesh->SetVisibility(false);
+	ArtMesh->SetVisibility(true);
 	BarrelMesh->SetCollisionProfileName(TEXT("BlockAll"));
 	RetakeVisuals::Tint(BarrelMesh, FLinearColor(0.8f, 0.1f, 0.05f));
 	FuseLabel->SetText(FText::FromString(TEXT("[E] ARM")));

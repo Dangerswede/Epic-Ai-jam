@@ -232,6 +232,12 @@ else:
                     mesh.set_material(i, mi)
             else:
                 log("  no T_%s_* textures: keeping the mesh's own (embedded) materials" % short)
+            # Tripo bakes 4K textures; 2K is plenty for props.
+            for p in eal.list_assets(MESH_DIR + "/" + name, recursive=True):
+                t = unreal.load_asset(p)
+                if isinstance(t, unreal.Texture2D):
+                    t.set_editor_property("max_texture_size", 2048)
+                    eal.save_loaded_asset(t)
             eal.save_loaded_asset(mesh)
             log("Mesh %s -> %s (MI_%s, ~%.0f cm)" % (fname, mesh.get_name(), short, size))
 

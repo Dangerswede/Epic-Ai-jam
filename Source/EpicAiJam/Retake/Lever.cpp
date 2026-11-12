@@ -13,6 +13,8 @@ ALever::ALever()
 	BaseMesh->SetRelativeScale3D(FVector(0.4f, 0.4f, 0.3f));
 	BaseMesh->SetCollisionProfileName(TEXT("BlockAll"));
 
+	ArtMesh = RetakeVisuals::CreateArtComponent(this, BaseMesh);
+
 	HandleMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HandleMesh"));
 	HandleMesh->SetupAttachment(BaseMesh);
 	HandleMesh->SetStaticMesh(RetakeVisuals::LoadBasicShape(TEXT("Cylinder")));
@@ -31,6 +33,13 @@ ALever::ALever()
 	UseLabel->SetTextRenderColor(FColor(255, 200, 0));
 	UseLabel->SetText(FText::FromString(TEXT("[E]")));
 	UseLabel->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void ALever::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	// The graybox handle stays visible: it shows the on/off state.
+	RetakeVisuals::ApplyArt(BaseMesh, ArtMesh, ArtMeshAsset, ArtSize);
 }
 
 void ALever::BeginPlay()

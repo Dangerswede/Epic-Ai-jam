@@ -29,6 +29,19 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void RetakeInteract(AActor* Interactor) override;
 	virtual void ResetForTake() override;
+	virtual void OnConstruction(const FTransform& Transform) override;
+
+	/** Art pass: optional prop mesh shown instead of the graybox (which stays as the collision). Pivot bottom-centre. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Art")
+	TObjectPtr<UStaticMesh> ArtMeshAsset;
+
+	/** Size (cm) the art mesh is scaled to. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Art")
+	FVector ArtSize = FVector(55.f, 55.f, 90.f);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Art")
+	TObjectPtr<UStaticMeshComponent> ArtMesh;
+
 
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FExplosivePropSignature OnArmed;

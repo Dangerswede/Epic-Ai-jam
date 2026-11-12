@@ -46,6 +46,11 @@ L.cameras([
     ((1000, 200, 600), (1500, 0, -150), 24),      # above the near edge
 ])
 
+# Art pass: Tripo props along the walls (corridor is 5 m wide, path runs down the middle).
+L.film_crew((-450, 170, 0), -20, (-500, -170, 0), 30,
+            lights=[((900, 210, 0), -160), ((1950, -210, 0), 20)],
+            extra=[("StageCrate", (2900, 170, 0), 90, 10), ("PlywoodFlat", (2300, 215, 0), 240, 180)])
+
 L.director(start, "Scene 5: The Gap",
            "Mind the gap. A stunt double who stays standing makes a fine stepping stone.",
            par=3, max_takes=5, duration=25,

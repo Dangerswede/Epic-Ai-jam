@@ -141,3 +141,65 @@ def director(start, title, shot_list, par, max_takes, duration, bonus=None):
         d.set_editor_property("ghost_class", gc)
     set_bonus(d, bonus)
     return d
+
+
+# ---------------------------------------------------------------------------- art pass (Tripo props)
+ART_ROOT = "/Game/Retake/Art/Meshes"
+
+
+def art(name):
+    """Loads an imported prop mesh, e.g. art('StageCrate'); None if it isn't imported."""
+    path = "%s/SM_%s/StaticMeshes/SM_%s" % (ART_ROOT, name, name)
+    return unreal.load_asset(path) if eal.does_asset_exist(path) else None
+
+
+def prop(name, loc, height, yaw=0.0, label=None):
+    """Decorative prop (no collision), uniformly scaled so it is `height` cm tall. Keep props off play paths."""
+    mesh = art(name)
+    if not mesh:
+        log("prop %s not imported - skipped" % name)
+        return None
+    a = spawn(unreal.StaticMeshActor, loc, (0, yaw, 0), label or ("Prop_" + name), "Dressing")
+    comp = a.static_mesh_component
+    comp.set_static_mesh(mesh)
+    comp.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    b = mesh.get_bounding_box()
+    s = height / max(1.0, b.max.z - b.min.z)
+    a.set_actor_scale3d(unreal.Vector(s, s, s))
+    return a
+
+
+def set_art(actor, name):
+    """Gameplay actor (crate, plate, lever, explosive): show the prop, keep the graybox as invisible collision."""
+    mesh = art(name)
+    if mesh and actor:
+        actor.set_editor_property("art_mesh_asset", mesh)
+
+
+def overlay_static(actor, name):
+    """Static graybox box (e.g. cover crates): put a prop of the same size on it and hide the box (it still collides)."""
+    mesh = art(name)
+    if not (mesh and actor):
+        return
+    b = actor.get_actor_bounds(False)
+    origin, extent = b[0], b[1]
+    p = spawn(unreal.StaticMeshActor, (origin.x, origin.y, origin.z - extent.z), (0, 0, 0), actor.get_actor_label() + "_Art", "Dressing")
+    comp = p.static_mesh_component
+    comp.set_static_mesh(mesh)
+    comp.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    mb = mesh.get_bounding_box()
+    size = mb.max - mb.min
+    p.set_actor_scale3d(unreal.Vector(2 * extent.x / max(1.0, size.x), 2 * extent.y / max(1.0, size.y), 2 * extent.z / max(1.0, size.z)))
+    actor.set_actor_hidden_in_game(True)
+    actor.static_mesh_component.set_visibility(False)
+
+
+def film_crew(cam_loc, cam_yaw, chair_loc, chair_yaw, lights=(), extra=()):
+    """The usual set dressing: camera on tripod, director's chair with clapperboard, studio lights, extras."""
+    prop("CinemaCamera", cam_loc, 170, cam_yaw)
+    prop("DirectorChair", chair_loc, 100, chair_yaw)
+    prop("Clapperboard", (chair_loc[0] + 70, chair_loc[1], chair_loc[2]), 35, chair_yaw + 30)
+    for loc, yaw in lights:
+        prop("StudioSpotlight", loc, 230, yaw)
+    for name, loc, height, yaw in extra:
+        prop(name, loc, height, yaw)

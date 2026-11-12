@@ -61,4 +61,14 @@ namespace RetakeVisuals
 
 	/** Loads an engine basic shape: Cube, Cylinder, Sphere, Plane, Cone. */
 	EPICAIJAM_API class UStaticMesh* LoadBasicShape(const TCHAR* Name);
+
+	/**
+	 * Art pass: show ArtAsset (pivot bottom-centre, any size) in ArtComp, scaled to TargetSize (world cm)
+	 * and standing where Graybox's bottom is; the graybox stays as the invisible collision shape.
+	 * With no ArtAsset the graybox is shown again.
+	 */
+	EPICAIJAM_API void ApplyArt(UStaticMeshComponent* Graybox, UStaticMeshComponent* ArtComp, UStaticMesh* ArtAsset, const FVector& TargetSize);
+
+	/** Creates the (collision-free) art mesh component; call from a constructor. */
+	EPICAIJAM_API UStaticMeshComponent* CreateArtComponent(AActor* Owner, USceneComponent* Parent);
 }

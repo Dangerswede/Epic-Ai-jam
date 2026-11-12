@@ -29,6 +29,7 @@ APushCrate::APushCrate()
 	CrateMesh->SetGenerateOverlapEvents(true);
 	CrateMesh->SetMobility(EComponentMobility::Movable);
 	CrateMesh->SetSimulatePhysics(false);
+	ArtMesh = RetakeVisuals::CreateArtComponent(this, CrateMesh);
 
 	// Crates press pressure plates.
 	Tags.Add(TEXT("RetakeWeight"));
@@ -39,6 +40,7 @@ void APushCrate::OnConstruction(const FTransform& Transform)
 	Super::OnConstruction(Transform);
 	// The engine cube is centered, 100 cm. Root scale sets the size.
 	SetActorScale3D(Size / 100.f);
+	RetakeVisuals::ApplyArt(CrateMesh, ArtMesh, ArtMeshAsset, ArtSize.IsNearlyZero() ? Size : ArtSize);
 }
 
 void APushCrate::BeginPlay()

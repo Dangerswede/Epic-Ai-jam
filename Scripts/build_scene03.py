@@ -74,6 +74,14 @@ L.cameras([
     ((4600, 0, 250), (3000, 0, 50), 35),         # exit looking back
 ])
 
+# Art pass: Tripo props. The long bridge crate stays graybox (no long prop yet).
+L.set_art(plate, "PressurePlate")
+L.set_art(bomb, "Dynamite")
+L.film_crew((-450, 650, 0), -30, (-500, 900, 0), -60,
+            lights=[((750, 850, 0), -150), ((-500, -900, 0), 40)],
+            extra=[("Scaffolding", (2500, 650, 0), 600, 0), ("Scaffolding", (3900, -650, 0), 600, 0),
+                   ("PlywoodFlat", (700, -950, 0), 260, 90), ("StageCrate", (-450, -500, 0), 90, 15)])
+
 L.director(start, "Scene 3: The Chase",
            "Big finale energy. Blow the wall, bridge the gap, get out.",
            par=3, max_takes=6, duration=30,

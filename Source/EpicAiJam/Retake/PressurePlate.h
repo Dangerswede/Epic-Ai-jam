@@ -20,6 +20,19 @@ public:
 	APressurePlate();
 
 	virtual void ResetForTake() override;
+	virtual void OnConstruction(const FTransform& Transform) override;
+
+	/** Art pass: optional prop mesh shown instead of the graybox (which stays as the collision). Pivot bottom-centre. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Art")
+	TObjectPtr<UStaticMesh> ArtMeshAsset;
+
+	/** Size (cm) the art mesh is scaled to. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Art")
+	FVector ArtSize = FVector(150.f, 150.f, 16.f);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Art")
+	TObjectPtr<UStaticMeshComponent> ArtMesh;
+
 
 	/** Actors with this tag also press the plate (e.g. crates). Characters always do. */
 	UPROPERTY(EditAnywhere, Category = "Retake")
