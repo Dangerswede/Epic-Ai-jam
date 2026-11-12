@@ -127,6 +127,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeTakeStarted OnTakeScrapped;
 
+	/** The current take was restarted with Q (TakeNumber = the take that rolls again). */
+	UPROPERTY(BlueprintAssignable, Category = "Retake")
+	FRetakeTakeStarted OnTakeRetaken;
+
 	/** Cut at MaxTakes: the last take was scrapped automatically. */
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeSceneEvent OnOutOfFilm;
@@ -151,9 +155,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void NotifyPlayerKilled();
 
-	/** Backspace: throw away the current take and the last finished one, then roll that take again. Only while Rolling with at least one take. */
+	/** Backspace: throw away the current take and the last finished one, then roll that take again (go back one take). Only while Rolling with at least one take. */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void ScrapLastTake();
+
+	/** Q: throw away only the take being recorded and roll the same take again from the top. Only while Rolling. */
+	UFUNCTION(BlueprintCallable, Category = "Retake")
+	void RetakeCurrentTake();
 
 	/** Stunt death (explosion, laser, guard): launch the player away from Origin, short slow-mo, record StuntTailSeconds more, then cut. */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
@@ -242,6 +250,12 @@ private:
 
 	UFUNCTION()
 	void HandlePlayerScrap();
+
+	UFUNCTION()
+	void HandlePlayerRetake();
+
+	/** Stop recording/ghosts/timer of the rolling take without keeping it. False if not Rolling (or dying). */
+	bool AbortRollingTake();
 
 	int32 TotalTakesShot = 0;
 	bool bDying = false;
