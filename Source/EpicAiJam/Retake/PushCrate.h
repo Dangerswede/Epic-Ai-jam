@@ -11,7 +11,7 @@ class UStaticMeshComponent;
  * Crate moved only by kinematic sweeps (no physics simulation), so pushes replay deterministically.
  * - Player walking into a face: crate slides along that axis at PushSpeed, player records a Push action.
  * - Ghost: when its recorded frame has Push, the crate is placed in front of the ghost's recorded position.
- * - Unsupported crates fall straight down (constant speed) - push one into a gap to bridge it.
+ * - A crate falls straight down (constant speed) once no part of its bottom is supported - push it fully over a gap to bridge it.
  * (Godot: an AnimatableBody3D moved with move_and_collide instead of a RigidBody3D.)
  */
 UCLASS()
@@ -25,9 +25,9 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void ResetForTake() override;
 
-	/** Edge length of the cube in cm. */
+	/** Crate size in cm (X length, Y width, Z height), in the crate's local space. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Retake")
-	float Size = 120.f;
+	FVector Size = FVector(120.f, 120.f, 120.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Retake")
 	float PushSpeed = 220.f;

@@ -35,7 +35,8 @@ def recreate(path):
 # ---------------------------------------------------------------- ghost material
 def make_ghost_material():
     path = MAT_DIR + "/M_Ghost"
-    recreate(path)
+    if eal.does_asset_exist(path):
+        return unreal.load_asset(path)  # referenced by BP_TakeGhost; keep it
     mat = asset_tools.create_asset("M_Ghost", MAT_DIR, unreal.Material, unreal.MaterialFactoryNew())
     mat.set_editor_property("blend_mode", unreal.BlendMode.BLEND_TRANSLUCENT)
     mat.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_UNLIT)
@@ -60,7 +61,8 @@ def make_ghost_material():
 # ---------------------------------------------------------------- ghost blueprint
 def make_ghost_blueprint(ghost_mat):
     path = BP_DIR + "/BP_TakeGhost"
-    recreate(path)
+    if eal.does_asset_exist(path):
+        return unreal.BlueprintEditorLibrary.generated_class(unreal.load_asset(path))
     factory = unreal.BlueprintFactory()
     factory.set_editor_property("parent_class", unreal.TakeGhost)
     bp = asset_tools.create_asset("BP_TakeGhost", BP_DIR, None, factory)
@@ -96,10 +98,10 @@ def box(label, center, size, rot=(0, 0, 0)):
 
 def build_level(ghost_class):
     les = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    if eal.does_asset_exist(MAP_PATH):
-        eal.delete_asset(MAP_PATH)
-    if not les.new_level(MAP_PATH):
-        raise RuntimeError("new_level failed")
+    import os, sys
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else r"D:\Projekt\EpicAiJam\Scripts")
+    import retake_levels
+    retake_levels.new_map(MAP_PATH)
 
     # Studio floor: 6000 x 4000, top at z = 0.
     box("StudioFloor", (1500, 0, -10), (6000, 4000, 20))
@@ -158,7 +160,20 @@ def build_level(ghost_class):
     if ghost_class:
         director.set_editor_property("ghost_class", ghost_class)
 
-    les.save_current_level()
+    # Director's Cut cameras (T10).
+    import os
+    import sys
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else r"D:\Projekt\EpicAiJam\Scripts")
+    import retake_levels as L
+    director.set_editor_property("par_takes", 2)
+    L.cameras([
+        ((-700, -1600, 1300), (1500, 0, 150), 18),   # wide
+        ((2400, 900, 250), (1800, 0, 350), 30),      # gate from below, near the plate
+        ((900, -700, 600), (1800, 0, 300), 35),      # bridge side
+        ((3100, 300, 600), (2300, 0, 300), 28),      # goal end looking back
+    ])
+
+    L.save_map(MAP_PATH)
     log("Saved " + MAP_PATH)
 
 

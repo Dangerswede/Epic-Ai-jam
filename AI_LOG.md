@@ -19,3 +19,4 @@ How AI tools were used during development.
 | 2026-11-12 | Claude Code | T6: AStuntGuard (patrol/chase/stuck state machine, sight cone + line trace), ALaserBeam (activator-disabled), Caught cut reason | Build verified |
 | 2026-11-12 | Claude Code | T7: AExplosiveProp (fuse, breaks BreakableWall-tagged actors, player cut, OnExploded, optional Niagara), APushCrate (kinematic sweep push, ghost push follows recorded position, kinematic fall) | Build verified |
 | 2026-11-12 | Claude Code | T8: URetakeHUDWidget, URetakeResultsWidget, UCallSheetMenuWidget (widget trees built in C++), ARetakeHUD/MenuHUD, URetakeSaveGame, MainMenu map (Scripts/build_mainmenu.py), Space-to-roll | Build verified |
+| 2026-11-12 | Claude Code | T9: Scene02_Heist and Scene03_Chase graybox levels via Scripts/build_scene02.py, build_scene03.py and shared Scripts/retake_levels.py (also Director's Cut cameras); PushCrate size is now a vector with corner-based support | Levels verified by script |

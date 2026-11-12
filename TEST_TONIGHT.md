@@ -71,3 +71,17 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 45. Open `Content/Retake/Maps/MainMenu` and Play (or run the packaged game; it now starts here): **Call sheet** with 3 scene rows. Scene 1 READY, 2 and 3 LOCKED (greyed). After wrapping Scene 1 it shows WRAPPED (N takes) and Scene 2 unlocks (Scene 2/3 maps arrive in T9).
 46. QUIT closes the game (in PIE it ends the session).
 47. Reset progress: delete `Saved/SaveGames/RetakeProgress.sav`.
+
+## T9 – Scene02_Heist and Scene03_Chase (open from Content/Retake/Maps, or via the menu once unlocked)
+48. **Heist** (par 3): vault at the far end behind 3 red lasers; lever in the right-hand alcove area; guard patrolling in front of it.
+    - Take 1: walk into the guard's view, then run far away (e.g. back-left corner). Getting caught is fine.
+    - Take 2: while the guard chases ghost 1, pull the lever (E). Lasers disappear.
+    - Take 3: walk through the door, into the vault, onto the money bag (blue disc).
+    Check: guard really follows ghost 1 long enough; lasers kill you when on; 3 takes feels right (2 might be possible = fine).
+49. **Chase** (par 3): plate in the start room opens the corridor gate; red barrel next to a wall; a long brown crate; a wide pit; exit at the end.
+    - Take 1: stand on the plate.
+    - Take 2: go to the barrel, press E. Fuse is only 0.5 s and radius 5 m: you get blown up (that's the stunt).
+    - Take 3: stay in the start room until the bang, then go through, push the long crate (walk into its back) until it drops into the pit, walk over it, reach the exit.
+    Check: crate drops flush with the floor; the pit can't be jumped; falling in = CUT.
+50. Unlock flow: wrap Scene 1 → menu shows Scene 2 READY, etc.
+51. Packaged build: `Builds\Windows\EpicAiJam.exe` starts in the main menu.

@@ -36,7 +36,7 @@ void APushCrate::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 	// The engine cube is centered, 100 cm. Root scale sets the size.
-	SetActorScale3D(FVector(Size / 100.f));
+	SetActorScale3D(Size / 100.f);
 }
 
 void APushCrate::BeginPlay()
@@ -53,25 +53,28 @@ void APushCrate::ResetForTake()
 
 bool APushCrate::GetContactFace(const AActor* Pusher, FVector& OutDir, float& OutAxisDist) const
 {
-	const float Half = Size * 0.5f;
+	const FVector Half = Size * 0.5f;
 	const FVector Local = GetActorTransform().InverseTransformPositionNoScale(Pusher->GetActorLocation());
 
 	// Pusher must be vertically overlapping the crate (feet below the top).
 	const float FeetZ = Local.Z - 96.f;
-	if (FeetZ > Half - 10.f || Local.Z + 96.f < -Half)
+	if (FeetZ > Half.Z - 10.f || Local.Z + 96.f < -Half.Z)
 	{
 		return false;
 	}
 
-	const bool bXAxis = FMath::Abs(Local.X) >= FMath::Abs(Local.Y);
+	// Pick the face the pusher is closest to, relative to the crate's proportions.
+	const bool bXAxis = (FMath::Abs(Local.X) - Half.X) >= (FMath::Abs(Local.Y) - Half.Y);
 	const float Along = bXAxis ? Local.X : Local.Y;
 	const float Across = bXAxis ? Local.Y : Local.X;
-	if (FMath::Abs(Across) > Half + PawnRadius * 0.5f)
+	const float HalfAlong = bXAxis ? Half.X : Half.Y;
+	const float HalfAcross = bXAxis ? Half.Y : Half.X;
+	if (FMath::Abs(Across) > HalfAcross + PawnRadius * 0.5f)
 	{
 		return false;
 	}
-	OutAxisDist = FMath::Abs(Along);
-	if (OutAxisDist > Half + PawnRadius + ContactSlack)
+	OutAxisDist = FMath::Abs(Along) - HalfAlong; // distance from the face
+	if (OutAxisDist > PawnRadius + ContactSlack)
 	{
 		return false;
 	}
@@ -80,7 +83,6 @@ bool APushCrate::GetContactFace(const AActor* Pusher, FVector& OutDir, float& Ou
 	OutDir = GetActorQuat().RotateVector(LocalDir);
 	return true;
 }
-
 void APushCrate::TryPushBy(AActor* Pusher, float DeltaSeconds)
 {
 	FVector Dir;
@@ -90,7 +92,6 @@ void APushCrate::TryPushBy(AActor* Pusher, float DeltaSeconds)
 		return;
 	}
 
-	const float Contact = Size * 0.5f + PawnRadius;
 	FVector Delta = FVector::ZeroVector;
 
 	if (ARetakeCharacter* Player = Cast<ARetakeCharacter>(Pusher))
@@ -111,7 +112,7 @@ void APushCrate::TryPushBy(AActor* Pusher, float DeltaSeconds)
 		{
 			return;
 		}
-		const float Wanted = Contact - AxisDist; // how far the crate must move to sit just in front
+		const float Wanted = PawnRadius - AxisDist; // how far the crate must move to sit just in front
 		if (Wanted <= 0.f)
 		{
 			return;
@@ -129,26 +130,36 @@ void APushCrate::TryPushBy(AActor* Pusher, float DeltaSeconds)
 
 void APushCrate::ApplyFall(float DeltaSeconds)
 {
-	const float Half = Size * 0.5f;
+	const FVector Half = Size * 0.5f;
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(CrateFloor), false, this);
-	FHitResult Floor;
-	const FVector Start = GetActorLocation();
-	const FVector End = Start - FVector(0.f, 0.f, 10000.f);
-	const float FeetZ = Start.Z - Half;
+	const FTransform Xf = GetActorTransform();
+	const float BottomZ = GetActorLocation().Z - Half.Z;
+
+	// Trace down from the center and the four (slightly inset) bottom corners; highest ground supports the crate.
+	const FVector2D Points[] = {
+		{ 0.f, 0.f },
+		{ Half.X - 5.f, Half.Y - 5.f }, { -Half.X + 5.f, Half.Y - 5.f },
+		{ Half.X - 5.f, -Half.Y + 5.f }, { -Half.X + 5.f, -Half.Y + 5.f },
+	};
 	float GroundZ = -1e9f;
-	if (GetWorld()->LineTraceSingleByChannel(Floor, Start, End, ECC_WorldStatic, Params))
+	for (const FVector2D& P : Points)
 	{
-		GroundZ = Floor.ImpactPoint.Z;
+		const FVector Start = Xf.TransformPositionNoScale(FVector(P.X, P.Y, 0.f));
+		const FVector End = Start - FVector(0.f, 0.f, 10000.f);
+		FHitResult Hit;
+		if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_WorldStatic, Params))
+		{
+			GroundZ = FMath::Max(GroundZ, Hit.ImpactPoint.Z);
+		}
 	}
-	if (FeetZ <= GroundZ + 1.f)
+	if (BottomZ <= GroundZ + 1.f)
 	{
 		return; // supported
 	}
-	// Center is over a gap: drop straight down (no sweep so the ledge corner can't snag it), snap on landing.
-	const float Drop = FMath::Min(FallSpeed * DeltaSeconds, FeetZ - GroundZ);
+	// No support: drop straight down (no sweep so a ledge corner can't snag it), snap on landing.
+	const float Drop = FMath::Min(FallSpeed * DeltaSeconds, BottomZ - GroundZ);
 	AddActorWorldOffset(FVector(0.f, 0.f, -Drop), false, nullptr, ETeleportType::None);
 }
-
 void APushCrate::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
