@@ -207,15 +207,27 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(2000, 250);
 		WaitUntil(TEXT("guard spots the player"), [Guard]() { return Guard->GetGuardState() == EStuntGuardState::Chase; }, 8.f);
 		MoveTo(2300, -1450, 80.f);
-		Wait(1.f);
+		MoveTo(-650, -1450, 80.f); // keep running: the lure only lasts while this take plays (P4)
+		WaitUntil(TEXT("guard catches up (or 8 s)"), [this]() { return Director->GetState() != ERetakeSceneState::Rolling; }, 8.f);
 		Do(TEXT("Press R (cut) if still rolling"), [this]()
 		{
 			if (Director->GetState() == ERetakeSceneState::Rolling) Player->Cut();
 		});
 		// Take 2: while the guard chases ghost 1, pull the lever.
 		NextTake(2);
-		Wait(6.f);
+		WaitUntil(TEXT("ghost 1 drags the guard away from the lever"), [this]()
+		{
+			const AStuntGuard* G = FindFirst<AStuntGuard>();
+			const ALever* L = FindFirst<ALever>();
+			return G->GetGuardState() != EStuntGuardState::Patrol && FVector::Dist2D(G->GetActorLocation(), L->GetActorLocation()) > 1500.f;
+		}, 20.f);
 		MoveTo(1400, 960, 40.f);
+		Check(TEXT("margin: guard still busy and far from the lever"), [this]()
+		{
+			const AStuntGuard* G = FindFirst<AStuntGuard>();
+			const ALever* L = FindFirst<ALever>();
+			return G->GetGuardState() != EStuntGuardState::Patrol && FVector::Dist2D(G->GetActorLocation(), L->GetActorLocation()) > 1200.f;
+		});
 		Interact();
 		Check(TEXT("lever on"), [Lever]() { return Lever->IsActive(); });
 		Check(TEXT("lasers off"), [this]()
@@ -231,7 +243,15 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		// Take 3: wait for ghost 2 to pull the lever, walk into the vault.
 		NextTake(3);
 		Check(TEXT("two ghosts spawned"), [this]() { return Director->GetGhosts().Num() == 2; });
-		MoveTo(1900, -250);
+		// Stay out of sight until ghost 1 has dragged the guard south, then go along the north side.
+		WaitUntil(TEXT("ghost 1 drags the guard away"), [this]()
+		{
+			const AStuntGuard* G = FindFirst<AStuntGuard>();
+			const ALever* L = FindFirst<ALever>();
+			return G->GetGuardState() != EStuntGuardState::Patrol && FVector::Dist2D(G->GetActorLocation(), L->GetActorLocation()) > 1500.f;
+		}, 20.f);
+		MoveTo(1500, 350);
+		MoveTo(2150, 150);
 		WaitUntil(TEXT("ghost 2 pulled the lever -> lasers off"), [this]()
 		{
 			for (TActorIterator<ALaserBeam> It(GetWorld()); It; ++It) { if (It->IsBeamOn()) return false; }
@@ -314,7 +334,8 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(3500, 250);
 		WaitUntil(TEXT("guard spots the player"), [Guard]() { return Guard->GetGuardState() == EStuntGuardState::Chase; }, 8.f);
 		MoveTo(3800, -1400, 80.f);
-		Wait(1.f);
+		MoveTo(2150, -1400, 80.f); // keep running west, away from the laser door (P4)
+		WaitUntil(TEXT("guard catches up (or 8 s)"), [this]() { return Director->GetState() != ERetakeSceneState::Rolling; }, 8.f);
 		CutIfRolling();
 		// Take 4: lever, lasers, crate, rooftop.
 		NextTake(4);
@@ -325,6 +346,10 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		WaitUntil(TEXT("ghost 3 lures the guard"), [Guard]() { return Guard->GetGuardState() != EStuntGuardState::Patrol; }, 15.f);
 		Wait(2.f);
 		MoveTo(2900, 960, 40.f);
+		Check(TEXT("margin: guard still busy and far from the lever"), [Guard, Lever]()
+		{
+			return Guard->GetGuardState() != EStuntGuardState::Patrol && FVector::Dist2D(Guard->GetActorLocation(), Lever->GetActorLocation()) > 1200.f;
+		});
 		Interact();
 		Check(TEXT("lever on"), [Lever]() { return Lever->IsActive(); });
 		Check(TEXT("lasers off"), LasersOff);

@@ -66,6 +66,6 @@ L.cameras([
 
 L.director(start, "Scene 2: The Heist",
            "Three takes. Distract, disable, grab. Make it look easy.",
-           par=3, max_takes=5, duration=25)
+           par=3, max_takes=5, duration=30)
 L.save_map(MAP)
 L.log("Saved " + MAP)

@@ -89,9 +89,16 @@ void AStuntGuard::SetGuardState(EStuntGuardState NewState)
 	}
 }
 
+static bool IsFinishedGhost(const AActor* Actor)
+{
+	const ATakeGhost* Ghost = Cast<ATakeGhost>(Actor);
+	return Ghost && Ghost->HasFinished();
+}
+
 bool AStuntGuard::CanSee(const AActor* Candidate) const
 {
-	if (!IsValid(Candidate) || !Candidate->GetActorEnableCollision() || Candidate->IsHidden())
+	// A ghost whose take has ended is just a frozen prop: it can't keep the guard busy forever.
+	if (!IsValid(Candidate) || !Candidate->GetActorEnableCollision() || Candidate->IsHidden() || IsFinishedGhost(Candidate))
 	{
 		return false;
 	}
@@ -216,7 +223,7 @@ void AStuntGuard::Tick(float DeltaSeconds)
 			Current = Seen;
 			Target = Seen;
 		}
-		if (!IsValid(Current) || !Current->GetActorEnableCollision() ||
+		if (!IsValid(Current) || !Current->GetActorEnableCollision() || IsFinishedGhost(Current) ||
 			FVector::Dist(Current->GetActorLocation(), GetActorLocation()) > SightRange * LoseSightMultiplier)
 		{
 			Target.Reset();
@@ -240,7 +247,7 @@ void AStuntGuard::Tick(float DeltaSeconds)
 		{
 			MoveToward(Ghost->GetActorLocation(), ChaseSpeed); // stay glued to the ghost
 		}
-		if (StuckTimeLeft <= 0.f || !IsValid(Ghost))
+		if (StuckTimeLeft <= 0.f || !IsValid(Ghost) || IsFinishedGhost(Ghost))
 		{
 			IgnoredGhost = Ghost;
 			IgnoreTimeLeft = GhostIgnoreSeconds;
