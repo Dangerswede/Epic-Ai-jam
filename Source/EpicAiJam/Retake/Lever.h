@@ -6,6 +6,7 @@
 #include "Lever.generated.h"
 
 class UStaticMeshComponent;
+class UTextRenderComponent;
 
 /**
  * Toggles on the Interact action (player or ghost) within range.
@@ -36,6 +37,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Retake")
 	TObjectPtr<UStaticMeshComponent> HandleMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Retake")
+	TObjectPtr<UTextRenderComponent> UseLabel;
 
 	UPROPERTY(EditAnywhere, Category = "Retake")
 	float HandleAngle = 35.f;

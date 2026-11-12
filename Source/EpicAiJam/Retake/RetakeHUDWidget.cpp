@@ -81,6 +81,19 @@ void URetakeHUDWidget::BuildTree()
 		S->SetAutoSize(true);
 		BriefingPanel = Sheet;
 	}
+
+	// Key hints, bottom-left, while rolling.
+	{
+		UBorder* Hints = Panel(WidgetTree, Slate(), FMargin(14.f, 6.f));
+		Hints->SetContent(Text(WidgetTree,
+			TEXT("WASD Move   SPACE Jump   E Use   R Cut   BACKSPACE Scrap take   ESC Pause"), 14, Chalk(), ETextJustify::Left, false));
+		UCanvasPanelSlot* S = Canvas->AddChildToCanvas(Hints);
+		S->SetAnchors(FAnchors(0.f, 1.f));
+		S->SetAlignment(FVector2D(0.f, 1.f));
+		S->SetPosition(FVector2D(32.f, -24.f));
+		S->SetAutoSize(true);
+		KeyHints = Hints;
+	}
 }
 
 void URetakeHUDWidget::SetDirector(ARetakeSceneDirector* InDirector)
@@ -137,6 +150,7 @@ void URetakeHUDWidget::HandleStateChanged(ERetakeSceneState NewState, ERetakeSce
 	if (BriefingPanel) BriefingPanel->SetVisibility(bBriefing ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	if (Clapper) Clapper->SetVisibility(bHideAll ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 	if (TimerPanel) TimerPanel->SetVisibility(NewState == ERetakeSceneState::Rolling ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	if (KeyHints) KeyHints->SetVisibility(NewState == ERetakeSceneState::Rolling ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	if (StampText && bHideAll) StampDuration = 0.f, StampText->SetRenderOpacity(0.f);
 
 	switch (NewState)

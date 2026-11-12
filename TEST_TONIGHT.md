@@ -129,3 +129,4 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
 ## Code-review fixes (12 Nov, afternoon)
 70. **P1 – actions only while Rolling:** In the briefing press Space: the take starts but the character does NOT jump. During the red "CUT!" pause press E next to a lever: nothing happens. During the Director's Cut, E/R do nothing (Space still skips).
+71. **P2 – key hints:** while a take is rolling, a dark bar bottom-left reads "WASD Move   SPACE Jump   E Use   R Cut   BACKSPACE Scrap take   ESC Pause" (hidden in briefing/cut/Director's Cut). Levers show a yellow "[E]" above them. Scene 1's shot list now ends with "Press R to call CUT when you're in position. Your take stays where you left it." Ideal check: let someone who hasn't played finish Scene 1 without telling them the keys.

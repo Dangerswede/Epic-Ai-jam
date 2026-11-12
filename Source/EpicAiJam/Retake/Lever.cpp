@@ -1,6 +1,7 @@
 #include "Retake/Lever.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Components/TextRenderComponent.h"
 
 ALever::ALever()
 {
@@ -20,6 +21,16 @@ ALever::ALever()
 	HandleMesh->SetRelativeScale3D(FVector(0.25f, 0.25f, 2.5f));
 	HandleMesh->SetMobility(EComponentMobility::Movable);
 	HandleMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	UseLabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("UseLabel"));
+	UseLabel->SetupAttachment(BaseMesh);
+	UseLabel->SetUsingAbsoluteScale(true);
+	UseLabel->SetRelativeLocation(FVector(0.f, 0.f, 420.f)); // ~125 cm above the base (base is scaled 0.3 in Z)
+	UseLabel->SetHorizontalAlignment(EHTA_Center);
+	UseLabel->SetWorldSize(40.f);
+	UseLabel->SetTextRenderColor(FColor(255, 200, 0));
+	UseLabel->SetText(FText::FromString(TEXT("[E]")));
+	UseLabel->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ALever::BeginPlay()

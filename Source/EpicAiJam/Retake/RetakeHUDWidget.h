@@ -48,6 +48,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> SceneTitleText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TakeText;
 	UPROPERTY(Transient) TObjectPtr<UWidget> TimerPanel;
+	UPROPERTY(Transient) TObjectPtr<UWidget> KeyHints;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TimerText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> StampText;
 	UPROPERTY(Transient) TObjectPtr<UWidget> BriefingPanel;

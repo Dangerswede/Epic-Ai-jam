@@ -155,7 +155,8 @@ def build_level(ghost_class):
     director = spawn(unreal.RetakeSceneDirector, (0, 0, 200), label="SceneDirector")
     director.set_editor_property("scene_title", "Scene 1: The Bridge")
     director.set_editor_property("shot_list_text",
-                                 "Take it slow. One of you holds the gate, the other walks the bridge.")
+                                 "Take it slow. One of you holds the gate, the other walks the bridge. "
+                                 "Press R to call CUT when you're in position. Your take stays where you left it.")
     director.set_editor_property("player_start", start)
     if ghost_class:
         director.set_editor_property("ghost_class", ghost_class)
