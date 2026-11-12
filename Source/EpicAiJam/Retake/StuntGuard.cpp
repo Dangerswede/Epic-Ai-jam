@@ -158,7 +158,7 @@ void AStuntGuard::OnCaught(AActor* Caught)
 	{
 		if (ARetakeSceneDirector* Director = ARetakeSceneDirector::Get(this))
 		{
-			Director->CutTake(ERetakeCutReason::Caught);
+			Director->BeginStuntDeath(ERetakeCutReason::Caught, GetActorLocation());
 		}
 		Target.Reset();
 		SetGuardState(EStuntGuardState::Patrol);

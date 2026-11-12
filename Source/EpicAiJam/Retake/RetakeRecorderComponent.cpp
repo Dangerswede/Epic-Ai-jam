@@ -67,6 +67,11 @@ FTakeData URetakeRecorderComponent::StopRecording()
 		return LastTake;
 	}
 
+	// Make sure actions flagged right before the stop (e.g. Died) land on a final frame.
+	if (PendingActions != 0)
+	{
+		SampleFrame();
+	}
 	bRecording = false;
 	SetComponentTickEnabled(false);
 

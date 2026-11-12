@@ -11,8 +11,20 @@ enum class ERetakeAction : uint8
 	Jump     = 1 << 0,
 	Interact = 1 << 1,
 	Push     = 1 << 2,
+	Died     = 1 << 3,  // stunt death: set on the last frame of the take
 };
 ENUM_CLASS_FLAGS(ERetakeAction);
+
+/** Why a take ended. */
+UENUM(BlueprintType)
+enum class ERetakeCutReason : uint8
+{
+	PlayerCut,  // player pressed R
+	Killed,     // explosion, laser or kill volume
+	TimeUp,     // TakeDurationSeconds ran out
+	Caught,     // a guard caught the player
+	Wrapped,    // reached the goal (the winning take)
+};
 
 /** One fixed-rate (30 Hz) sample of an actor. Never raw input or physics state. */
 USTRUCT(BlueprintType)
@@ -60,4 +72,11 @@ struct EPICAIJAM_API FTakeData
 	/** Length in seconds (time of the last frame). */
 	UPROPERTY(BlueprintReadOnly, Category = "Retake")
 	float Duration = 0.f;
+
+	/** How the take ended. */
+	UPROPERTY(BlueprintReadOnly, Category = "Retake")
+	ERetakeCutReason EndReason = ERetakeCutReason::PlayerCut;
+
+	/** True if the last frame carries the Died action (the ghost ends lying down). */
+	bool EndsInDeath() const { return Frames.Num() > 0 && Frames.Last().HasAction(ERetakeAction::Died); }
 };

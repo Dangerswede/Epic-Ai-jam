@@ -114,7 +114,7 @@ void AExplosiveProp::Explode()
 		{
 			if (ARetakeSceneDirector* Director = ARetakeSceneDirector::Get(this))
 			{
-				Director->NotifyPlayerKilled();
+				Director->BeginStuntDeath(ERetakeCutReason::Killed, Center);
 			}
 		}
 	}

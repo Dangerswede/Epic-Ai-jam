@@ -12,6 +12,7 @@
 #include "Retake/RetakeSaveGame.h"
 #include "Retake/TakeGhost.h"
 #include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogRetakeDirector, Log, All);
 
@@ -233,6 +234,9 @@ void ARetakeSceneDirector::StartRolling()
 	}
 
 	GetWorldTimerManager().ClearTimer(StateTimer);
+	GetWorldTimerManager().ClearTimer(DeathTimer);
+	bDying = false;
+	UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
 	CurrentTakeNumber = Takes.Num() + 1;
 
 	ResetResettables();
@@ -286,6 +290,7 @@ void ARetakeSceneDirector::CutTake(ERetakeCutReason Reason)
 	if (URetakeRecorderComponent* Recorder = Player->GetRecorder())
 	{
 		Takes.Add(Recorder->StopRecording());
+		Takes.Last().EndReason = Reason;
 	}
 	for (ATakeGhost* Ghost : Ghosts)
 	{
@@ -315,7 +320,7 @@ void ARetakeSceneDirector::HandlePlayerScrap()
 
 void ARetakeSceneDirector::ScrapLastTake()
 {
-	if (State != ERetakeSceneState::Rolling || !Player || Takes.Num() == 0)
+	if (State != ERetakeSceneState::Rolling || !Player || Takes.Num() == 0 || bDying)
 	{
 		return;
 	}
@@ -342,12 +347,56 @@ void ARetakeSceneDirector::ScrapLastTake()
 
 void ARetakeSceneDirector::NotifyPlayerKilled()
 {
+	if (bDying)
+	{
+		return; // already flying from a stunt death; let the tail finish
+	}
 	CutTake(ERetakeCutReason::Killed);
+}
+
+void ARetakeSceneDirector::BeginStuntDeath(ERetakeCutReason Reason, FVector Origin)
+{
+	if (State != ERetakeSceneState::Rolling || !Player || bDying)
+	{
+		return;
+	}
+	bDying = true;
+	GetWorldTimerManager().ClearTimer(TakeTimer);
+	SetPlayerControl(false);
+
+	// Throw the stunt double away from whatever got them. The flight is recorded as ordinary frames.
+	FVector Away = Player->GetActorLocation() - Origin;
+	Away.Z = 0.f;
+	Away = Away.IsNearlyZero() ? -Player->GetActorForwardVector() : Away.GetSafeNormal();
+	Player->LaunchCharacter(Away * 900.f + FVector::UpVector * 700.f, true, true);
+	Player->PlayStuntShake();
+
+	// Brief slow-mo hit: 0.3x for 0.25 real seconds (timers run in dilated game time).
+	if (StuntSlowMoDilation < 1.f)
+	{
+		UGameplayStatics::SetGlobalTimeDilation(this, StuntSlowMoDilation);
+		FTimerHandle SlowMo;
+		GetWorldTimerManager().SetTimer(SlowMo, FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
+		}), 0.25f * StuntSlowMoDilation, false);
+	}
+
+	UE_LOG(LogRetakeDirector, Log, TEXT("Stunt death (%s)"), *UEnum::GetValueAsString(Reason));
+	GetWorldTimerManager().SetTimer(DeathTimer, FTimerDelegate::CreateWeakLambda(this, [this, Reason]()
+	{
+		if (Player && Player->GetRecorder())
+		{
+			Player->GetRecorder()->RecordAction(ERetakeAction::Died); // lands on the take's last frame
+		}
+		UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
+		CutTake(Reason);
+	}), FMath::Max(0.01f, StuntTailSeconds), false);
 }
 
 void ARetakeSceneDirector::NotifyGoalReached(AActor* Who)
 {
-	if (State != ERetakeSceneState::Rolling || !Player || Who != Player)
+	if (State != ERetakeSceneState::Rolling || !Player || Who != Player || bDying)
 	{
 		return;
 	}
@@ -357,6 +406,7 @@ void ARetakeSceneDirector::NotifyGoalReached(AActor* Who)
 	if (URetakeRecorderComponent* Recorder = Player->GetRecorder())
 	{
 		Takes.Add(Recorder->StopRecording());
+		Takes.Last().EndReason = ERetakeCutReason::Wrapped;
 	}
 	for (ATakeGhost* Ghost : Ghosts)
 	{

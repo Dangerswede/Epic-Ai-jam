@@ -60,6 +60,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	bool AreActionsEnabled() const { return bActionsEnabled; }
 
+	/** Small camera shake (jitters the spring arm's socket offset) for stunt deaths. */
+	void PlayStuntShake(float Duration = 0.3f, float Amplitude = 14.f);
+
+	virtual void Tick(float DeltaSeconds) override;
+
 	URetakeRecorderComponent* GetRecorder() const { return Recorder; }
 	USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	UCameraComponent* GetFollowCamera() const { return FollowCamera; }
@@ -125,6 +130,10 @@ public:
 
 private:
 	bool bActionsEnabled = true;
+	float ShakeTimeLeft = 0.f;
+	float ShakeDuration = 0.f;
+	float ShakeAmplitude = 0.f;
+	FVector BaseSocketOffset = FVector::ZeroVector;
 
 	void BuildDefaultInput();
 	void AddMappingContext();

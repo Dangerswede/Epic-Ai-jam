@@ -282,10 +282,24 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		Check(TEXT("explosive armed"), [Bomb]() { return Bomb->IsArmed(); });
 		WaitUntil(TEXT("take 2 cut by the blast"), [this]() { return Director->GetState() == ERetakeSceneState::Cut; }, 5.f);
 		Check(TEXT("wall broken"), [Wall]() { return Wall && Wall->IsHidden(); });
+		// P5: stunt death - thrown at least 3 m, last frame carries Died.
+		Check(TEXT("take 2 is a stunt death (thrown, Died on last frame)"), [this, Bomb]()
+		{
+			const FTakeData& T = Director->GetTakes()[1];
+			const float Thrown = FVector::Dist2D(T.Frames.Last().Location, Bomb->GetActorLocation());
+			UE_LOG(LogRetakeTest, Display, TEXT("  thrown to %.0f cm from the bomb"), Thrown);
+			return T.EndsInDeath() && T.EndReason == ERetakeCutReason::Killed && Thrown > 300.f;
+		});
 		// Take 3: wait for ghost 2's blast, then push the crate into the pit and escape.
 		NextTake(3);
 		Check(TEXT("wall restored for the new take"), [Wall]() { return Wall && !Wall->IsHidden(); });
 		WaitUntil(TEXT("ghost 2 armed it -> explosion"), [Bomb]() { return Bomb->HasExploded(); }, 25.f);
+		WaitUntil(TEXT("ghost 2 flies the same way and stays down (no collision)"), [this]()
+		{
+			const ATakeGhost* G = Director->GetGhosts().Num() > 1 ? Director->GetGhosts()[1].Get() : nullptr;
+			return G && G->HasFinished() && !G->GetActorEnableCollision() &&
+				FVector::Dist2D(G->GetActorLocation(), Director->GetTakes()[1].Frames.Last().Location) < 5.f;
+		}, 5.f);
 		MoveTo(700, -110);
 		MoveTo(1650, -110);
 		MoveTo(1940, 0, 30.f);

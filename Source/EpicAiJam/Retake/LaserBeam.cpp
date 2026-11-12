@@ -104,7 +104,12 @@ void ALaserBeam::Tick(float DeltaSeconds)
 		{
 			if (ARetakeSceneDirector* Director = ARetakeSceneDirector::Get(this))
 			{
-				Director->NotifyPlayerKilled();
+				// Thrown back the way they came: origin = closest point on the beam, nudged through to the far side.
+				const FVector Start = GetActorLocation();
+				const FVector Dir = GetActorForwardVector();
+				const FVector OnBeam = Start + Dir * FMath::Clamp(FVector::DotProduct(Actor->GetActorLocation() - Start, Dir), 0.f, BeamLength);
+				const FVector Push = Actor->GetVelocity().GetSafeNormal2D();
+				Director->BeginStuntDeath(ERetakeCutReason::Killed, Push.IsNearlyZero() ? OnBeam : OnBeam + Push * 100.f);
 			}
 			break;
 		}

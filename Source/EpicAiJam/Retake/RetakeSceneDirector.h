@@ -22,15 +22,6 @@ enum class ERetakeSceneState : uint8
 	Results,
 };
 
-UENUM(BlueprintType)
-enum class ERetakeCutReason : uint8
-{
-	PlayerCut,  // player pressed R
-	Killed,     // kill volume
-	TimeUp,     // TakeDurationSeconds ran out
-	Caught,     // a guard caught the player
-};
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FRetakeStateChanged, ERetakeSceneState, NewState, ERetakeSceneState, OldState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FRetakeTakeStarted, int32, TakeNumber);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FRetakeTakeCut, int32, TakeNumber, ERetakeCutReason, Reason);
@@ -88,6 +79,14 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Timing", meta = (ClampMin = "0.0"))
 	float SceneFailedSeconds = 3.f;
+
+	/** Seconds the recorder keeps running after a stunt death (the flight ends up in the take). */
+	UPROPERTY(EditAnywhere, Category = "Timing", meta = (ClampMin = "0.0"))
+	float StuntTailSeconds = 0.6f;
+
+	/** Global time dilation for the brief hit-stop on a stunt death (1 = off). */
+	UPROPERTY(EditAnywhere, Category = "Timing", meta = (ClampMin = "0.05", ClampMax = "1.0"))
+	float StuntSlowMoDilation = 0.3f;
 
 	/** Pause after scrapping a take before rolling again. */
 	UPROPERTY(EditAnywhere, Category = "Timing", meta = (ClampMin = "0.0"))
@@ -148,6 +147,13 @@ public:
 	/** Backspace: throw away the current take and the last finished one, then roll that take again. Only while Rolling with at least one take. */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void ScrapLastTake();
+
+	/** Stunt death (explosion, laser, guard): launch the player away from Origin, short slow-mo, record StuntTailSeconds more, then cut. */
+	UFUNCTION(BlueprintCallable, Category = "Retake")
+	void BeginStuntDeath(ERetakeCutReason Reason, FVector Origin);
+
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	bool IsDying() const { return bDying; }
 
 	/** Every take that was rolled to a cut or wrap since the scene (re)started, including scrapped ones. */
 	UFUNCTION(BlueprintPure, Category = "Retake")
@@ -230,6 +236,8 @@ private:
 	void HandlePlayerScrap();
 
 	int32 TotalTakesShot = 0;
+	bool bDying = false;
+	FTimerHandle DeathTimer;
 
 	bool bLastWrapNewBest = false;
 	ERetakeSceneState State = ERetakeSceneState::None;

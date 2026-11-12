@@ -20,7 +20,8 @@
 
 ARetakeCharacter::ARetakeCharacter()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = false; // only ticks while shaking
 
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.f);
 
@@ -231,6 +232,38 @@ void ARetakeCharacter::Interact()
 	RetakeInteraction::PerformInteract(this, InteractRadius);
 	OnInteract.Broadcast();
 	NotifyAction(ERetakeAction::Interact);
+}
+
+void ARetakeCharacter::PlayStuntShake(float Duration, float Amplitude)
+{
+	if (ShakeTimeLeft <= 0.f)
+	{
+		BaseSocketOffset = CameraBoom->SocketOffset;
+	}
+	ShakeDuration = FMath::Max(0.01f, Duration);
+	ShakeTimeLeft = ShakeDuration;
+	ShakeAmplitude = Amplitude;
+	SetActorTickEnabled(true);
+}
+
+void ARetakeCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	if (ShakeTimeLeft <= 0.f)
+	{
+		SetActorTickEnabled(false);
+		return;
+	}
+	// Real time, so the shake isn't stretched by the slow-mo.
+	const float Dilation = FMath::Max(0.01f, GetActorTimeDilation());
+	ShakeTimeLeft -= DeltaSeconds / Dilation;
+	if (ShakeTimeLeft <= 0.f)
+	{
+		CameraBoom->SocketOffset = BaseSocketOffset;
+		return;
+	}
+	const float Strength = ShakeAmplitude * (ShakeTimeLeft / ShakeDuration);
+	CameraBoom->SocketOffset = BaseSocketOffset + FVector(0.f, FMath::FRandRange(-1.f, 1.f), FMath::FRandRange(-1.f, 1.f)) * Strength;
 }
 
 void ARetakeCharacter::Scrap()

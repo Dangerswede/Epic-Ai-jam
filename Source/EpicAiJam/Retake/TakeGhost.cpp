@@ -250,6 +250,17 @@ void ATakeGhost::Finish()
 		Move->Velocity = FVector::ZeroVector;
 		Move->SetMovementMode(MOVE_Walking);
 	}
+
+	// A take that ended in a stunt death: the stunt double stays down. No collision, so it
+	// doesn't weigh down plates and the guard can't see it.
+	if (Take.EndsInDeath())
+	{
+		BodyMesh->SetRelativeRotation(FRotator(90.f, 0.f, 0.f));
+		BodyMesh->SetRelativeLocation(FVector(0.f, 0.f, -60.f));
+		GetMesh()->SetRelativeRotation(GetMesh()->GetRelativeRotation() + FRotator(0.f, 0.f, 90.f));
+		TakeLabel->SetRelativeLocation(FVector(0.f, 0.f, 20.f));
+		SetActorEnableCollision(false);
+	}
 	OnFinished.Broadcast(this);
 }
 
