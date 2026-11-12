@@ -27,3 +27,13 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 12. Walk somewhere, press **R**. Expected: `CUT! Take 1 (PlayerCut)`, control frozen ~2 s, then you are back at the start and a ghost "TAKE 1" replays your route while you play take 2.
 13. Do R a few more times: ghosts for every earlier take play at once. After take 5: `SceneFailed`, then restart at take 1 with no ghosts.
 14. Stand still and let the timer run out: cut reason should be `TimeUp`.
+
+## T4 – Set pieces (test in any level with a RetakeSceneDirector)
+15. Place **PressurePlate**, **Gate**, **Lever**, **GoalZone**, **KillVolume** from Place Actors (search by name).
+16. Select the Gate → Details → *Linked Activators* → add the PressurePlate and the Lever.
+17. Play. Stand on the plate: plate turns green and sinks, gate slides up. Step off: gate closes.
+18. Walk to the lever, press **E**: handle flips and turns green, gate opens. Press E again: closes.
+19. Press R, then in take 2: the ghost should press the plate/flip the lever exactly when you did, and the gate reacts to the ghost.
+20. A ghost that ended standing on the plate keeps it pressed (gate stays open).
+21. Walk into the GoalZone (blue disc): log shows `That's a wrap!` → `DirectorsCut` (all takes replay together, you're hidden) → `Results`.
+22. Walk into the KillVolume (red wireframe box, visible in editor): `CUT! ... (Killed)`. A ghost walking through it does nothing.
