@@ -48,6 +48,27 @@ def strip_prefix(name, prefix):
     return name[len(prefix):] if name.startswith(prefix) else name
 
 
+def default_orm_texture():
+    """A 4x4 white linear (non-sRGB, Masks) texture so the ORM sampler type matches imported ORM maps."""
+    path = MAT_DIR + "/T_DefaultORM"
+    if not eal.does_asset_exist(path):
+        import struct, tempfile, zlib
+        raw = b"".join(b"\x00" + b"\xff\xff\xff" * 4 for _ in range(4))
+        def chunk(t, d):
+            return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+        png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 4, 4, 8, 2, 0, 0, 0)) \
+            + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+        tmp = os.path.join(tempfile.gettempdir(), "T_DefaultORM.png")
+        with open(tmp, "wb") as f:
+            f.write(png)
+        import_file(tmp, MAT_DIR, "T_DefaultORM")
+        tex = unreal.load_asset(path)
+        tex.set_editor_property("compression_settings", unreal.TextureCompressionSettings.TC_MASKS)
+        tex.set_editor_property("srgb", False)
+        eal.save_loaded_asset(tex)
+    return path
+
+
 # ---------------------------------------------------------------------------- master material
 def make_master():
     if eal.does_asset_exist(MASTER):
@@ -82,12 +103,15 @@ def make_master():
     normal = tex_param("Normal", "/Engine/EngineMaterials/FlatNormal", unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL, -800, 250)
     mel.connect_material_property(normal, "RGB", unreal.MaterialProperty.MP_NORMAL)
 
-    orm = tex_param("ORM", "/Engine/EngineResources/WhiteSquareTexture", unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR, -800, 550)
+    orm = tex_param("ORM", default_orm_texture(), unreal.MaterialSamplerType.SAMPLERTYPE_MASKS, -800, 550)
     mel.connect_material_property(orm, "R", unreal.MaterialProperty.MP_AMBIENT_OCCLUSION)
     mel.connect_material_property(mul(orm, "G", scalar("RoughnessScale", 0.8, -800, 800), "", -400, 600), "", unreal.MaterialProperty.MP_ROUGHNESS)
     mel.connect_material_property(mul(orm, "B", scalar("MetallicScale", 0.0, -800, 900), "", -400, 750), "", unreal.MaterialProperty.MP_METALLIC)
 
-    mel.recompile_material(mat)
+    try:
+        mel.recompile_material(mat)
+    except Exception as e:  # -nullrhi: shaders compile later when the editor/cooker loads it
+        log("  (material not compiled now: %s)" % e)
     eal.save_loaded_asset(mat)
     log("Created " + MASTER)
     return mat
