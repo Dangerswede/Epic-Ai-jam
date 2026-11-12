@@ -51,6 +51,7 @@ private:
 	void Finish(bool bPass, const FString& Message);
 
 	template <typename T> T* FindFirst() const;
+	class APushCrate* FindCrate(bool bBiggest) const;
 
 	ARetakeSceneDirector* Director = nullptr;
 	ARetakeCharacter* Player = nullptr;

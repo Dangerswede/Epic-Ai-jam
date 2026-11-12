@@ -17,6 +17,8 @@
 #include "Retake/PressurePlate.h"
 #include "Retake/PushCrate.h"
 #include "Retake/RetakeCharacter.h"
+#include "Retake/RetakeHUD.h"
+#include "Retake/RetakeHUDWidget.h"
 #include "Retake/RetakeSaveGame.h"
 #include "Retake/RetakeScenes.h"
 #include "Retake/RetakeSceneDirector.h"
@@ -41,6 +43,19 @@ T* ARetakeTestDriver::FindFirst() const
 		return *It;
 	}
 	return nullptr;
+}
+
+APushCrate* ARetakeTestDriver::FindCrate(bool bBiggest) const
+{
+	APushCrate* Best = nullptr;
+	for (TActorIterator<APushCrate> It(GetWorld()); It; ++It)
+	{
+		if (!Best || (bBiggest ? It->Size.X > Best->Size.X : It->Size.X < Best->Size.X))
+		{
+			Best = *It;
+		}
+	}
+	return Best;
 }
 
 // ---------------------------------------------------------------------------- step builders
@@ -118,7 +133,7 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 	// P6: remember where the crate ended in the winning take.
 	Do(TEXT("remember crate position at wrap"), [this]()
 	{
-		const APushCrate* Crate = FindFirst<APushCrate>();
+		const APushCrate* Crate = FindCrate(true);
 		WrapCrateLocation = Crate ? Crate->GetActorLocation() : FVector::ZeroVector;
 	});
 	WaitState((uint8)ERetakeSceneState::DirectorsCut, 10.f);
@@ -131,7 +146,7 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 		}, 60.f);
 		Check(TEXT("crate ends exactly where it did in the winning take"), [this]()
 		{
-			const float D = FVector::Dist(FindFirst<APushCrate>()->GetActorLocation(), WrapCrateLocation);
+			const float D = FVector::Dist(FindCrate(true)->GetActorLocation(), WrapCrateLocation);
 			UE_LOG(LogRetakeTest, Display, TEXT("  crate replay error: %.2f cm"), D);
 			return D < 1.f;
 		});
@@ -158,6 +173,15 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 		return true;
 	});
 	WaitState((uint8)ERetakeSceneState::Results, 90.f);
+	Check(TEXT("stars: 1 wrap, 2 par, 3 par + director's note"), [this, Scene]()
+	{
+		const int32 Stars = Director->GetStars();
+		const int32 Expected = Scene == TEXT("Scene02_Heist") ? 2 : 3; // Heist test lure gets caught -> note missed
+		const URetakeSaveGame* Save = URetakeSaveGame::LoadOrCreate();
+		const int32* Saved = Save ? Save->BestStars.Find(Scene) : nullptr;
+		UE_LOG(LogRetakeTest, Display, TEXT("  stars %d (expected %d), saved %d, note met: %d"), Stars, Expected, Saved ? *Saved : -1, Director->IsBonusMet() ? 1 : 0);
+		return Stars == Expected && Saved && *Saved == Stars;
+	});
 	Check(TEXT("Director's Cut length"), [this, Scene]()
 	{
 		UE_LOG(LogRetakeTest, Display, TEXT("  Director's Cut took %.1f s real time"), DirectorsCutRealSeconds);
@@ -226,6 +250,12 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		Check(TEXT("scrapped: only take 1 kept"), [this]() { return Director->GetTakes().Num() == 1; });
 		// Take 2 (again): the ghost holds the plate; walk the bridge.
 		NextTake(2);
+		Check(TEXT("HUD timeline shows 1 earlier take"), [this]()
+		{
+			const APlayerController* PC = GetWorld()->GetFirstPlayerController();
+			const ARetakeHUD* Hud = PC ? PC->GetHUD<ARetakeHUD>() : nullptr;
+			return Hud && Hud->GetHUDWidget() && Hud->GetHUDWidget()->GetTimelineRowCount() == 1;
+		});
 		Check(TEXT("one ghost spawned"), [this]() { return Director->GetGhosts().Num() == 1; });
 		MoveTo(100, 0);
 		MoveTo(1050, 0);
@@ -345,10 +375,16 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 	else if (Scene == TEXT("Scene04_Finale"))
 	{
 		AGate* Gate = FindFirst<AGate>();
-		AExplosiveProp* Bomb = FindFirst<AExplosiveProp>();
-		APushCrate* Crate = FindFirst<APushCrate>();
+		APushCrate* Crate = FindCrate(true);      // long bridge crate in the alley
+		APushCrate* PropCrate = FindCrate(false); // small prop crate in the start room
 		AStuntGuard* Guard = FindFirst<AStuntGuard>();
 		ALever* Lever = FindFirst<ALever>();
+		APressurePlate* PlateN = nullptr;
+		APressurePlate* PlateS = nullptr;
+		for (TActorIterator<APressurePlate> It(GetWorld()); It; ++It)
+		{
+			(It->GetActorLocation().Y > 0.f ? PlateN : PlateS) = *It;
+		}
 		auto LasersOff = [this]()
 		{
 			for (TActorIterator<ALaserBeam> It(GetWorld()); It; ++It) { if (It->IsBeamOn()) return false; }
@@ -361,23 +397,25 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 				if (Director->GetState() == ERetakeSceneState::Rolling) Player->Cut();
 			});
 		};
+		auto WaitGateOpen = [this, Gate](const TCHAR* Why)
+		{
+			WaitUntil(Why, [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 15.f);
+		};
 
-		// Take 1: hold the plate.
+		// Take 1 (crate trick): push the prop crate onto the north mark, stand on the south mark.
+		MoveTo(200, 180, 20.f);
+		MoveTo(200, 545, 40.f, 10.f);
+		WaitUntil(TEXT("prop crate presses the north plate"), [PlateN]() { return PlateN->IsActive(); }, 5.f);
+		Check(TEXT("one plate is not enough: gate still shut"), [Gate]() { return Gate->GetOpenAlpha() < 0.05f; });
 		MoveTo(200, -700, 40.f);
-		WaitUntil(TEXT("gate open"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 3.f);
+		WaitGateOpen(TEXT("both plates -> gate open"));
 		Wait(0.5f);
 		Cut();
-		// Take 2: arm the explosive, get blown up.
+		// Take 2: ghost 1 repeats the crate trick; lure the guard away.
 		NextTake(2);
 		MoveTo(700, 0);
-		WaitUntil(TEXT("ghost 1 holds the plate -> gate open"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 15.f);
-		MoveTo(1480, 40, 40.f);
-		Interact();
-		WaitUntil(TEXT("take 2 cut by the blast"), [this]() { return Director->GetState() == ERetakeSceneState::Cut; }, 5.f);
-		// Take 3: after ghost 2's blast, lure the guard away.
-		NextTake(3);
-		WaitUntil(TEXT("ghost 2's explosion"), [Bomb]() { return Bomb->HasExploded(); }, 25.f);
-		MoveTo(700, -110);
+		WaitGateOpen(TEXT("ghost 1 holds both marks -> gate open"));
+		Check(TEXT("ghost pushed the prop crate onto the plate again"), [PlateN, PropCrate]() { return PlateN->IsActive() && PropCrate != nullptr; });
 		MoveTo(1900, -110);
 		MoveTo(2700, -600);
 		MoveTo(3500, 250);
@@ -386,13 +424,13 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(2150, -1400, 80.f); // keep running west, away from the laser door (P4)
 		WaitUntil(TEXT("guard catches up (or 8 s)"), [this]() { return Director->GetState() != ERetakeSceneState::Rolling; }, 8.f);
 		CutIfRolling();
-		// Take 4: lever, lasers, crate, rooftop.
-		NextTake(4);
-		Check(TEXT("three ghosts spawned"), [this]() { return Director->GetGhosts().Num() == 3; });
-		WaitUntil(TEXT("ghost 2's explosion"), [Bomb]() { return Bomb->HasExploded(); }, 25.f);
-		MoveTo(700, -110);
+		// Take 3: lever, lasers, crate bridge, rooftop.
+		NextTake(3);
+		Check(TEXT("two ghosts spawned"), [this]() { return Director->GetGhosts().Num() == 2; });
+		MoveTo(700, 0);
+		WaitGateOpen(TEXT("gate open again"));
 		MoveTo(1900, -110);
-		WaitUntil(TEXT("ghost 3 lures the guard"), [Guard]() { return Guard->GetGuardState() != EStuntGuardState::Patrol; }, 15.f);
+		WaitUntil(TEXT("ghost 2 lures the guard"), [Guard]() { return Guard->GetGuardState() != EStuntGuardState::Patrol; }, 15.f);
 		Wait(2.f);
 		MoveTo(2900, 960, 40.f);
 		Check(TEXT("margin: guard still busy and far from the lever"), [Guard, Lever]()
@@ -409,8 +447,7 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(6250, 0);
 		MoveTo(7150, 0);
 		MoveTo(7600, 0);
-	}
-	else
+	}	else
 	{
 		Finish(false, TEXT("no solution script for this scene"));
 		return;

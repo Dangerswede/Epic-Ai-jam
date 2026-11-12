@@ -55,10 +55,25 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TakeText;
 	UPROPERTY(Transient) TObjectPtr<UWidget> TimerPanel;
 	UPROPERTY(Transient) TObjectPtr<UWidget> KeyHints;
+	UPROPERTY(Transient) TObjectPtr<UWidget> TimelinePanel;
+	UPROPERTY(Transient) TObjectPtr<class UCanvasPanel> TimelineCanvas;
+	UPROPERTY(Transient) TObjectPtr<class USizeBox> TimelineSize;
+	UPROPERTY(Transient) TObjectPtr<UWidget> Playhead;
+	float TimelineWidth = 600.f;
+	int32 TimelineRows = 0;
+
+public:
+	/** Number of take rows currently shown in the timeline (for tests). */
+	int32 GetTimelineRowCount() const { return TimelineRows; }
+
+private:
+
+	void RebuildTimeline();
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TimerText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> StampText;
 	UPROPERTY(Transient) TObjectPtr<UWidget> BriefingPanel;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> ShotListText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> NoteText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> HintText;
 
 	float StampTime = 0.f;

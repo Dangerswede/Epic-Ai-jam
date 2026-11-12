@@ -2,6 +2,7 @@
 
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/SizeBox.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Retake/RetakeWidgetUtils.h"
@@ -70,6 +71,8 @@ void URetakeHUDWidget::BuildTree()
 		Box->AddChildToVerticalBox(Text(WidgetTree, TEXT("SHOT LIST"), 14, Red()));
 		ShotListText = Text(WidgetTree, TEXT(""), 22, Ink(), ETextJustify::Left, false);
 		Box->AddChildToVerticalBox(ShotListText)->SetPadding(FMargin(0.f, 6.f));
+		NoteText = Text(WidgetTree, TEXT(""), 18, Red(), ETextJustify::Left);
+		Box->AddChildToVerticalBox(NoteText)->SetPadding(FMargin(0.f, 4.f));
 		HintText = Text(WidgetTree, TEXT("Press Space to roll"), 18, Ink());
 		Box->AddChildToVerticalBox(HintText)->SetPadding(FMargin(0.f, 10.f, 0.f, 0.f));
 		Sheet->SetContent(Box);
@@ -93,6 +96,23 @@ void URetakeHUDWidget::BuildTree()
 		S->SetPosition(FVector2D(32.f, -24.f));
 		S->SetAutoSize(true);
 		KeyHints = Hints;
+	}
+
+	// Timeline of earlier takes, top centre (rows are rebuilt each take).
+	{
+		UBorder* Strip = Panel(WidgetTree, Slate(), FMargin(8.f, 6.f));
+		TimelineCanvas = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass());
+		TimelineSize = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+		TimelineSize->SetWidthOverride(TimelineWidth);
+		TimelineSize->SetHeightOverride(14.f);
+		TimelineSize->SetContent(TimelineCanvas);
+		Strip->SetContent(TimelineSize);
+		UCanvasPanelSlot* S = Canvas->AddChildToCanvas(Strip);
+		S->SetAnchors(FAnchors(0.5f, 0.f));
+		S->SetAlignment(FVector2D(0.5f, 0.f));
+		S->SetPosition(FVector2D(0.f, 28.f));
+		S->SetAutoSize(true);
+		TimelinePanel = Strip;
 	}
 }
 
@@ -128,6 +148,8 @@ void URetakeHUDWidget::RefreshStatic()
 	}
 	SceneTitleText->SetText(D->SceneTitle);
 	ShotListText->SetText(D->ShotListText);
+	NoteText->SetText(D->BonusText.IsEmpty() ? FText::GetEmpty()
+		: FText::FromString(FString::Printf(TEXT("DIRECTOR'S NOTE: %s"), *D->BonusText.ToString())));
 	const int32 Take = FMath::Max(1, D->GetCurrentTakeNumber());
 	TakeText->SetText(FText::FromString(FString::Printf(TEXT("TAKE %d / %d"), Take, D->MaxTakes)));
 	HintText->SetText(FText::FromString(D->bWaitForRollInput ? TEXT("Press Space to roll") : TEXT("Get ready...")));
@@ -154,6 +176,7 @@ void URetakeHUDWidget::HandleStateChanged(ERetakeSceneState NewState, ERetakeSce
 	if (BriefingPanel) BriefingPanel->SetVisibility(bBriefing ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	if (Clapper) Clapper->SetVisibility(bHideAll ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 	if (TimerPanel) TimerPanel->SetVisibility(NewState == ERetakeSceneState::Rolling ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	if (TimelinePanel) TimelinePanel->SetVisibility(NewState == ERetakeSceneState::Rolling ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	if (KeyHints) KeyHints->SetVisibility(NewState == ERetakeSceneState::Rolling ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	if (StampText && bHideAll) StampDuration = 0.f, StampText->SetRenderOpacity(0.f);
 
@@ -172,6 +195,7 @@ void URetakeHUDWidget::HandleStateChanged(ERetakeSceneState NewState, ERetakeSce
 
 void URetakeHUDWidget::HandleTakeStarted(int32 TakeNumber)
 {
+	RebuildTimeline();
 	RefreshStatic();
 	ShowStamp(TEXT("ACTION!"), RetakeUI::Gold(), 1.2f);
 }
@@ -199,9 +223,78 @@ void URetakeHUDWidget::HandleOutOfFilm()
 	ShowStamp(TEXT("OUT OF FILM!\nLast take scrapped"), RetakeUI::Red(), 1.9f);
 }
 
+void URetakeHUDWidget::RebuildTimeline()
+{
+	using namespace RetakeUI;
+	const ARetakeSceneDirector* D = Director.Get();
+	if (!D || !TimelineCanvas)
+	{
+		return;
+	}
+	TimelineCanvas->ClearChildren();
+	const float Total = FMath::Max(1.f, D->TakeDurationSeconds);
+	const TArray<FTakeData>& Takes = D->GetTakes();
+	const float RowH = 12.f;
+	const float Height = FMath::Max(1, Takes.Num()) * RowH + 2.f;
+	TimelineSize->SetHeightOverride(Height);
+	TimelineRows = Takes.Num();
+
+	auto Place = [this](UWidget* W, float X, float Y, float SX, float SY)
+	{
+		UCanvasPanelSlot* S = TimelineCanvas->AddChildToCanvas(W);
+		S->SetPosition(FVector2D(X, Y));
+		S->SetSize(FVector2D(SX, SY));
+		return S;
+	};
+	auto ToX = [this, Total](float Time) { return FMath::Clamp(Time / Total, 0.f, 1.f) * TimelineWidth; };
+
+	for (int32 Row = 0; Row < Takes.Num(); ++Row)
+	{
+		const FTakeData& T = Takes[Row];
+		const float Y = Row * RowH + 2.f;
+		const float EndX = ToX(T.Duration);
+		// Thin bar for the take's length.
+		Place(Panel(WidgetTree, FLinearColor(0.5f, 0.5f, 0.5f, 0.8f), FMargin(0.f)), 0.f, Y + 4.f, FMath::Max(1.f, EndX), 2.f);
+		// Gold ticks where the take pressed E.
+		for (const FTakeFrame& F : T.Frames)
+		{
+			if (F.HasAction(ERetakeAction::Interact))
+			{
+				Place(Panel(WidgetTree, Gold(), FMargin(0.f)), ToX(F.Time) - 3.f, Y + 1.f, 6.f, 8.f);
+			}
+		}
+		// End marker: red X for a stunt death, grey stop otherwise.
+		if (T.EndsInDeath())
+		{
+			UTextBlock* X = Text(WidgetTree, TEXT("X"), 9, Red(), ETextJustify::Center);
+			UCanvasPanelSlot* S = Place(X, EndX - 5.f, Y - 2.f, 10.f, 12.f);
+			S->SetAutoSize(true);
+		}
+		else
+		{
+			Place(Panel(WidgetTree, Chalk(), FMargin(0.f)), EndX - 2.f, Y + 1.f, 4.f, 8.f);
+		}
+	}
+	// Playhead last so it draws on top.
+	Playhead = Panel(WidgetTree, Red(), FMargin(0.f));
+	Place(Playhead, 0.f, 0.f, 2.f, Height);
+}
+
 void URetakeHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
+	if (const ARetakeSceneDirector* PD = Director.Get())
+	{
+		if (Playhead && PD->GetState() == ERetakeSceneState::Rolling)
+		{
+			const float Total = FMath::Max(1.f, PD->TakeDurationSeconds);
+			const float X = FMath::Clamp((Total - PD->GetTakeTimeRemaining()) / Total, 0.f, 1.f) * TimelineWidth;
+			if (UCanvasPanelSlot* S = Cast<UCanvasPanelSlot>(Playhead->Slot))
+			{
+				S->SetPosition(FVector2D(X - 1.f, 0.f));
+			}
+		}
+	}
 
 	if (const ARetakeSceneDirector* D = Director.Get())
 	{
