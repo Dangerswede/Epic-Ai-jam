@@ -4,7 +4,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "RetakeGameMode.generated.h"
 
-/** Default game mode for Retake: spawns ARetakeCharacter as the player pawn. */
+/** Default game mode for Retake scenes: spawns ARetakeCharacter, uses ARetakeHUD. */
 UCLASS()
 class EPICAIJAM_API ARetakeGameMode : public AGameModeBase
 {
@@ -12,4 +12,14 @@ class EPICAIJAM_API ARetakeGameMode : public AGameModeBase
 
 public:
 	ARetakeGameMode();
+};
+
+/** Game mode for the MainMenu map: no pawn, call sheet menu HUD. */
+UCLASS()
+class EPICAIJAM_API ARetakeMenuGameMode : public AGameModeBase
+{
+	GENERATED_BODY()
+
+public:
+	ARetakeMenuGameMode();
 };

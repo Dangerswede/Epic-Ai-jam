@@ -37,6 +37,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeCharacterSignature OnCutRequested;
 
+	/** Fired whenever Space/Jump is pressed, even when a jump isn't possible (used for "roll" / "skip"). */
+	UPROPERTY(BlueprintAssignable, Category = "Retake")
+	FRetakeCharacterSignature OnJumpPressed;
+
 	/** Fired for every recordable discrete action (Jump, Interact, Push). */
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeActionSignature OnActionPerformed;

@@ -61,3 +61,13 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 37. Place a **PushCrate** (brown cube). Walk into one side and keep holding the key: it slides away from you slowly. It stops at walls. It doesn't rotate or tumble.
 38. Push it over a ledge/gap: it drops straight down. In the next take the ghost pushes the crate along exactly the same path.
 39. Push the crate onto a PressurePlate: the plate activates.
+
+## T8 – HUD, menu, results
+40. Scene01 (editor default): HUD shows a clapperboard top-left (RETAKE PRODUCTIONS / scene title / TAKE 1 / 5) and the shot list at the bottom with "Press Space to roll". Nothing happens until you press **Space**.
+41. Space: big yellow "ACTION!" stamp slams in, countdown top-right (red under 5 s).
+42. Press R: red "CUT! Take 1" stamp. Kill volume/guard/time-up add "Ouch." / "Busted." / "Too slow!".
+43. Use all 5 takes: "SCENE FAILED / Back to Take 1".
+44. Wrap the scene: "THAT'S A WRAP!", Director's Cut, then a **Dailies report** (paper sheet): takes used, par, 3 diamonds (gold = stars; 3 if takes <= par 2), buttons NEXT SCENE / RETRY / MAIN MENU (mouse cursor visible).
+45. Open `Content/Retake/Maps/MainMenu` and Play (or run the packaged game; it now starts here): **Call sheet** with 3 scene rows. Scene 1 READY, 2 and 3 LOCKED (greyed). After wrapping Scene 1 it shows WRAPPED (N takes) and Scene 2 unlocks (Scene 2/3 maps arrive in T9).
+46. QUIT closes the game (in PIE it ends the session).
+47. Reset progress: delete `Saved/SaveGames/RetakeProgress.sav`.

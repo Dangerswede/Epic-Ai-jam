@@ -188,6 +188,8 @@ void ARetakeCharacter::Look(const FInputActionValue& Value)
 
 void ARetakeCharacter::StartJump()
 {
+	OnJumpPressed.Broadcast();
+
 	// Only record a Jump action when a jump can actually start (not mid-air spam).
 	const bool bCouldJump = CanJump();
 	Jump();

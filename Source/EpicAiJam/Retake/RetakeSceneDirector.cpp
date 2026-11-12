@@ -8,6 +8,7 @@
 #include "Retake/RetakeCharacter.h"
 #include "Retake/RetakeRecorderComponent.h"
 #include "Retake/RetakeResettable.h"
+#include "Retake/RetakeSaveGame.h"
 #include "Retake/TakeGhost.h"
 #include "TimerManager.h"
 
@@ -60,8 +61,35 @@ void ARetakeSceneDirector::BeginPlay()
 		StartTransform = PlayerStart ? PlayerStart->GetActorTransform() : Player->GetActorTransform();
 		SetState(ERetakeSceneState::Briefing);
 		SetPlayerControl(false);
-		ScheduleState(BriefingSeconds, [this]() { StartRolling(); });
+		if (!bWaitForRollInput)
+		{
+			ScheduleState(BriefingSeconds, [this]() { StartRolling(); });
+		}
 	});
+}
+
+FString ARetakeSceneDirector::GetSceneId() const
+{
+	FString Name = GetWorld() ? GetWorld()->GetMapName() : FString();
+	Name.RemoveFromStart(GetWorld() ? GetWorld()->StreamingLevelsPrefix : FString());
+	return Name;
+}
+
+void ARetakeSceneDirector::HandlePlayerJumpPressed()
+{
+	HandleRollOrSkipInput();
+}
+
+void ARetakeSceneDirector::HandleRollOrSkipInput()
+{
+	if (State == ERetakeSceneState::Briefing)
+	{
+		StartRolling();
+	}
+	else if (State == ERetakeSceneState::DirectorsCut)
+	{
+		FinishDirectorsCut();
+	}
 }
 
 void ARetakeSceneDirector::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -83,6 +111,7 @@ bool ARetakeSceneDirector::FindPlayer()
 	if (Player)
 	{
 		Player->OnCutRequested.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerCut);
+		Player->OnJumpPressed.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerJumpPressed);
 	}
 	return Player != nullptr;
 }
@@ -324,6 +353,7 @@ void ARetakeSceneDirector::StartDirectorsCut()
 	{
 		Player->SetActorHiddenInGame(true);
 		Player->SetActorEnableCollision(false);
+		Player->GetCharacterMovement()->DisableMovement();
 	}
 	SpawnGhosts(Takes);
 
@@ -350,6 +380,7 @@ void ARetakeSceneDirector::FinishDirectorsCut()
 
 void ARetakeSceneDirector::EnterResults()
 {
+	bLastWrapNewBest = URetakeSaveGame::RecordWrap(GetSceneId(), Takes.Num());
 	GetWorldTimerManager().ClearTimer(StateTimer);
 	for (ATakeGhost* Ghost : Ghosts)
 	{

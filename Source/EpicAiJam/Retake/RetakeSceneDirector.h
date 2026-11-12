@@ -63,6 +63,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene", meta = (ClampMin = "1"))
 	int32 MaxTakes = 5;
 
+	/** Takes needed for 3 stars. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene", meta = (ClampMin = "1"))
+	int32 ParTakes = 2;
+
+	/** Briefing waits for Space ("Press Space to roll") instead of BriefingSeconds. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene")
+	bool bWaitForRollInput = true;
+
 	/** Where the player starts every take (any actor, e.g. a PlayerStart). If unset, the player's spawn location is used. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene")
 	TObjectPtr<AActor> PlayerStart;
@@ -149,6 +157,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	ARetakeCharacter* GetPlayer() const { return Player; }
 
+	/** Map name without PIE prefix, e.g. "Scene01_Bridge" (used for saves and the scene list). */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	FString GetSceneId() const;
+
+	/** True if the last wrap beat the saved best. */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	bool WasLastWrapNewBest() const { return bLastWrapNewBest; }
+
+	/** Space during Briefing rolls the first take; during the Director's Cut it skips. */
+	UFUNCTION(BlueprintCallable, Category = "Retake")
+	void HandleRollOrSkipInput();
+
 	const TArray<TObjectPtr<ATakeGhost>>& GetGhosts() const { return Ghosts; }
 
 	/** Reset every IRetakeResettable in the level. */
@@ -182,6 +202,10 @@ private:
 	TArray<TObjectPtr<ATakeGhost>> Ghosts;
 
 	TArray<FTakeData> Takes;
+	UFUNCTION()
+	void HandlePlayerJumpPressed();
+
+	bool bLastWrapNewBest = false;
 	ERetakeSceneState State = ERetakeSceneState::None;
 	int32 CurrentTakeNumber = 0;
 	double TakeStartTime = 0.0;
