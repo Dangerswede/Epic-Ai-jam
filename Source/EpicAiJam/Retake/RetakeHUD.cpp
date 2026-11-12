@@ -3,6 +3,7 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "Retake/CallSheetMenuWidget.h"
+#include "Retake/PauseMenuWidget.h"
 #include "Retake/RetakeHUDWidget.h"
 #include "Retake/RetakeResultsWidget.h"
 #include "TimerManager.h"
@@ -56,6 +57,27 @@ void ARetakeHUD::HandleStateChanged(ERetakeSceneState NewState, ERetakeSceneStat
 	else if (ResultsWidget->GetVisibility() != ESlateVisibility::Collapsed)
 	{
 		ResultsWidget->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
+void ARetakeHUD::TogglePauseMenu()
+{
+	APlayerController* PC = GetOwningPlayerController();
+	if (!PC)
+	{
+		return;
+	}
+	if (!PauseWidget)
+	{
+		PauseWidget = CreateWidget<UPauseMenuWidget>(PC, UPauseMenuWidget::StaticClass());
+	}
+	if (PauseWidget->IsOpen())
+	{
+		PauseWidget->Close();
+	}
+	else
+	{
+		PauseWidget->Open();
 	}
 }
 

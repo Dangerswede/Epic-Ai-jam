@@ -1,5 +1,6 @@
 #include "Retake/RetakeCharacter.h"
 
+#include "Retake/RetakeHUD.h"
 #include "Retake/RetakeInteractable.h"
 #include "Retake/RetakeRecorderComponent.h"
 #include "Camera/CameraComponent.h"
@@ -79,6 +80,11 @@ void ARetakeCharacter::BuildDefaultInput()
 	if (!JumpAction)     { JumpAction = MakeAction(TEXT("IA_Jump"), EInputActionValueType::Boolean); }
 	if (!InteractAction) { InteractAction = MakeAction(TEXT("IA_Interact"), EInputActionValueType::Boolean); }
 	if (!CutAction)      { CutAction = MakeAction(TEXT("IA_Cut"), EInputActionValueType::Boolean); }
+	if (!PauseAction)
+	{
+		PauseAction = MakeAction(TEXT("IA_Pause"), EInputActionValueType::Boolean);
+		PauseAction->bTriggerWhenPaused = true;
+	}
 
 	if (MappingContext)
 	{
@@ -127,6 +133,11 @@ void ARetakeCharacter::BuildDefaultInput()
 
 	MappingContext->MapKey(CutAction, EKeys::R);
 	MappingContext->MapKey(CutAction, EKeys::Gamepad_FaceButton_Top);
+
+	// Esc stops PIE in the editor, so P works there too.
+	MappingContext->MapKey(PauseAction, EKeys::Escape);
+	MappingContext->MapKey(PauseAction, EKeys::P);
+	MappingContext->MapKey(PauseAction, EKeys::Gamepad_Special_Right);
 }
 
 void ARetakeCharacter::AddMappingContext()
@@ -164,6 +175,7 @@ void ARetakeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	Input->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 	Input->BindAction(InteractAction, ETriggerEvent::Started, this, &ARetakeCharacter::Interact);
 	Input->BindAction(CutAction, ETriggerEvent::Started, this, &ARetakeCharacter::Cut);
+	Input->BindAction(PauseAction, ETriggerEvent::Started, this, &ARetakeCharacter::TogglePause);
 }
 
 void ARetakeCharacter::Move(const FInputActionValue& Value)
@@ -204,6 +216,17 @@ void ARetakeCharacter::Interact()
 	RetakeInteraction::PerformInteract(this, InteractRadius);
 	OnInteract.Broadcast();
 	NotifyAction(ERetakeAction::Interact);
+}
+
+void ARetakeCharacter::TogglePause()
+{
+	if (const APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (ARetakeHUD* HUD = PC->GetHUD<ARetakeHUD>())
+		{
+			HUD->TogglePauseMenu();
+		}
+	}
 }
 
 void ARetakeCharacter::Cut()

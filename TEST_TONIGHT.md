@@ -119,3 +119,7 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
     `"E:\Unreal engine\UE_5.9\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" D:\Projekt\EpicAiJam\EpicAiJam.uproject -ExecutePythonScript="D:\Projekt\EpicAiJam\Scripts\import_art.py" -unattended -nullrhi`
 65. Check in `Content/Retake/Art`: SM_ mesh with MI_ material (parent `M_RetakeMaster`) showing its textures, sensible size (1 unit = 1 cm). Fill in the new rows at the bottom of ASSETS.md.
 66. Swap a placeholder: select e.g. the Gate in a level → Details → DoorMesh → pick the new SM_. (Tested with a generated cube + texture: import, MI creation, texture hookup and meters→cm rescale all worked.)
+
+## Pause menu
+67. In a scene press **P** (in the editor; **Esc** stops PIE there) or **Esc** in the packaged game: dimmed screen, "PAUSED – The crew is on a coffee break.", buttons RESUME / RESTART SCENE / MAIN MENU, cursor visible, game frozen (ghosts and timer stop).
+68. RESUME (or P/Esc again) continues exactly where you were. RESTART SCENE starts again from Take 1. MAIN MENU goes to the call sheet.

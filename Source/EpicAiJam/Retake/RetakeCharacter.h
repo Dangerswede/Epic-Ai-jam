@@ -89,6 +89,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> CutAction;
 
+	/** Esc / P / Start: pause menu (works while paused). */
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> PauseAction;
+
 	UPROPERTY(EditAnywhere, Category = "Input", meta = (ClampMin = "0.0"))
 	float MouseLookSensitivity = 1.0f;
 
@@ -101,6 +105,7 @@ public:
 	void StartJump();
 	void Interact();
 	void Cut();
+	void TogglePause();
 
 private:
 	void BuildDefaultInput();

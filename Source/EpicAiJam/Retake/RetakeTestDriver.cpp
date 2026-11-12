@@ -28,6 +28,7 @@ ARetakeTestDriver::ARetakeTestDriver()
 	PrimaryActorTick.bCanEverTick = true;
 	// Run before characters so movement input is consumed this frame.
 	PrimaryActorTick.TickGroup = TG_PrePhysics;
+	PrimaryActorTick.bTickEvenWhenPaused = true;
 }
 
 template <typename T>
@@ -126,6 +127,10 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 		const bool bNextOk = !RetakeScenes::All().IsValidIndex(Index + 1) || Save->IsUnlocked(Index + 1);
 		return Save && Save->IsWrapped(Scene) && bNextOk;
 	});
+	Do(TEXT("Press P (pause)"), [this]() { Player->TogglePause(); });
+	Check(TEXT("game paused"), [this]() { return UGameplayStatics::IsGamePaused(this); });
+	Do(TEXT("Press P (resume)"), [this]() { Player->TogglePause(); });
+	Check(TEXT("game resumed"), [this]() { return !UGameplayStatics::IsGamePaused(this); });
 }
 
 void ARetakeTestDriver::BuildSolution(const FString& Scene)

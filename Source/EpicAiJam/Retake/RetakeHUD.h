@@ -29,6 +29,9 @@ public:
 
 	URetakeHUDWidget* GetHUDWidget() const { return HUDWidget; }
 
+	/** Esc: open/close the pause menu. */
+	void TogglePauseMenu();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -38,6 +41,7 @@ private:
 
 	UPROPERTY(Transient) TObjectPtr<URetakeHUDWidget> HUDWidget;
 	UPROPERTY(Transient) TObjectPtr<URetakeResultsWidget> ResultsWidget;
+	UPROPERTY(Transient) TObjectPtr<class UPauseMenuWidget> PauseWidget;
 	TWeakObjectPtr<ARetakeSceneDirector> Director;
 };
 
