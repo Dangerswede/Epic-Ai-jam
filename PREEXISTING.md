@@ -7,8 +7,9 @@ in-game content were created during the jam (12–15 Nov 2026).
 - Repository scaffolding (11 Nov 2026): `.gitignore`, `.gitattributes` (Git LFS), templates for these docs.
 - An **empty** Unreal Engine 5.9 Preview C++ project (11 Nov 2026): `.uproject`, module boilerplate
   (`EpicAiJam.Build.cs`, `EpicAiJam.cpp/.h`, target files), default config. No gameplay code or assets.
-- Planning: the game concept "Retake" and a task plan with prompts (T0–T15) for the AI assistant.
-  TODO (Markus): confirm when the plan/prompts were written and whether to attach them.
+- Planning: the game concept "Retake", a design plan and the task prompts T0–T15 for the AI assistant were
+  written on 11 Nov 2026 together with Claude in a Claude project (prompts/tools only). No game content
+  (code, levels, art, audio) was created before 12 Nov.
 
 ## Engine, plugins and tools (not made by us)
 - Unreal Engine 5.9 Preview (Epic Games) with built-in plugins/modules: Enhanced Input, UMG, Niagara,
