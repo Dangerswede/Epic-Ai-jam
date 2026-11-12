@@ -113,3 +113,9 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
     `"E:\Unreal engine\UE_5.9\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" D:\Projekt\EpicAiJam\EpicAiJam.uproject -run=pythonscript -script=D:\Projekt\EpicAiJam\Scripts\import_audio.py`
     (editor closed). Sounds land in `Content/Retake/Audio/Sounds` and are assigned in `DA_RetakeAudio`.
 63. Play a scene: clapperboard + "Take two!" + "Action!" at each take, "Cut!" on R, "Get me a new stunt double!" when blown up, "That's a wrap!" at the goal, "Print it!" on results; music changes per state. Missing sounds are just silent.
+
+## Art (prep for tonight's models)
+64. Drop GLB/FBX + textures into `ArtSource\` (naming in `ArtSource\README.txt`, e.g. `SM_StudioSpotlight.glb`, `T_StudioSpotlight_BaseColor.png`) and run (editor closed):
+    `"E:\Unreal engine\UE_5.9\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" D:\Projekt\EpicAiJam\EpicAiJam.uproject -ExecutePythonScript="D:\Projekt\EpicAiJam\Scripts\import_art.py" -unattended -nullrhi`
+65. Check in `Content/Retake/Art`: SM_ mesh with MI_ material (parent `M_RetakeMaster`) showing its textures, sensible size (1 unit = 1 cm). Fill in the new rows at the bottom of ASSETS.md.
+66. Swap a placeholder: select e.g. the Gate in a level → Details → DoorMesh → pick the new SM_. (Tested with a generated cube + texture: import, MI creation, texture hookup and meters→cm rescale all worked.)
