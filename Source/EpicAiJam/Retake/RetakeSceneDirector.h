@@ -66,6 +66,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene", meta = (ClampMin = "1"))
 	int32 ParTakes = 2;
 
+	/** Director's note: the extra goal for the 3rd star. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene|Director's Note")
+	ERetakeBonus BonusType = ERetakeBonus::None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene|Director's Note")
+	float BonusParam = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene|Director's Note")
+	FText BonusText;
+
 	/** Briefing waits for Space ("Press Space to roll") instead of BriefingSeconds. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene")
 	bool bWaitForRollInput = true;
@@ -166,6 +176,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	int32 GetTotalTakesShot() const { return TotalTakesShot; }
 
+	/** True if the director's note was fulfilled (evaluate after the wrap). */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	bool IsBonusMet() const;
+
+	/** Stars for the current result: 1 wrap, 2 at/under par, 3 at/under par + director's note. */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	int32 GetStars() const;
+
 	/** Called by UDirectorsCutComponent when its sequence is done. */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void FinishDirectorsCut();
@@ -244,6 +262,9 @@ private:
 	void HandlePlayerScrap();
 
 	int32 TotalTakesShot = 0;
+	int32 ScrapCount = 0;
+	bool bAnyCaught = false;
+	bool bAnyDied = false;
 	bool bDying = false;
 
 	// World track (P6): guard/crate transforms of the current take, and of the winning take for the Director's Cut.

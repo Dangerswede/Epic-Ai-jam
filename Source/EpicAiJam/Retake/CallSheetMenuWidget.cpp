@@ -65,7 +65,7 @@ void UCallSheetMenuWidget::BuildTree()
 		};
 		Cell(A, 300.f);
 		Cell(B, 380.f);
-		Cell(C, 170.f);
+		Cell(C, 260.f);
 		return H;
 	};
 	Box->AddChildToVerticalBox(Row(TEXT("SCENE"), TEXT("NOTES"), TEXT("STATUS"), 14, Red()));
@@ -75,7 +75,9 @@ void UCallSheetMenuWidget::BuildTree()
 	{
 		const bool bUnlocked = Save && Save->IsUnlocked(i);
 		const int32* Best = Save ? Save->BestTakes.Find(Scenes[i].MapName) : nullptr;
-		FString Status = !bUnlocked ? TEXT("LOCKED") : Best ? FString::Printf(TEXT("WRAPPED (%d takes)"), *Best) : TEXT("READY");
+		const int32* Stars = Save ? Save->BestStars.Find(Scenes[i].MapName) : nullptr;
+		FString Status = !bUnlocked ? TEXT("LOCKED") : Best
+			? FString::Printf(TEXT("WRAPPED %d/3 stars (%d takes)"), Stars ? *Stars : 1, *Best) : TEXT("READY");
 
 		UHorizontalBox* H = Row(Scenes[i].Title, Scenes[i].Logline, Status, 18, bUnlocked ? Ink() : Dim());
 		UButton* Play = Button(WidgetTree, bUnlocked ? TEXT("PLAY") : TEXT("---"), 16);

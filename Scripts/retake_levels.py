@@ -118,7 +118,17 @@ def ghost_class():
     return None
 
 
-def director(start, title, shot_list, par, max_takes, duration):
+def set_bonus(d, bonus):
+    """bonus = (kind, param, text); kind is a unreal.RetakeBonus name, e.g. 'NO_SCRAPS'."""
+    if not bonus:
+        return
+    kind, param, text = bonus
+    d.set_editor_property("bonus_type", getattr(unreal.RetakeBonus, kind))
+    d.set_editor_property("bonus_param", float(param))
+    d.set_editor_property("bonus_text", text)
+
+
+def director(start, title, shot_list, par, max_takes, duration, bonus=None):
     d = spawn(unreal.RetakeSceneDirector, (0, 0, 200), label="SceneDirector")
     d.set_editor_property("scene_title", title)
     d.set_editor_property("shot_list_text", shot_list)
@@ -129,4 +139,5 @@ def director(start, title, shot_list, par, max_takes, duration):
     gc = ghost_class()
     if gc:
         d.set_editor_property("ghost_class", gc)
+    set_bonus(d, bonus)
     return d

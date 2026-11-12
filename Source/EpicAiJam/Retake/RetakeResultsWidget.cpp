@@ -13,11 +13,11 @@
 #include "Retake/RetakeScenes.h"
 #include "Retake/RetakeWidgetUtils.h"
 
-int32 URetakeResultsWidget::ComputeStars(int32 TakesUsed, int32 Par)
+int32 URetakeResultsWidget::ComputeStars(int32 TakesUsed, int32 Par, bool bBonusMet)
 {
-	if (TakesUsed <= Par) return 3;
-	if (TakesUsed == Par + 1) return 2;
-	return 1;
+	// 1 for the wrap, 2 at/under par, 3 at/under par AND the director's note.
+	if (TakesUsed > Par) return 1;
+	return bBonusMet ? 3 : 2;
 }
 
 TSharedRef<SWidget> URetakeResultsWidget::RebuildWidget()
@@ -63,6 +63,8 @@ void URetakeResultsWidget::BuildTree()
 
 	TakesText = Text(WidgetTree, TEXT(""), 22, Ink(), ETextJustify::Center, false);
 	Box->AddChildToVerticalBox(TakesText)->SetPadding(FMargin(0.f, 6.f));
+	NoteText = Text(WidgetTree, TEXT(""), 18, Ink(), ETextJustify::Center);
+	Box->AddChildToVerticalBox(NoteText)->SetPadding(FMargin(0.f, 4.f));
 	BestText = Text(WidgetTree, TEXT(""), 18, Red(), ETextJustify::Center);
 	Box->AddChildToVerticalBox(BestText);
 
@@ -96,7 +98,17 @@ void URetakeResultsWidget::ShowResults(ARetakeSceneDirector* InDirector, bool bN
 	}
 	const int32 Used = InDirector->GetTakes().Num();
 	const int32 Par = InDirector->ParTakes;
-	const int32 NumStars = ComputeStars(Used, Par);
+	const bool bBonus = InDirector->IsBonusMet();
+	const int32 NumStars = ComputeStars(Used, Par, bBonus);
+	if (!InDirector->BonusText.IsEmpty())
+	{
+		NoteText->SetText(FText::FromString(FString::Printf(TEXT("%s DIRECTOR'S NOTE: %s"), bBonus ? TEXT("[X]") : TEXT("[  ]"), *InDirector->BonusText.ToString())));
+		NoteText->SetColorAndOpacity(FSlateColor(bBonus ? FLinearColor(0.1f, 0.45f, 0.1f) : RetakeUI::Dim()));
+	}
+	else
+	{
+		NoteText->SetText(FText::GetEmpty());
+	}
 
 	TitleText->SetText(InDirector->SceneTitle);
 	TakesText->SetText(FText::FromString(FString::Printf(TEXT("Takes in the cut: %d   (par %d)\nFilm shot: %d takes"), Used, Par, InDirector->GetTotalTakesShot())));

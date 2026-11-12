@@ -296,6 +296,8 @@ void ARetakeSceneDirector::CutTake(ERetakeCutReason Reason)
 	{
 		Takes.Add(Recorder->StopRecording());
 		Takes.Last().EndReason = Reason;
+		bAnyCaught |= Reason == ERetakeCutReason::Caught;
+		bAnyDied |= Takes.Last().EndsInDeath();
 	}
 	bRecordingTrack = false;
 	for (ATakeGhost* Ghost : Ghosts)
@@ -314,6 +316,7 @@ void ARetakeSceneDirector::CutTake(ERetakeCutReason Reason)
 		// Out of film: don't wipe everything, just throw away this last take and roll it again.
 		Takes.Pop();
 		UE_LOG(LogRetakeDirector, Log, TEXT("Out of film: take %d scrapped."), CurrentTakeNumber);
+		++ScrapCount;
 		OnOutOfFilm.Broadcast();
 	}
 	ScheduleState(CutPauseSeconds, [this]() { StartRolling(); });
@@ -338,6 +341,7 @@ void ARetakeSceneDirector::ScrapLastTake()
 		Recorder->StopRecording();
 	}
 	bRecordingTrack = false;
+	++ScrapCount;
 	const int32 Scrapped = Takes.Last().TakeNumber;
 	Takes.Pop();
 	for (ATakeGhost* Ghost : Ghosts)
@@ -350,6 +354,32 @@ void ARetakeSceneDirector::ScrapLastTake()
 	SetState(ERetakeSceneState::Cut);
 	OnTakeScrapped.Broadcast(Scrapped);
 	ScheduleState(ScrapPauseSeconds, [this]() { StartRolling(); });
+}
+
+bool ARetakeSceneDirector::IsBonusMet() const
+{
+	switch (BonusType)
+	{
+	case ERetakeBonus::FinalTakeUnderSeconds:
+		return Takes.Num() > 0 && Takes.Last().EndReason == ERetakeCutReason::Wrapped && Takes.Last().Duration < BonusParam;
+	case ERetakeBonus::NobodyCaught: return !bAnyCaught;
+	case ERetakeBonus::SomeoneDied:  return bAnyDied;
+	case ERetakeBonus::NoScraps:     return ScrapCount == 0;
+	default:                         return true; // no note = nothing to miss
+	}
+}
+
+int32 ARetakeSceneDirector::GetStars() const
+{
+	if (Takes.Num() == 0)
+	{
+		return 0;
+	}
+	if (Takes.Num() > ParTakes)
+	{
+		return 1;
+	}
+	return IsBonusMet() ? 3 : 2;
 }
 
 void ARetakeSceneDirector::NotifyPlayerKilled()
@@ -504,7 +534,7 @@ void ARetakeSceneDirector::FinishDirectorsCut()
 
 void ARetakeSceneDirector::EnterResults()
 {
-	bLastWrapNewBest = URetakeSaveGame::RecordWrap(GetSceneId(), Takes.Num());
+	bLastWrapNewBest = URetakeSaveGame::RecordWrap(GetSceneId(), Takes.Num(), GetStars());
 	GetWorldTimerManager().ClearTimer(StateTimer);
 	for (ATakeGhost* Ghost : Ghosts)
 	{
@@ -522,6 +552,9 @@ void ARetakeSceneDirector::RestartScene()
 		Player->GetRecorder()->StopRecording();
 	}
 	TotalTakesShot = 0;
+	ScrapCount = 0;
+	bAnyCaught = false;
+	bAnyDied = false;
 	bReplayingTrack = false;
 	SetWorldReplayMode(false);
 	Takes.Reset();

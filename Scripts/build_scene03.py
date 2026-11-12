@@ -17,6 +17,7 @@ import unreal
 import retake_levels as L
 
 MAP = "/Game/Retake/Maps/Scene03_Chase"
+FINAL_N = 20  # director's note: playtest final take + ~30%
 L.new_map(MAP)
 
 W = 170   # corridor half width (inner)
@@ -75,6 +76,7 @@ L.cameras([
 
 L.director(start, "Scene 3: The Chase",
            "Big finale energy. Blow the wall, bridge the gap, get out.",
-           par=3, max_takes=6, duration=30)
+           par=3, max_takes=6, duration=30,
+           bonus=("FINAL_TAKE_UNDER_SECONDS", FINAL_N, "Final take in under %d seconds." % FINAL_N))
 L.save_map(MAP)
 L.log("Saved " + MAP)

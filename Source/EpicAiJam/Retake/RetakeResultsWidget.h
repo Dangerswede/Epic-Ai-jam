@@ -22,7 +22,7 @@ public:
 	void ShowResults(ARetakeSceneDirector* InDirector, bool bNewBest);
 
 	/** 3 stars at or under par, 2 at par+1, otherwise 1. */
-	static int32 ComputeStars(int32 TakesUsed, int32 Par);
+	static int32 ComputeStars(int32 TakesUsed, int32 Par, bool bBonusMet);
 
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
@@ -41,6 +41,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TitleText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TakesText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> BestText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> NoteText;
 	UPROPERTY(Transient) TArray<TObjectPtr<UBorder>> Stars;
 	UPROPERTY(Transient) TObjectPtr<UButton> NextButton;
 };

@@ -167,6 +167,8 @@ def build_level(ghost_class):
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else r"D:\Projekt\EpicAiJam\Scripts")
     import retake_levels as L
     director.set_editor_property("par_takes", 2)
+    FINAL_N = 12  # director's note: playtest final take + ~30%
+    L.set_bonus(director, ("FINAL_TAKE_UNDER_SECONDS", FINAL_N, "Do the final take in under %d seconds." % FINAL_N))
     L.cameras([
         ((-700, -1600, 1300), (1500, 0, 150), 18),   # wide
         ((2400, 900, 250), (1800, 0, 350), 30),      # gate from below, near the plate

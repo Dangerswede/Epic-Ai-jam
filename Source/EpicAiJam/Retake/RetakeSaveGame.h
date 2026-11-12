@@ -18,6 +18,10 @@ public:
 	UPROPERTY()
 	TMap<FString, int32> BestTakes;
 
+	/** Map name -> most stars earned (0-3). */
+	UPROPERTY()
+	TMap<FString, int32> BestStars;
+
 	/** Volume settings (0..1), set from the call sheet menu. */
 	UPROPERTY() float MusicVolume = 0.8f;
 	UPROPERTY() float SfxVolume = 1.f;
@@ -35,7 +39,7 @@ public:
 	static URetakeSaveGame* LoadOrCreate();
 
 	/** Record a wrap and save to disk. Returns true if it's a new best. */
-	static bool RecordWrap(const FString& MapName, int32 TakesUsed);
+	static bool RecordWrap(const FString& MapName, int32 TakesUsed, int32 Stars);
 
 	/** Automated playtests (-RetakeTestSave) use their own slot so they never touch real progress. */
 	static const TCHAR* SlotName()

@@ -26,6 +26,17 @@ enum class ERetakeCutReason : uint8
 	Wrapped,    // reached the goal (the winning take)
 };
 
+/** The scene's "director's note": an optional extra goal for the third star. */
+UENUM(BlueprintType)
+enum class ERetakeBonus : uint8
+{
+	None,
+	FinalTakeUnderSeconds,  // BonusParam = seconds
+	NobodyCaught,           // no take ended with a guard catching the player
+	SomeoneDied,            // at least one take ended in a stunt death
+	NoScraps,               // never scrapped a take (Backspace or out of film)
+};
+
 /** One fixed-rate (30 Hz) sample of an actor. Never raw input or physics state. */
 USTRUCT(BlueprintType)
 struct EPICAIJAM_API FTakeFrame

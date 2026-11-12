@@ -30,7 +30,7 @@ void URetakeSaveGame::SaveNow()
 	UGameplayStatics::SaveGameToSlot(this, SlotName(), 0);
 }
 
-bool URetakeSaveGame::RecordWrap(const FString& MapName, int32 TakesUsed)
+bool URetakeSaveGame::RecordWrap(const FString& MapName, int32 TakesUsed, int32 Stars)
 {
 	URetakeSaveGame* Save = LoadOrCreate();
 	if (!Save)
@@ -42,6 +42,11 @@ bool URetakeSaveGame::RecordWrap(const FString& MapName, int32 TakesUsed)
 	if (bNewBest)
 	{
 		Save->BestTakes.Add(MapName, TakesUsed);
+	}
+	const int32* OldStars = Save->BestStars.Find(MapName);
+	if (!OldStars || Stars > *OldStars)
+	{
+		Save->BestStars.Add(MapName, Stars);
 	}
 	UGameplayStatics::SaveGameToSlot(Save, SlotName(), 0);
 	return bNewBest;
