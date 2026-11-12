@@ -118,6 +118,17 @@ def ghost_class():
     return None
 
 
+def set_roles(d, roles):
+    """roles = [(name, task), ...] for take 1, 2, ..."""
+    out = []
+    for name, task in roles:
+        r = unreal.TakeRole()
+        r.set_editor_property("name", name)
+        r.set_editor_property("task", task)
+        out.append(r)
+    d.set_editor_property("roles", out)
+
+
 def set_bonus(d, bonus):
     """bonus = (kind, param, text); kind is a unreal.RetakeBonus name, e.g. 'NO_SCRAPS'."""
     if not bonus:

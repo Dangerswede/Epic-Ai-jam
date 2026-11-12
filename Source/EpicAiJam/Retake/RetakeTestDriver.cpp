@@ -234,14 +234,17 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 
 	if (Scene == TEXT("Scene01_Bridge"))
 	{
-		APressurePlate* Plate = FindFirst<APressurePlate>();
-		AGate* Gate = FindFirst<AGate>();
-		// Take 1: stand on the plate.
-		MoveTo(300, 600);
-		MoveTo(2400, 900, 40.f);
-		Check(TEXT("plate pressed by player"), [Plate]() { return Plate->IsActive(); });
-		WaitUntil(TEXT("gate open"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 3.f);
-		Wait(0.5f);
+		// D2: GRIP hits switch A, runs under the bridge, hits switch B; HERO crosses through both windows.
+		AGate* GateA = nullptr;
+		AGate* GateB = nullptr;
+		for (TActorIterator<AGate> It(GetWorld()); It; ++It) { (It->GetActorLocation().X < 1900.f ? GateA : GateB) = *It; }
+		// Take 1: GRIP.
+		MoveTo(250, -380, 40.f);
+		Interact();
+		WaitUntil(TEXT("switch A opens gate A"), [GateA]() { return GateA->ShouldBeOpen(); }, 1.f);
+		MoveTo(2480, -500, 40.f);
+		Interact();
+		WaitUntil(TEXT("switch B opens gate B"), [GateB]() { return GateB->ShouldBeOpen(); }, 1.f);
 		Cut();
 		// P1: Space roll must not record a jump, and E during the CUT pause must do nothing.
 		WaitState((uint8)ERetakeSceneState::Cut, 3.f);
@@ -257,13 +260,13 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		Check(TEXT("E ignored during CUT"), [this]() { return InteractCount == 0; });
 		// P3: shoot a useless take 2, then scrap it from take 3 -> we get a fresh take 2.
 		NextTake(2);
-		MoveTo(300, -300);
+		MoveTo(600, 400);
 		Cut();
 		NextTake(3);
 		Check(TEXT("two ghosts in take 3"), [this]() { return Director->GetGhosts().Num() == 2; });
 		Do(TEXT("Press Backspace (scrap)"), [this]() { Player->Scrap(); });
 		Check(TEXT("scrapped: only take 1 kept"), [this]() { return Director->GetTakes().Num() == 1; });
-		// Take 2 (again): the ghost holds the plate; walk the bridge.
+		// Take 2 (again): HERO.
 		NextTake(2);
 		Check(TEXT("HUD timeline shows 1 earlier take"), [this]()
 		{
@@ -274,11 +277,11 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		Check(TEXT("one ghost spawned"), [this]() { return Director->GetGhosts().Num() == 1; });
 		MoveTo(100, 0);
 		MoveTo(1050, 0);
-		WaitUntil(TEXT("ghost holds the plate -> gate open"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 15.f);
-		MoveTo(1700, 0);
+		WaitUntil(TEXT("ghost's switch A -> gate A open"), [GateA]() { return GateA->GetOpenAlpha() > 0.95f; }, 5.f);
+		MoveTo(2150, 0);
+		WaitUntil(TEXT("ghost's switch B -> gate B open"), [GateB]() { return GateB->GetOpenAlpha() > 0.95f; }, 5.f);
 		MoveTo(2650, 0);
-	}
-	else if (Scene == TEXT("Scene02_Heist"))
+	}	else if (Scene == TEXT("Scene02_Heist"))
 	{
 		ALever* Lever = FindFirst<ALever>();
 		// Take 1: get spotted by the guard, then run far away (lure).
@@ -577,7 +580,8 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	if (Scene == TEXT("Scene01_Bridge"))
 	{
 		// P3 out of film: cut quickly until the last take, cut it too -> it is scrapped, nothing is wiped.
-		for (int32 Take = 2; Take <= 5; ++Take)
+		const int32 Max = Director->MaxTakes;
+		for (int32 Take = 2; Take <= Max; ++Take)
 		{
 			WaitUntil(FString::Printf(TEXT("take %d rolling"), Take), [this, Take]()
 			{
@@ -586,10 +590,10 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 			Wait(0.3f);
 			Do(TEXT("Press R (cut)"), [this]() { Player->Cut(); });
 		}
-		Check(TEXT("out of film: take 5 scrapped, 4 kept"), [this]() { return Director->GetTakes().Num() == 4; });
-		WaitUntil(TEXT("take 5 rolls again"), [this]()
+		Check(TEXT("out of film: last take scrapped, the others kept"), [this, Max]() { return Director->GetTakes().Num() == Max - 1; });
+		WaitUntil(TEXT("last take rolls again"), [this, Max]()
 		{
-			return Director->GetState() == ERetakeSceneState::Rolling && Director->GetCurrentTakeNumber() == 5;
+			return Director->GetState() == ERetakeSceneState::Rolling && Director->GetCurrentTakeNumber() == Max;
 		}, 10.f);
 	}
 }
