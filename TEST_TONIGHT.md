@@ -166,3 +166,6 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
 ## D3 – Scene 2 redesign
 91. **Scene 2: The Heist** teaches roles (12 s per take, par 3, ~45 s total). The vault door is a gate that only opens while LOCK A, B and C (north wall) are all on (6 s each). TAKE 1 - DECOY: get spotted by the guard (it walks toward you), run to the south-west corner and then east along the south wall until the take ends. TAKE 2 - INSIDE MAN: go up the west side, along the north wall, hit the three locks quickly, R. TAKE 3 - HERO: wait a moment until the guard turns after the decoy, go south-east and into the vault while the locks are open, grab the bag. Lasers and the lever are gone from this scene. Director's note: nobody gets busted.
+
+## D4 – Scene 3 redesign
+92. **Scene 3: The Chase** - new trick EXPLOSIVES with the old timed switch (16 s takes, par 3). TAKE 1 - PYRO: light charge 1 (2 s fuse), back off, after the bang light charge 2 (0.5 s fuse) - you get blown up (stunt). TAKE 2 - GRIP: take the north corridor from the start room and hit the EXIT switch at its end. TAKE 3 - HERO: wait out the first bang near the start of the corridor, wait out the second one before the second wall, then run for the exit while it's open. The crate and the pit are gone from this scene. Director's note: final take under 18 s.

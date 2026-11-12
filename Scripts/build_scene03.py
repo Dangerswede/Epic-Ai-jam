@@ -1,14 +1,16 @@
 """
-Scene03_Chase graybox (3-4 takes). Run headless like build_scene02.py.
+Scene03_Chase graybox - D4 redesign (par 3, max 5, 16 s takes).
+New trick: EXPLOSIVES (stunt deaths), combined with an old one: a TIMED SWITCH gate.
 
-Layout (cm, X forward), escape corridor inner width 340 (y -170..170), walls 300 tall:
-  Start room x -600..900. Pressure plate at (200, -700) opens the gate at x = 1000.
-  Explosive (short fuse 0.5 s, radius 5 m: whoever arms it doesn't get away) at x = 1600,
-  next to the breakable wall at x = 1700.
-  Long crate (780 x 280 x 150) at x 2000..2780. Pit x 2800..3600 (too wide to jump), with
-  crate-only rails at z = -150 so the pushed crate lands flush with the floor. Goal at x = 4300.
-  Intended: take 1 holds the plate, take 2 arms the explosive (and is blown up - stunt!),
-  take 3 waits, then pushes the crate into the pit and escapes.
+Layout (cm, X forward):
+  Start room x -600..900. Main corridor x 900..4700 (y -170..170); a parallel NORTH corridor
+  x 900..4100 (y 330..670) entered from the start room.
+  Charge 1 (fuse 2 s, radius 4 m) at (1600, 110) next to breakable wall 1 (x = 1700).
+  Charge 2 (fuse 0.5 s, radius 5 m: whoever lights it takes the fall) at (2900, 110), wall 2 at x = 3000.
+  Exit gate at x = 4000, opened for 5 s by the EXIT switch at the far end of the north corridor.
+  Goal at x = 4400.
+Intended: PYRO lights charge 1, gets clear, then lights charge 2 and is blown up; GRIP runs the north
+corridor and hits the exit switch; HERO follows the blasts and makes the exit while it's open.
 """
 import os
 import sys
@@ -17,74 +19,78 @@ import unreal
 import retake_levels as L
 
 MAP = "/Game/Retake/Maps/Scene03_Chase"
-FINAL_N = 20  # director's note: playtest final take + ~30%
+FINAL_N = 18  # director's note: playtest final take (13.8 s) + ~30%
 L.new_map(MAP)
 
-W = 170   # corridor half width (inner)
+W = 170   # main corridor half width (inner)
 H = 300
 
 # Floors.
 L.box_span("StartFloor", -600, 900, -1000, 1000, -20, 0)
-L.box_span("CorridorFloorA", 900, 2800, -W, W, -20, 0)
-L.box_span("CorridorFloorB", 3600, 4700, -W, W, -20, 0)
-L.box_span("StartWall_E1", 885, 915, W, 1000, 0, H)
-L.box_span("StartWall_E2", 885, 915, -1000, -W, 0, H)
+L.box_span("CorridorFloor", 900, 4700, -W, W, -20, 0)
+L.box_span("NorthFloor", 900, 4100, 330, 670, -20, 0)
 
-# Corridor walls (span the pit too).
-L.box_span("CorridorWall_N", 900, 4700, W, W + 30, -400, H)
-L.box_span("CorridorWall_S", 900, 4700, -W - 30, -W, -400, H)
-L.box_span("CorridorWall_End", 4700, 4730, -W - 30, W + 30, 0, H)
+# Start room east wall with two openings: main corridor (y -170..170) and north corridor (y 330..670).
+L.box_span("StartWall_E1", 885, 915, 670, 1000, 0, H)
+L.box_span("StartWall_E2", 885, 915, W, 330, 0, H)
+L.box_span("StartWall_E3", 885, 915, -1000, -W, 0, H)
 
-# Pit rails: block the crate's floor traces, ignore pawns (players fall through).
-for i, (y0, y1) in enumerate(((130, W), (-W, -130))):
-    rail = L.box_span("PitRail%d" % (i + 1), 2800, 3600, y0, y1, -170, -150, folder="Pit")
-    L.ignore_pawns(rail)
+# Main corridor walls (the north one is thick: it separates the two corridors).
+L.box_span("CorridorWall_N", 900, 4700, W, 330, 0, H)
+L.box_span("CorridorWall_S", 900, 4700, -W - 30, -W, 0, H)
+L.box_span("CorridorWall_End", 4700, 4730, -W - 30, 330, 0, H)
+L.box_span("NorthWall_N", 900, 4100, 670, 700, 0, H)
+L.box_span("NorthWall_End", 4100, 4130, 330, 700, 0, H)
 
-kill = L.spawn(unreal.KillVolume, (3200, 0, -600), label="KillVolume_Pit")
-kill.set_actor_scale3d(unreal.Vector(4, 4, 1))
-kill2 = L.spawn(unreal.KillVolume, (2000, 0, -1200), label="KillVolume_Net")
-kill2.set_actor_scale3d(unreal.Vector(12, 12, 1))
+kill = L.spawn(unreal.KillVolume, (2000, 0, -1200), label="KillVolume_Net")
+kill.set_actor_scale3d(unreal.Vector(12, 12, 1))
 
-# Gate + plate.
-plate = L.spawn(unreal.PressurePlate, (200, -700, 40), label="PressurePlate")
-gate = L.spawn(unreal.Gate, (1000, 0, 0), label="Gate")
-gate.set_actor_scale3d(unreal.Vector(1, 340.0 / 300.0, 1.2))
-gate.set_editor_property("linked_activators", [plate])
+# Charges and breakable walls.
+wall1 = L.box_span("BreakableWall1", 1680, 1720, -W, W, 0, H)
+L.tag(wall1, "BreakableWall")
+bomb1 = L.spawn(unreal.ExplosiveProp, (1600, 110, 45), label="Charge1")
+bomb1.set_editor_property("fuse_seconds", 2.0)
+bomb1.set_editor_property("radius", 400.0)
+wall2 = L.box_span("BreakableWall2", 2980, 3020, -W, W, 0, H)
+L.tag(wall2, "BreakableWall")
+bomb2 = L.spawn(unreal.ExplosiveProp, (2900, 110, 45), label="Charge2")
+bomb2.set_editor_property("fuse_seconds", 0.5)
+bomb2.set_editor_property("radius", 500.0)
 
-# Breakable wall + explosive.
-wall = L.box_span("BreakableWall", 1680, 1720, -W, W, 0, H)
-L.tag(wall, "BreakableWall")
-bomb = L.spawn(unreal.ExplosiveProp, (1600, 110, 45), label="Explosive")
-bomb.set_editor_property("fuse_seconds", 0.5)
-bomb.set_editor_property("radius", 500.0)
+# Exit gate + timed switch at the end of the north corridor.
+exit_gate = L.spawn(unreal.Gate, (4000, 0, 0), label="ExitGate")
+exit_gate.set_actor_scale3d(unreal.Vector(1, 340.0 / 300.0, 1.2))
+exit_switch = L.spawn(unreal.TimedSwitch, (3950, 500, 55), label="ExitSwitch")
+exit_switch.set_editor_property("display_name", "EXIT")
+exit_switch.set_editor_property("active_seconds", 5.0)
+exit_gate.set_editor_property("linked_activators", [exit_switch])
 
-# Long crate.
-crate = L.spawn(unreal.PushCrate, (2390, 0, 75), label="BridgeCrate")
-crate.set_editor_property("size", unreal.Vector(780, 280, 150))
-crate.set_actor_scale3d(unreal.Vector(7.8, 2.8, 1.5))
-
-L.spawn(unreal.GoalZone, (4350, 0, 100), label="GoalZone_Exit")
+L.spawn(unreal.GoalZone, (4400, 0, 100), label="GoalZone_Exit")
 start = L.spawn(unreal.PlayerStart, (0, 0, 100), label="PlayerStart")
 
 L.studio_lights(spots=[((800, -1200, 1400), (1500, 0, 0)), ((3200, 1200, 1400), (3200, 0, 0))])
 L.cameras([
-    ((-500, 1400, 1600), (2000, 0, 0), 16),      # wide overview
-    ((1300, -600, 600), (1650, 0, 120), 28),     # explosive / wall (looking over the wall)
-    ((2600, 0, 900), (3200, 0, -100), 24),       # pit from above
-    ((4600, 0, 250), (3000, 0, 50), 35),         # exit looking back
+    ((-500, 1400, 1600), (2000, 0, 0), 16),
+    ((1300, -600, 600), (1650, 0, 120), 28),
+    ((2600, -600, 600), (2950, 0, 120), 28),
+    ((4600, 0, 250), (3000, 0, 50), 35),
 ])
 
-# Art pass: Tripo props. The long bridge crate stays graybox (no long prop yet).
-L.set_art(plate, "PressurePlate")
-L.set_art(bomb, "Dynamite")
-L.film_crew((-450, 650, 0), -30, (-500, 900, 0), -60,
-            lights=[((750, 850, 0), -150), ((-500, -900, 0), 40)],
-            extra=[("Scaffolding", (2500, 650, 0), 600, 0), ("Scaffolding", (3900, -650, 0), 600, 0),
-                   ("PlywoodFlat", (700, -950, 0), 260, 90), ("StageCrate", (-450, -500, 0), 90, 15)])
+# Art pass: Tripo props.
+L.set_art(bomb1, "Dynamite")
+L.set_art(bomb2, "Dynamite")
+L.film_crew((-450, -350, 0), -30, (-500, -700, 0), 30,
+            lights=[((750, -850, 0), 150), ((-500, 900, 0), -40)],
+            extra=[("Scaffolding", (2500, 950, 0), 600, 0), ("Scaffolding", (3900, -650, 0), 600, 0),
+                   ("PlywoodFlat", (700, -950, 0), 260, 90), ("StageCrate", (-450, 500, 0), 90, 15)])
 
-L.director(start, "Scene 3: The Chase",
-           "Big finale energy. Blow the wall, bridge the gap, get out.",
-           par=3, max_takes=6, duration=30,
-           bonus=("FINAL_TAKE_UNDER_SECONDS", FINAL_N, "Final take in under %d seconds." % FINAL_N))
+d = L.director(start, "Scene 3: The Chase",
+               "New trick: EXPLOSIVES. Blow both walls - the second fuse is short, so whoever lights it takes the fall. "
+               "Old trick: the exit is a timed gate.",
+               par=3, max_takes=5, duration=16,
+               bonus=("FINAL_TAKE_UNDER_SECONDS", FINAL_N, "Final take in under %d seconds." % FINAL_N))
+L.set_roles(d, [("Pyro", "Light charge 1, get clear, then light charge 2 - and take the fall."),
+                ("Grip", "Run the north corridor and hit the EXIT switch at the far end."),
+                ("Hero", "Follow the blasts and make the exit while the gate is open.")])
 L.save_map(MAP)
 L.log("Saved " + MAP)
