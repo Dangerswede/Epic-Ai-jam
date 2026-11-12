@@ -7,6 +7,8 @@
 
 class UStaticMeshComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPushCrateSignature, APushCrate*, Crate);
+
 /**
  * Crate moved only by kinematic sweeps (no physics simulation), so pushes replay deterministically.
  * - Player walking into a face: crate slides along that axis at PushSpeed, player records a Push action.
@@ -37,6 +39,10 @@ public:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
+	/** Fired when the crate starts moving after standing still (for audio). */
+	UPROPERTY(BlueprintAssignable, Category = "Retake")
+	FPushCrateSignature OnPushStarted;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -51,4 +57,5 @@ private:
 	void ApplyFall(float DeltaSeconds);
 
 	FTransform StartTransform;
+	float StillTime = 1.f;
 };

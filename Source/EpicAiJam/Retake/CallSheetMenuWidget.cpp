@@ -9,6 +9,8 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Components/Slider.h"
+#include "Retake/RetakeAudioSubsystem.h"
 #include "Retake/RetakeSaveGame.h"
 #include "Retake/RetakeScenes.h"
 #include "Retake/RetakeWidgetUtils.h"
@@ -90,6 +92,32 @@ void UCallSheetMenuWidget::BuildTree()
 		Box->AddChildToVerticalBox(H)->SetPadding(FMargin(0.f, 8.f));
 	}
 
+	// Sound department: three volume sliders (saved).
+	Box->AddChildToVerticalBox(Text(WidgetTree, TEXT("SOUND DEPARTMENT"), 14, Red()))->SetPadding(FMargin(0.f, 20.f, 0.f, 4.f));
+	UHorizontalBox* Sound = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+	auto AddSlider = [&](const TCHAR* Label, float Value) -> USlider*
+	{
+		Sound->AddChildToHorizontalBox(Text(WidgetTree, Label, 16, Ink()))->SetVerticalAlignment(VAlign_Center);
+		USizeBox* SB = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+		SB->SetWidthOverride(180.f);
+		USlider* Slider = WidgetTree->ConstructWidget<USlider>(USlider::StaticClass());
+		Slider->SetValue(Value);
+		Slider->SetSliderBarColor(Dim());
+		Slider->SetSliderHandleColor(Red());
+		SB->SetContent(Slider);
+		UHorizontalBoxSlot* HS = Sound->AddChildToHorizontalBox(SB);
+		HS->SetVerticalAlignment(VAlign_Center);
+		HS->SetPadding(FMargin(8.f, 0.f, 28.f, 0.f));
+		return Slider;
+	};
+	MusicSlider = AddSlider(TEXT("MUSIC"), Save ? Save->MusicVolume : 0.8f);
+	SfxSlider = AddSlider(TEXT("SFX"), Save ? Save->SfxVolume : 1.f);
+	VoiceSlider = AddSlider(TEXT("VOICE"), Save ? Save->VoiceVolume : 1.f);
+	MusicSlider->OnValueChanged.AddDynamic(this, &UCallSheetMenuWidget::HandleVolumeChanged);
+	SfxSlider->OnValueChanged.AddDynamic(this, &UCallSheetMenuWidget::HandleVolumeChanged);
+	VoiceSlider->OnValueChanged.AddDynamic(this, &UCallSheetMenuWidget::HandleVolumeChanged);
+	Box->AddChildToVerticalBox(Sound);
+
 	UButton* Quit = Button(WidgetTree, TEXT("QUIT"), 18);
 	Quit->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandleQuit);
 	UVerticalBoxSlot* QuitSlot = Box->AddChildToVerticalBox(Quit);
@@ -124,6 +152,11 @@ void UCallSheetMenuWidget::HandlePlay0() { PlayScene(0); }
 void UCallSheetMenuWidget::HandlePlay1() { PlayScene(1); }
 void UCallSheetMenuWidget::HandlePlay2() { PlayScene(2); }
 void UCallSheetMenuWidget::HandlePlay3() { PlayScene(3); }
+
+void UCallSheetMenuWidget::HandleVolumeChanged(float)
+{
+	URetakeAudioSubsystem::SetVolumes(this, MusicSlider->GetValue(), SfxSlider->GetValue(), VoiceSlider->GetValue(), true);
+}
 
 void UCallSheetMenuWidget::HandleQuit()
 {

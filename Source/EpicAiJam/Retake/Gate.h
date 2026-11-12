@@ -8,6 +8,8 @@
 class ARetakeActivator;
 class UStaticMeshComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGateSignature, AGate*, Gate);
+
 /**
  * Opens (slides up) while any linked plate or lever is active.
  * (Godot: an AnimatableBody3D that tweens up when any connected switch emits "activated".)
@@ -32,6 +34,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	float GetOpenAlpha() const { return OpenAlpha; }
+
+	/** Fired when the gate starts opening / closing (for audio). */
+	UPROPERTY(BlueprintAssignable, Category = "Retake") FGateSignature OnOpening;
+	UPROPERTY(BlueprintAssignable, Category = "Retake") FGateSignature OnClosing;
 
 protected:
 	virtual void BeginPlay() override;
@@ -59,4 +65,5 @@ private:
 
 	FVector ClosedLocation = FVector::ZeroVector;
 	float OpenAlpha = 0.f;
+	bool bWantsOpen = false;
 };

@@ -16,6 +16,8 @@ enum class EStuntGuardState : uint8
 	Stuck,   // caught a ghost, stays on it for a while
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FStuntGuardSignature, AStuntGuard*, Guard, AActor*, Target);
+
 /**
  * Security guard with plain C++ logic (no behavior tree):
  * patrols between two points, chases the nearest player/ghost in its sight cone,
@@ -35,6 +37,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	EStuntGuardState GetGuardState() const { return GuardState; }
+
+	/** Fired when the guard starts chasing someone / catches someone (for audio). */
+	UPROPERTY(BlueprintAssignable, Category = "Retake") FStuntGuardSignature OnSpotted;
+	UPROPERTY(BlueprintAssignable, Category = "Retake") FStuntGuardSignature OnCaughtSomeone;
 
 	/** Second patrol point, relative to where the guard is placed (drag the diamond in the viewport). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guard", meta = (MakeEditWidget = "true"))

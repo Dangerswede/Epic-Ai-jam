@@ -25,7 +25,8 @@ void AGate::BeginPlay()
 	Super::BeginPlay();
 	ClosedLocation = DoorMesh->GetRelativeLocation();
 	RetakeVisuals::Tint(DoorMesh, DoorColor);
-	OpenAlpha = ShouldBeOpen() ? 1.f : 0.f;
+	bWantsOpen = ShouldBeOpen();
+	OpenAlpha = bWantsOpen ? 1.f : 0.f;
 	ApplyAlpha();
 }
 
@@ -46,7 +47,13 @@ void AGate::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	// Polling the few linked activators is simpler and order-independent compared to events.
-	const float Target = ShouldBeOpen() ? 1.f : 0.f;
+	const bool bOpen = ShouldBeOpen();
+	if (bOpen != bWantsOpen)
+	{
+		bWantsOpen = bOpen;
+		(bOpen ? OnOpening : OnClosing).Broadcast(this);
+	}
+	const float Target = bOpen ? 1.f : 0.f;
 	if (!FMath::IsNearlyEqual(OpenAlpha, Target))
 	{
 		OpenAlpha = FMath::FInterpConstantTo(OpenAlpha, Target, DeltaSeconds, 1.f / MoveTime);
@@ -58,6 +65,7 @@ void AGate::ResetForTake()
 {
 	// Every take starts with the gate in its rest state.
 	OpenAlpha = 0.f;
+	bWantsOpen = false;
 	ApplyAlpha();
 }
 

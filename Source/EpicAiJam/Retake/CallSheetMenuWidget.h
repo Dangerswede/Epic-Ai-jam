@@ -26,4 +26,9 @@ private:
 	UFUNCTION() void HandlePlay2();
 	UFUNCTION() void HandlePlay3();
 	UFUNCTION() void HandleQuit();
+	UFUNCTION() void HandleVolumeChanged(float Value);
+
+	UPROPERTY(Transient) TObjectPtr<class USlider> MusicSlider;
+	UPROPERTY(Transient) TObjectPtr<class USlider> SfxSlider;
+	UPROPERTY(Transient) TObjectPtr<class USlider> VoiceSlider;
 };

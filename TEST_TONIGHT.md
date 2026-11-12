@@ -106,3 +106,10 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
     - Take 3: wait for the bang, go through into the courtyard, let the guard spot you (front of its patrol, around the middle of the courtyard), run to the far south-east corner.
     - Take 4: wait for the bang, enter the courtyard, wait ~2 s for ghost 3 to drag the guard away, pull the lever (north side), go through the laser door (east), push the long crate into the pit, run up the ramp to the rooftop goal.
 60. Check: whole scene doable in under ~2.5 min; the rooftop (water tower, billboard) reads as a finale; Director's Cut shows 4 ghosts.
+
+## Audio (prep for tonight's sounds)
+61. Main menu: a **SOUND DEPARTMENT** row with MUSIC / SFX / VOICE sliders. Move them, restart the game: values are kept.
+62. Drop WAVs into `AudioSource\` named like the slots (see `AudioSource\README.txt`, e.g. `VoiceAction.wav`, `SfxExplosion.wav`, `MusicRollingLoop.wav`) and run:
+    `"E:\Unreal engine\UE_5.9\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" D:\Projekt\EpicAiJam\EpicAiJam.uproject -run=pythonscript -script=D:\Projekt\EpicAiJam\Scripts\import_audio.py`
+    (editor closed). Sounds land in `Content/Retake/Audio/Sounds` and are assigned in `DA_RetakeAudio`.
+63. Play a scene: clapperboard + "Take two!" + "Action!" at each take, "Cut!" on R, "Get me a new stunt double!" when blown up, "That's a wrap!" at the goal, "Print it!" on results; music changes per state. Missing sounds are just silent.

@@ -18,6 +18,14 @@ public:
 	UPROPERTY()
 	TMap<FString, int32> BestTakes;
 
+	/** Volume settings (0..1), set from the call sheet menu. */
+	UPROPERTY() float MusicVolume = 0.8f;
+	UPROPERTY() float SfxVolume = 1.f;
+	UPROPERTY() float VoiceVolume = 1.f;
+
+	/** Save this object to disk. */
+	void SaveNow();
+
 	bool IsWrapped(const FString& MapName) const { return BestTakes.Contains(MapName); }
 
 	/** A scene is unlocked if it is the first one or the previous one is wrapped. */

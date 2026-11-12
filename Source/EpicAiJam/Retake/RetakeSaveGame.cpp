@@ -25,6 +25,11 @@ URetakeSaveGame* URetakeSaveGame::LoadOrCreate()
 	return Cast<URetakeSaveGame>(UGameplayStatics::CreateSaveGameObject(URetakeSaveGame::StaticClass()));
 }
 
+void URetakeSaveGame::SaveNow()
+{
+	UGameplayStatics::SaveGameToSlot(this, SlotName(), 0);
+}
+
 bool URetakeSaveGame::RecordWrap(const FString& MapName, int32 TakesUsed)
 {
 	URetakeSaveGame* Save = LoadOrCreate();

@@ -146,6 +146,7 @@ void AStuntGuard::MoveToward(const FVector& Location, float Speed)
 
 void AStuntGuard::OnCaught(AActor* Caught)
 {
+	OnCaughtSomeone.Broadcast(this, Caught);
 	if (Cast<ARetakeCharacter>(Caught))
 	{
 		if (ARetakeSceneDirector* Director = ARetakeSceneDirector::Get(this))
@@ -193,6 +194,7 @@ void AStuntGuard::Tick(float DeltaSeconds)
 		{
 			Target = Seen;
 			SetGuardState(EStuntGuardState::Chase);
+			OnSpotted.Broadcast(this, Seen);
 			break;
 		}
 		const FVector A = StartTransform.GetLocation();
