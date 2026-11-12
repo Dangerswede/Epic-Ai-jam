@@ -30,6 +30,19 @@ public:
 
 	virtual void ResetForTake() override {}
 
+	/** True if any activator in the list is active. */
+	static bool AnyActive(const TArray<TObjectPtr<ARetakeActivator>>& Activators)
+	{
+		for (const ARetakeActivator* A : Activators)
+		{
+			if (A && A->IsActive())
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 protected:
 	/** Sets the state and broadcasts if it changed. */
 	void SetActive(bool bNewActive);

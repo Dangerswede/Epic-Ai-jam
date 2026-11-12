@@ -46,3 +46,10 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 26. Check it can't be done in 1 take: stand on the plate, then run for the gate. It should close long before you get there.
 27. Look check: lighting (sun + 2 spotlights), ghost is see-through and sepia. Note anything too dark/bright.
 28. Packaged build: run `Builds\Windows\EpicAiJam.exe`. It should start straight into Scene01_Bridge. Alt+F4 to quit (no menu yet).
+
+## T6 – Guard and laser (test in Scene01 or any level with a director)
+29. Place a **StuntGuard**. In the viewport drag its diamond (*Patrol Point B*) to set the patrol route. Play: it walks back and forth, label "SECURITY".
+30. Walk in front of it (within ~8 m, inside its view, yellow visor = front): label "HEY! STOP!", it chases you (slower than you). If it reaches you: `CUT! ... (Caught)`.
+31. Take 2: let your take-1 ghost walk past the guard. Guard chases the ghost, says "GOTCHA!", stays glued to it ~3 s while the ghost keeps walking, then returns to patrolling.
+32. Place a **LaserBeam** (red line, length = *Beam Length*). Walk into it: `CUT! (Killed)`. Ghosts walk through it.
+33. Add a Lever/PressurePlate to the laser's *Linked Activators*: when active the beam disappears and is safe.

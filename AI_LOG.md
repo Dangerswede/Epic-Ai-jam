@@ -16,3 +16,4 @@ How AI tools were used during development.
 | 2026-11-12 | Claude Code | T3: ARetakeSceneDirector state machine (Briefing/Rolling/Cut/SceneFailed/Wrap/DirectorsCut/Results), IRetakeResettable, built-in fallback Director's Cut replay | Build verified |
 | 2026-11-12 | Claude Code | T4: ARetakeActivator base, APressurePlate, ALever, AGate, AGoalZone, AKillVolume (engine basic shapes, swappable mesh slots) | Build verified |
 | 2026-11-12 | Claude Code | T5: Scene01_Bridge graybox level, M_Ghost material and BP_TakeGhost generated via editor Python script (Scripts/build_scene01.py); default map set | Level contents verified by script |
+| 2026-11-12 | Claude Code | T6: AStuntGuard (patrol/chase/stuck state machine, sight cone + line trace), ALaserBeam (activator-disabled), Caught cut reason | Build verified |

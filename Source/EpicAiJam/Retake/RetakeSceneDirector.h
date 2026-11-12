@@ -27,6 +27,7 @@ enum class ERetakeCutReason : uint8
 	PlayerCut,  // player pressed R
 	Killed,     // kill volume
 	TimeUp,     // TakeDurationSeconds ran out
+	Caught,     // a guard caught the player
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FRetakeStateChanged, ERetakeSceneState, NewState, ERetakeSceneState, OldState);
