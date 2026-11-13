@@ -703,6 +703,22 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		WaitUntil(TEXT("vault door opens"), [Vault]() { return Vault->GetOpenAlpha() > 0.95f; }, 3.f);
 		MoveTo(1900, 0);
 		MoveTo(2450, 0);
+	}	else if (Scene == TEXT("Scene13_ProjectionRoom"))
+	{
+		// Reel 3 closer: the tight route - A + C in take 1, B + exit in take 2 (par 2).
+		AGate* Exit = FindFirst<AGate>();
+		MoveTo(300, 840, 30.f);
+		Interact();
+		MoveTo(1000, 520, 30.f);
+		Interact();
+		Check(TEXT("two levers are not enough"), [Exit]() { return Exit->GetOpenAlpha() < 0.05f; });
+		Cut();
+		NextTake(2);
+		MoveTo(300, -840, 30.f);
+		Interact();
+		MoveTo(950, -100);
+		WaitUntil(TEXT("all three levers -> exit open"), [Exit]() { return Exit->GetOpenAlpha() > 0.95f; }, 3.f);
+		MoveTo(1500, 0);
 	}	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
@@ -796,6 +812,12 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+	}
+	else if (Scene == TEXT("Scene13_ProjectionRoom"))
+	{
+		MoveTo(300, 840, 30.f);
+		Do(TEXT("Press E (lever A)"), [this]() { Player->Interact(); });
+		MoveTo(1500, 0, 60.f, 40.f); // one lever: exit stays shut, the take runs out
 	}
 	else if (Scene == TEXT("Scene07_Vault"))
 	{

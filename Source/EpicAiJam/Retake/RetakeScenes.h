@@ -53,7 +53,7 @@ namespace RetakeScenes
 				TEXT("Stunt: J. Ward. Night shoot. Lights unreliable."), TEXT("Again. In the dark, this time."), false },
 			{ TEXT("Scene12_TheRig"), 12, 3, TEXT("Scene 12: The Rig"), TEXT("Crates, a timer, a long drop."), nullptr,
 				TEXT("Stunt: J. Ward. Rig: NOT INSPECTED. Sign-off: none."), TEXT("Somebody check that rig. Anybody?"), false },
-			{ nullptr, 13, 3, TEXT("Scene 13: The Projection Room"), TEXT("Every take, on loop."), nullptr,
+			{ TEXT("Scene13_ProjectionRoom"), 13, 3, TEXT("Scene 13: The Projection Room"), TEXT("Every take, on loop."), nullptr,
 				TEXT("Stunt: J. Ward. Dailies: every take, on loop."), TEXT("I've watched this a thousand times."), true },
 			// Reel 4
 			{ nullptr, 14, 4, TEXT("Scene 14: The Chase (Final)"), TEXT("The last of the pyro. Tighter timing."), nullptr,

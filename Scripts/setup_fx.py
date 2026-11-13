@@ -53,3 +53,29 @@ if not lib.does_asset_exist(GLOW):
     mel.recompile_material(m)
     lib.save_asset(GLOW)
     unreal.log("FX: created " + GLOW)
+
+# Projection screen (scene 13): unlit, emissive = captured texture * warm tint * Brightness.
+SCREEN = DST_DIR + "/M_ProjectionScreen"
+if not lib.does_asset_exist(SCREEN):
+    mel = unreal.MaterialEditingLibrary
+    m = unreal.AssetToolsHelpers.get_asset_tools().create_asset("M_ProjectionScreen", DST_DIR, unreal.Material, unreal.MaterialFactoryNew())
+    m.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_UNLIT)
+    tex = mel.create_material_expression(m, unreal.MaterialExpressionTextureSampleParameter2D, -800, 0)
+    tex.set_editor_property("parameter_name", "Screen")
+    tex.set_editor_property("texture", unreal.load_asset("/Engine/EngineResources/DefaultTexture"))
+    tint = mel.create_material_expression(m, unreal.MaterialExpressionVectorParameter, -800, 250)
+    tint.set_editor_property("parameter_name", "Tint")
+    tint.set_editor_property("default_value", unreal.LinearColor(1.0, 0.88, 0.7, 1.0))
+    bright = mel.create_material_expression(m, unreal.MaterialExpressionScalarParameter, -800, 400)
+    bright.set_editor_property("parameter_name", "Brightness")
+    bright.set_editor_property("default_value", 3.0)
+    mul1 = mel.create_material_expression(m, unreal.MaterialExpressionMultiply, -500, 100)
+    mel.connect_material_expressions(tex, "RGB", mul1, "A")
+    mel.connect_material_expressions(tint, "", mul1, "B")
+    mul2 = mel.create_material_expression(m, unreal.MaterialExpressionMultiply, -300, 200)
+    mel.connect_material_expressions(mul1, "", mul2, "A")
+    mel.connect_material_expressions(bright, "", mul2, "B")
+    mel.connect_material_property(mul2, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    mel.recompile_material(m)
+    lib.save_asset(SCREEN)
+    unreal.log("FX: created " + SCREEN)
