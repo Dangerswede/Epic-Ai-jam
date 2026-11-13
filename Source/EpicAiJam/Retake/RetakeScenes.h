@@ -38,7 +38,7 @@ namespace RetakeScenes
 			// Reel 2
 			{ TEXT("Scene05_Rooftop"), 5, 2, TEXT("Scene 5: The Rooftop"), TEXT("Lasers and a timer. The coffee is still hot."), nullptr,
 				TEXT("Stunt: J. Ward. Coffee's hot. Nobody's drinking it."), TEXT("Has anyone seen Jack?"), false },
-			{ nullptr, 6, 2, TEXT("Scene 6: The Saloon"), TEXT("Two guards, a lot of crates."), nullptr,
+			{ TEXT("Scene06_Saloon"), 6, 2, TEXT("Scene 6: The Saloon"), TEXT("Two guards, a lot of crates."), nullptr,
 				TEXT("Stunt: J. Ward. Extras: 0. Wanted posters: 1."), TEXT("Jack loved the saloon gags. Roll it."), false },
 			{ TEXT("Scene07_Vault"), 7, 2, TEXT("Scene 7: The Vault"), TEXT("Levers in order. Mind the clock."), nullptr,
 				TEXT("Stunt: J. Ward. All clocks stopped at 4:47."), TEXT("What time is it? ...Never mind. Action."), false },

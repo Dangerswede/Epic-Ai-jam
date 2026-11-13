@@ -833,6 +833,51 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(2300, -100);
 		WaitUntil(TEXT("ghost locks open the vault"), [Vault]() { return Vault->GetOpenAlpha() > 0.95f; }, 3.f);
 		MoveTo(3000, 0);
+	}	else if (Scene == TEXT("Scene06_Saloon"))
+	{
+		// Reel 2 extra: one decoy circles BOTH guards; the stunt pushes the crate to the balcony and climbs.
+		APushCrate* Crate = FindCrate(true);
+		auto BothChasing = [this]()
+		{
+			int32 N = 0;
+			for (TActorIterator<AStuntGuard> It(GetWorld()); It; ++It) { N += It->GetGuardState() != EStuntGuardState::Patrol ? 1 : 0; }
+			return N == 2;
+		};
+		// Take 1: DECOY.
+		MoveTo(300, 0);
+		WaitUntil(TEXT("both guards spot the decoy"), BothChasing, 3.f);
+		Steps.Add({ TEXT("circle until the take ends"), 20.f, [this](float)
+		{
+			if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Done;
+			const FVector2D Center(-350.f, -300.f);
+			const FVector2D P = FVector2D(Player->GetActorLocation()) - Center;
+			const float Ang = FMath::Atan2(P.Y, P.X) + FMath::DegreesToRadians(40.f);
+			const FVector2D Aim = Center + FVector2D(FMath::Cos(Ang), FMath::Sin(Ang)) * 600.f;
+			Player->AddMovementInput(FVector((Aim - FVector2D(Player->GetActorLocation())).GetSafeNormal(), 0.f), 1.f);
+			return EStepResult::Running;
+		} });
+		// Take 2: STUNT.
+		NextTake(2);
+		MoveTo(-200, 950);
+		WaitUntil(TEXT("decoy ghost has both guards"), BothChasing, 4.f);
+		MoveTo(700, 950);
+		MoveTo(1350, 600, 30.f);
+		MoveTo(2050, 600, 70.f, 12.f); // pushing the crate east until it hits the balcony (we stop ~117 cm short of its centre)
+		Check(TEXT("crate against the balcony"), [Crate]() { return Crate->GetActorLocation().X > 2080.f; });
+		// Climb: walk into it and jump whenever something blocks us (floor -> crate -> balcony).
+		TSharedPtr<float> Blocked = MakeShared<float>(0.f);
+		Steps.Add({ TEXT("climb crate -> balcony"), 8.f, [this, Blocked](float Dt)
+		{
+			if (Director->GetState() == ERetakeSceneState::Wrap) return EStepResult::Done;
+			if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Failed;
+			if (Player->GetActorLocation().Z > 330.f) return EStepResult::Done;
+			UCharacterMovementComponent* Move = Player->GetCharacterMovement();
+			Player->AddMovementInput(FVector(1.f, 0.f, 0.f), 1.f);
+			*Blocked = (Move->IsMovingOnGround() && Move->Velocity.Size2D() < 120.f) ? *Blocked + Dt : 0.f;
+			if (*Blocked > 0.1f) { Player->StartJump(); *Blocked = -0.4f; }
+			return EStepResult::Running;
+		} });
+		MoveTo(2400, 600);
 	}	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
@@ -926,6 +971,10 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+	}
+	else if (Scene == TEXT("Scene06_Saloon"))
+	{
+		MoveTo(2400, 600, 60.f, 40.f); // busted, or stuck below the balcony
 	}
 	else if (Scene == TEXT("Scene14_ChaseFinal"))
 	{

@@ -2,7 +2,7 @@
 # Usage:  powershell -File Scripts\run_playtests.ps1 [-Scenes Scene01_Bridge,...] [-Scenarios solution,wrong]
 # Needs the editor target built. Uses a separate save slot (-RetakeTestSave), never your real progress.
 param(
-    [string[]]$Scenes = @("Scene01_Bridge", "Scene02_Heist", "Scene03_Chase", "Scene04_Finale", "Scene05_Rooftop", "Scene07_Vault", "Scene08_BridgeReshoot", "Scene10_EmptyStage", "Scene11_HeistNight", "Scene12_TheRig", "Scene13_ProjectionRoom", "Scene14_ChaseFinal", "Scene15_Rehearsal", "Scene05_TheGap"),
+    [string[]]$Scenes = @("Scene01_Bridge", "Scene02_Heist", "Scene03_Chase", "Scene04_Finale", "Scene05_Rooftop", "Scene06_Saloon", "Scene07_Vault", "Scene08_BridgeReshoot", "Scene10_EmptyStage", "Scene11_HeistNight", "Scene12_TheRig", "Scene13_ProjectionRoom", "Scene14_ChaseFinal", "Scene15_Rehearsal", "Scene05_TheGap"),
     [string[]]$Scenarios = @("solution", "wrong"),
     [string]$Engine = "E:\Unreal engine\UE_5.9"
 )
