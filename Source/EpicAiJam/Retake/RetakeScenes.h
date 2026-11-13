@@ -47,7 +47,7 @@ namespace RetakeScenes
 			// Reel 3
 			{ nullptr, 9, 3, TEXT("Scene 9: The Backlot"), TEXT("Night. Nobody is supposed to be here."), nullptr,
 				TEXT("Stunt: J. Ward. Location closed. NO SHOOTING TODAY."), TEXT("Nobody's supposed to be out here tonight."), false },
-			{ nullptr, 10, 3, TEXT("Scene 10"), TEXT("Tape marks. One chair."), TEXT("SCENE 10"),
+			{ TEXT("Scene10_EmptyStage"), 10, 3, TEXT("Scene 10"), TEXT("Tape marks. One chair."), TEXT("SCENE 10"),
 				TEXT("Crew: none. Cast: none. Stunt: J. Ward."), nullptr, false },
 			{ nullptr, 11, 3, TEXT("Scene 11: The Heist (Night)"), TEXT("Twice the guards. The lights don't hold."), nullptr,
 				TEXT("Stunt: J. Ward. Night shoot. Lights unreliable."), TEXT("Again. In the dark, this time."), false },

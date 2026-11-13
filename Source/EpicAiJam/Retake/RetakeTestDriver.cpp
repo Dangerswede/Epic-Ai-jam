@@ -549,6 +549,21 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(1650, 0);
 		WaitUntil(TEXT("both switches on -> gate open for the hero"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 4.f);
 		MoveTo(2650, 0);
+	}	else if (Scene == TEXT("Scene10_EmptyStage"))
+	{
+		// ST2: two stand-ins hold the tape marks (plates), the stunt walks through the door.
+		AGate* Door = FindFirst<AGate>();
+		MoveTo(600, -650, 30.f);
+		Check(TEXT("one mark is not enough"), [Door]() { return Door->GetOpenAlpha() < 0.05f; });
+		Cut();
+		NextTake(2);
+		MoveTo(600, 650, 30.f);
+		WaitUntil(TEXT("both marks taken -> door opens"), [Door]() { return Door->GetOpenAlpha() > 0.95f; }, 3.f);
+		Cut();
+		NextTake(3);
+		MoveTo(900, 0);
+		WaitUntil(TEXT("door open for the stunt"), [Door]() { return Door->GetOpenAlpha() > 0.95f; }, 4.f);
+		MoveTo(1550, 0);
 	}	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
@@ -642,6 +657,11 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+	}
+	else if (Scene == TEXT("Scene10_EmptyStage"))
+	{
+		MoveTo(600, -650, 30.f);
+		MoveTo(1550, 0, 60.f, 40.f); // one mark held only while standing on it
 	}
 	else if (Scene == TEXT("Scene08_BridgeReshoot"))
 	{

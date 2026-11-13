@@ -196,3 +196,4 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
 ## ST2 – New scenes
 105. **Scene 8: The Bridge (Reshoot)** (after scene 4 and the END OF REEL 1 card): dusk light; one gate needs SWITCH A and SWITCH B on at the same time (4 s each). Take 46 GRIP: wait by switch A until ~5 s, then press it. Take 47 BEST BOY: run under the bridge to switch B and press it. Take 48 HERO: wait a couple of seconds, then up the ramp - the gate opens in front of you.
+106. **Scene 10** (no title, the director says nothing): a dim empty stage. The door at the back only opens while both floor marks are taken. Take 46: stand on the south mark, R. Take 47: stand on the north mark, R. Take 48: walk through the door. Check the call sheet on the back wall is readable and the room feels lonely.
