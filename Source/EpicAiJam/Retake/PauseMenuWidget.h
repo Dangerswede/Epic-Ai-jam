@@ -29,6 +29,11 @@ private:
 	UFUNCTION() void HandleRestart();
 	UFUNCTION() void HandleMenu();
 	UFUNCTION() void HandleSkip();
+	UFUNCTION() void HandleVolumeChanged(float Value);
+
+	UPROPERTY(Transient) TObjectPtr<class USlider> MusicSlider;
+	UPROPERTY(Transient) TObjectPtr<class USlider> SfxSlider;
+	UPROPERTY(Transient) TObjectPtr<class USlider> VoiceSlider;
 
 	UPROPERTY(Transient) TObjectPtr<class UButton> SkipButton;
 

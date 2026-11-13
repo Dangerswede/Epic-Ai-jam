@@ -2,10 +2,16 @@
 
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Components/SizeBox.h"
+#include "Components/Slider.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Retake/RetakeAudioSubsystem.h"
+#include "Retake/RetakeSaveGame.h"
 #include "Retake/RetakeSceneDirector.h"
 #include "Retake/RetakeScenes.h"
 #include "Retake/RetakeWidgetUtils.h"
@@ -52,6 +58,32 @@ void UPauseMenuWidget::BuildTree()
 	SkipButton = AddButton(TEXT("SKIP SCENE (0 stars)"));
 	SkipButton->OnClicked.AddDynamic(this, &UPauseMenuWidget::HandleSkip);
 	AddButton(TEXT("MAIN MENU"))->OnClicked.AddDynamic(this, &UPauseMenuWidget::HandleMenu);
+
+	// F7: the sound department, also from inside a scene (same save as the call sheet sliders).
+	Box->AddChildToVerticalBox(Text(WidgetTree, TEXT("SOUND DEPARTMENT"), 14, Red()))->SetPadding(FMargin(0.f, 14.f, 0.f, 2.f));
+	const URetakeSaveGame* Save = URetakeSaveGame::LoadOrCreate();
+	auto AddSlider = [&](const TCHAR* Label, float Value) -> USlider*
+	{
+		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+		USizeBox* LabelBox = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+		LabelBox->SetWidthOverride(90.f);
+		LabelBox->SetContent(Text(WidgetTree, Label, 15, Ink()));
+		Row->AddChildToHorizontalBox(LabelBox)->SetVerticalAlignment(VAlign_Center);
+		USizeBox* SB = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+		SB->SetWidthOverride(200.f);
+		USlider* Slider = WidgetTree->ConstructWidget<USlider>(USlider::StaticClass());
+		Slider->SetValue(Value);
+		Slider->SetSliderBarColor(RetakeUI::Dim());
+		Slider->SetSliderHandleColor(Red());
+		Slider->OnValueChanged.AddDynamic(this, &UPauseMenuWidget::HandleVolumeChanged);
+		SB->SetContent(Slider);
+		Row->AddChildToHorizontalBox(SB)->SetVerticalAlignment(VAlign_Center);
+		Box->AddChildToVerticalBox(Row)->SetPadding(FMargin(0.f, 2.f));
+		return Slider;
+	};
+	MusicSlider = AddSlider(TEXT("MUSIC"), Save ? Save->MusicVolume : 0.8f);
+	SfxSlider = AddSlider(TEXT("SFX"), Save ? Save->SfxVolume : 1.f);
+	VoiceSlider = AddSlider(TEXT("VOICE"), Save ? Save->VoiceVolume : 1.f);
 
 	UCanvasPanelSlot* S = Canvas->AddChildToCanvas(Sheet);
 	S->SetAnchors(FAnchors(0.5f, 0.5f));
@@ -121,6 +153,11 @@ void UPauseMenuWidget::HandleRestart()
 		PC->SetShowMouseCursor(false);
 		PC->SetInputMode(FInputModeGameOnly());
 	}
+}
+
+void UPauseMenuWidget::HandleVolumeChanged(float)
+{
+	URetakeAudioSubsystem::SetVolumes(this, MusicSlider->GetValue(), SfxSlider->GetValue(), VoiceSlider->GetValue(), true);
 }
 
 void UPauseMenuWidget::HandleSkip()
