@@ -284,8 +284,28 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 	};
 
 	WaitState((uint8)ERetakeSceneState::Briefing, 10.f);
+	if (Director->bLocationScout)
+	{
+		// F7: walk the set during the briefing; nothing may be recorded, and rolling puts us back on the start mark.
+		Steps.Add({ TEXT("scout: walk the set during the briefing"), 8.f, [this](float)
+		{
+			if (Director->GetState() != ERetakeSceneState::Briefing) return EStepResult::Failed;
+			const FVector2D Delta = FVector2D(400.f, -300.f) - FVector2D(Player->GetActorLocation());
+			if (Delta.Size() < 60.f) return EStepResult::Done;
+			Player->AddMovementInput(FVector(Delta.GetSafeNormal(), 0.f), 1.f);
+			return EStepResult::Running;
+		} });
+		Check(TEXT("scouting: still briefing, no take recorded"), [this]()
+		{
+			return Director->GetState() == ERetakeSceneState::Briefing && Director->GetTakes().Num() == 0 && Director->GetTotalTakesShot() == 0;
+		});
+	}
 	Roll();
 	NextTake(1);
+	if (Director->bLocationScout)
+	{
+		Check(TEXT("take 1 starts from the start mark"), [this]() { return FVector::Dist2D(Player->GetActorLocation(), FVector::ZeroVector) < 50.f; });
+	}
 
 	if (Scene == TEXT("Scene01_Bridge"))
 	{
@@ -878,6 +898,52 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 			return EStepResult::Running;
 		} });
 		MoveTo(2400, 600);
+	}	else if (Scene == TEXT("Scene09_Backlot"))
+	{
+		// Reel 3 opener (location scout): DECOY circles the guard, PYRO blows the boarded door, HERO goes through.
+		AStuntGuard* Guard = FindFirst<AStuntGuard>();
+		AExplosiveProp* Charge = FindFirst<AExplosiveProp>();
+		auto TakeTime = [this]() { return Director->TakeDurationSeconds - Director->GetTakeTimeRemaining(); };
+		// Take 1: DECOY.
+		MoveTo(300, 500);
+		WaitUntil(TEXT("guard spots the decoy"), [Guard]() { return Guard->GetGuardState() == EStuntGuardState::Chase; }, 3.f);
+		Steps.Add({ TEXT("circle until the take ends"), 20.f, [this](float)
+		{
+			if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Done;
+			const FVector2D Center(-250.f, 400.f);
+			const FVector2D P = FVector2D(Player->GetActorLocation()) - Center;
+			const float Ang = FMath::Atan2(P.Y, P.X) + FMath::DegreesToRadians(40.f);
+			const FVector2D Aim = Center + FVector2D(FMath::Cos(Ang), FMath::Sin(Ang)) * 560.f;
+			Player->AddMovementInput(FVector((Aim - FVector2D(Player->GetActorLocation())).GetSafeNormal(), 0.f), 1.f);
+			return EStepResult::Running;
+		} });
+		// Take 2: PYRO.
+		NextTake(2);
+		MoveTo(500, -500);
+		WaitUntil(TEXT("decoy ghost has the guard"), [Guard]() { return Guard->GetGuardState() != EStuntGuardState::Patrol; }, 3.f);
+		MoveTo(1620, -300, 30.f);
+		Interact();
+		Check(TEXT("charge armed"), [Charge]() { return Charge->IsArmed(); });
+		MoveTo(1100, -750);
+		WaitUntil(TEXT("the boarded door blows"), [Charge]() { return Charge->HasExploded(); }, 4.f);
+		Cut();
+		// Take 3: HERO.
+		NextTake(3);
+		MoveTo(500, -500);
+		MoveTo(1150, -700);
+		TSharedPtr<int32> Leg = MakeShared<int32>(0);
+		Steps.Add({ TEXT("pace clear of the blast until it goes off"), 12.f, [this, Charge, Leg](float)
+		{
+			if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Failed;
+			if (Charge->HasExploded()) return EStepResult::Done;
+			const FVector2D Target((*Leg % 2 == 0) ? 1000.f : 1250.f, -750.f);
+			const FVector2D Delta = Target - FVector2D(Player->GetActorLocation());
+			if (Delta.Size() < 40.f) { ++*Leg; }
+			Player->AddMovementInput(FVector(Delta.GetSafeNormal(), 0.f), 0.6f);
+			return EStepResult::Running;
+		} });
+		MoveTo(1650, -250);
+		MoveTo(2800, -250);
 	}	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
@@ -971,6 +1037,10 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+	}
+	else if (Scene == TEXT("Scene09_Backlot"))
+	{
+		MoveTo(2800, -250, 60.f, 40.f); // the facade is shut and the guard is watching
 	}
 	else if (Scene == TEXT("Scene06_Saloon"))
 	{

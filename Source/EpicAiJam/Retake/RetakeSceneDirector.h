@@ -124,6 +124,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene")
 	bool bWaitForRollInput = true;
 
+	/** F7: location scout - during the briefing you can walk the set (nothing is recorded, guards stand still,
+	 *  marks are visible); Space rolls take 1 from the start mark as usual. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene")
+	bool bLocationScout = false;
+
 	/** Where the player starts every take (any actor, e.g. a PlayerStart). If unset, the player's spawn location is used. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scene")
 	TObjectPtr<AActor> PlayerStart;

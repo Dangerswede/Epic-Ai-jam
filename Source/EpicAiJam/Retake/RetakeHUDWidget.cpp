@@ -205,6 +205,7 @@ void URetakeHUDWidget::RefreshStatic()
 	}
 	TakeText->SetText(FText::FromString(FString::Printf(TEXT("TAKE %d   FILM %d/%d"), RetakeScenes::DisplayTake(Take), Take, D->MaxTakes)));
 	HintText->SetText(FText::FromString(D->GetState() == ERetakeSceneState::Cut ? TEXT("Next take rolls in a moment...")
+		: (D->bLocationScout && D->GetTakes().Num() == 0) ? TEXT("LOCATION SCOUT: walk the set - nothing is recorded. Press Space to roll.")
 		: D->bWaitForRollInput ? TEXT("Press Space to roll") : TEXT("Get ready...")));
 }
 

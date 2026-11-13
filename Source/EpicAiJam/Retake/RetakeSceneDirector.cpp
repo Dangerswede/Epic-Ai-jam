@@ -111,6 +111,14 @@ void ARetakeSceneDirector::BeginPlay()
 		StartTransform = PlayerStart ? PlayerStart->GetActorTransform() : Player->GetActorTransform();
 		SetState(ERetakeSceneState::Briefing);
 		SetPlayerControl(false);
+		if (bLocationScout && Player)
+		{
+			// F7: walk and look only - no E/R/Q, no jump (Space is the roll button here).
+			if (APlayerController* PC = Cast<APlayerController>(Player->GetController()))
+			{
+				PC->SetIgnoreMoveInput(false);
+			}
+		}
 		if (!bWaitForRollInput)
 		{
 			ScheduleState(BriefingSeconds, [this]() { StartRolling(); });

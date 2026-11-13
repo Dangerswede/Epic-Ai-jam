@@ -45,7 +45,7 @@ namespace RetakeScenes
 			{ TEXT("Scene08_BridgeReshoot"), 8, 2, TEXT("Scene 8: The Bridge (Reshoot)"), TEXT("Again, at dusk. Three takes this time."), nullptr,
 				TEXT("Stunt: J. Ward. Reshoot. Light: fading."), TEXT("Same as yesterday. Same as every day."), true },
 			// Reel 3
-			{ nullptr, 9, 3, TEXT("Scene 9: The Backlot"), TEXT("Night. Nobody is supposed to be here."), nullptr,
+			{ TEXT("Scene09_Backlot"), 9, 3, TEXT("Scene 9: The Backlot"), TEXT("Night. Nobody is supposed to be here."), nullptr,
 				TEXT("Stunt: J. Ward. Location closed. NO SHOOTING TODAY."), TEXT("Nobody's supposed to be out here tonight."), false },
 			{ TEXT("Scene10_EmptyStage"), 10, 3, TEXT("Scene 10"), TEXT("Tape marks. One chair."), TEXT("SCENE 10"),
 				TEXT("Crew: none. Cast: none. Stunt: J. Ward."), nullptr, false },
