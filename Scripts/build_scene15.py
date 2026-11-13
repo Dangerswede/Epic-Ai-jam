@@ -43,7 +43,7 @@ L.sign("SAFETY NET: MISSING", (1280, W - 6, 170), yaw=-90, size=30, color=(0.95,
 L.cameras([((-400, -800, 800), (1280, 0, -100), 20), ((1280, -230, 120), (1280, 0, -150), 16)])
 d = L.director(start, "Scene 15: The Rehearsal",
                "Just a rehearsal of the gap jump. The net never showed up - so somebody has to be the net.",
-               par=2, max_takes=4, duration=12, bonus=("NO_SCRAPS", 0, "No scrapped takes."))
+               par=2, max_takes=4, duration=12, bonus=("FINAL_TAKE_UNDER_SECONDS", 11, "Final take in under 11 seconds."))
 L.set_roles(d, [("Net", "Drop into the pit and stand in the middle. Stay standing."),
                 ("Stunt", "Run, jump onto the net's head, land on the far side.")])
 L.marks([(1, (1280, 0, -PIT_DEPTH), (2.5, 6), (-500, -150, 500), "Where the net should be"),

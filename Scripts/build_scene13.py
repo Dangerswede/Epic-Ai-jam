@@ -56,7 +56,7 @@ L.director_chairs((-600, -800, 0), yaw=150, n=1)
 L.cameras([((-700, -900, 340), (500, 0, 0), 22), ((1650, 900, 300), (800, 0, 50), 26)])
 d = L.director(start, "Scene 13: The Projection Room",
                "The exit wants all three levers. Takes are short. Route it well and two takes will do.",
-               par=2, max_takes=5, duration=7, bonus=("NO_SCRAPS", 0, "No scrapped takes."))
+               par=2, max_takes=5, duration=7, bonus=("FINAL_TAKE_UNDER_SECONDS", 6, "Final take in under 6 seconds."))
 L.set_roles(d, [("Projectionist", "Lever A on the north wall, then lever C by the exit."),
                 ("Stunt", "Lever B on the south wall, then out through the exit.")])
 L.marks([(1, (300, 820, 0), (1, 3), (-500, -300, 300), "Lever A"),

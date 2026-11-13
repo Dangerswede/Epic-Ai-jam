@@ -57,7 +57,7 @@ L.film_crew((-450, -700, 0), 30, (-600, -1000, 0), 60,
 d = L.director(start, "Scene 8: The Bridge (Reshoot)",
                "Reshoot, and the light is going. ONE gate this time, and it wants BOTH switches on at once - "
                "4 seconds each, too far apart for one runner. Two grips, one hero.",
-               par=3, max_takes=5, duration=15, bonus=("NO_SCRAPS", 0, "No scrapped takes."))
+               par=3, max_takes=5, duration=15, bonus=("FINAL_TAKE_UNDER_SECONDS", 11, "Final take in under 11 seconds."))
 L.set_roles(d, [("Grip", "Switch A by the ramp. Don't hit it too early - wait for the far side."),
                 ("Best Boy", "Run under the bridge to switch B on the far side and hit it."),
                 ("Hero", "Up the ramp and across while both switches hold the gate.")])

@@ -123,7 +123,7 @@ L.film_crew((-450, -350, 0), 20, (-500, 400, 0), -40,
                    ("Clapperboard", (7300, 380, 300), 40, -30), ("CinemaCamera", (7200, 300, 300), 170, -60)])
 
 d = L.director(start, "Scene 4: The Finale",
-           "Final scene - plan the ORDER. Four jobs, you decide which take does which. "
+           "End of reel 1 - plan the ORDER. Four jobs, you decide which take does which. "
            "Some jobs only work once others are in the can. Props can hit a mark too.",
            par=4, max_takes=7, duration=30,
            bonus=("NO_SCRAPS", 0, "No scrapped takes."))

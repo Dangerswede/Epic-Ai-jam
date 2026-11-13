@@ -96,7 +96,7 @@ void URetakeResultsWidget::BuildTree()
 	WatchSlot->SetHorizontalAlignment(HAlign_Center);
 	WatchSlot->SetPadding(FMargin(0.f, 14.f, 0.f, 0.f));
 
-	NextButton = Button(WidgetTree, TEXT("NEXT SCENE"), 18);
+	NextButton = Button(WidgetTree, TEXT("NEXT SCENE  [ENTER]"), 18);
 	UButton* Retry = Button(WidgetTree, TEXT("RETRY"), 18);
 	UButton* Menu = Button(WidgetTree, TEXT("MAIN MENU"), 18);
 	for (UButton* Btn : { NextButton.Get(), Retry, Menu })
@@ -115,6 +115,7 @@ void URetakeResultsWidget::BuildTree()
 	S->SetAlignment(FVector2D(0.5f, 0.5f));
 	S->SetAutoSize(true);
 	ResultsSheet = Sheet;
+	SetIsFocusable(true); // F6: receives Enter
 
 	// S5: memorial card (finale only), typed out on black before the results.
 	MemorialCard = Panel(WidgetTree, FLinearColor::Black, FMargin(0.f));
@@ -260,9 +261,21 @@ void URetakeResultsWidget::NativeTick(const FGeometry& MyGeometry, float InDelta
 		MemorialText->SetText(FText::FromString(Card.Left(Shown)));
 		const float TypedAt = 0.8f + Card.Len() / 16.f;
 		const float FadeStart = TypedAt + 2.5f;
-		MemorialCard->SetRenderOpacity(FMath::Clamp(1.f - (MemorialClock - FadeStart) / 1.f, 0.f, 1.f));
-		MemorialText->SetRenderOpacity(MemorialCard->GetRenderOpacity());
-		if (MemorialClock >= FadeStart + 1.f)
+		// F5: then THE END and the credits on the same black card, then the card fades and the results come up.
+		const float CreditsStart = FadeStart + 1.f;
+		const float CardFade = CreditsStart + 5.f;
+		static const FString Credits = TEXT("THE END\n\nRETAKE  -  The Last Take\n\nA game by Markus\nMade with Unreal Engine 5, Claude Code and Tripo3D\nEpic AI MegaJam 2026");
+		if (MemorialClock >= CreditsStart)
+		{
+			MemorialText->SetText(FText::FromString(Credits));
+			MemorialText->SetRenderOpacity(FMath::Clamp((MemorialClock - CreditsStart) / 0.6f, 0.f, 1.f) * FMath::Clamp(1.f - (MemorialClock - CardFade) / 1.f, 0.f, 1.f));
+		}
+		else
+		{
+			MemorialText->SetRenderOpacity(FMath::Clamp(1.f - (MemorialClock - FadeStart) / 0.8f, 0.f, 1.f));
+		}
+		MemorialCard->SetRenderOpacity(FMath::Clamp(1.f - (MemorialClock - CardFade) / 1.f, 0.f, 1.f));
+		if (MemorialClock >= CardFade + 1.f)
 		{
 			MemorialClock = -1.f;
 			MemorialCard->SetVisibility(ESlateVisibility::Collapsed);
@@ -311,6 +324,18 @@ void URetakeResultsWidget::NativeTick(const FGeometry& MyGeometry, float InDelta
 		PopupText->SetRenderTransformAngle(RetakeUI::PopTilt(PopupTime, -4.f));
 		PopupText->SetRenderOpacity(LastPopup.IsEmpty() ? 0.f : 1.f);
 	}
+}
+
+FReply URetakeResultsWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	// F6: Enter (or gamepad Start) = NEXT SCENE, once the memorial/credits card is done.
+	const FKey Key = InKeyEvent.GetKey();
+	if ((Key == EKeys::Enter || Key == EKeys::Gamepad_Special_Right) && MemorialClock < 0.f && ReelClock < 0.f && NextSceneIndex != INDEX_NONE)
+	{
+		HandleNext();
+		return FReply::Handled();
+	}
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
 
 void URetakeResultsWidget::CloseAndRestoreInput()

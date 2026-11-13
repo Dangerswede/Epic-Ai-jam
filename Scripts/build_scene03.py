@@ -88,7 +88,7 @@ d = L.director(start, "Scene 3: The Chase",
                "New trick: EXPLOSIVES. Blow both walls - the second fuse is short, so whoever lights it takes the fall. "
                "Old trick: the exit is a timed gate. New: the DIRECTOR'S NOTE below is an extra goal for the third star.",
                par=3, max_takes=5, duration=16,
-               bonus=("FINAL_TAKE_UNDER_SECONDS", FINAL_N, "Final take in under %d seconds." % FINAL_N))
+               bonus=("SOMEONE_DIED", 0, "Give me one spectacular wipe-out."))
 L.set_roles(d, [("Pyro", "Light charge 1, get clear, then light charge 2 - and take the fall."),
                 ("Grip", "Run the north corridor and hit the EXIT switch at the far end."),
                 ("Hero", "Follow the blasts and make the exit while the gate is open.")])

@@ -54,7 +54,7 @@ L.cameras([((-500, -650, 600), (1400, 0, 50), 20), ((2700, 600, 300), (1400, 0, 
 d = L.director(start, "Scene 5: The Rooftop",
                "Lasers across the roof door, and their switch is in the far corner - too far for one runner. "
                "The crew left their coffee. Nobody's drinking it.",
-               par=2, max_takes=4, duration=12, bonus=("NO_SCRAPS", 0, "No scrapped takes."))
+               par=2, max_takes=4, duration=12, bonus=("FINAL_TAKE_UNDER_SECONDS", 7, "Final take in under 7 seconds."))
 L.set_roles(d, [("Tech", "Back corner: hit the LASERS switch."),
                 ("Hero", "Straight through the laser door while it's dark, to the edge.")])
 L.marks([(1, (-450, -550, 0), (1, 3), (500, 300, 300), "The switch"),
