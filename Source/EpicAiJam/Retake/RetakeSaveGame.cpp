@@ -30,6 +30,19 @@ void URetakeSaveGame::SaveNow()
 	UGameplayStatics::SaveGameToSlot(this, SlotName(), 0);
 }
 
+void URetakeSaveGame::RecordSkip(const FString& MapName)
+{
+	if (URetakeSaveGame* Save = LoadOrCreate())
+	{
+		Save->SkippedScenes.Add(MapName);
+		if (!Save->BestStars.Contains(MapName))
+		{
+			Save->BestStars.Add(MapName, 0);
+		}
+		UGameplayStatics::SaveGameToSlot(Save, SlotName(), 0);
+	}
+}
+
 bool URetakeSaveGame::RecordWrap(const FString& MapName, int32 TakesUsed, int32 Stars)
 {
 	URetakeSaveGame* Save = LoadOrCreate();

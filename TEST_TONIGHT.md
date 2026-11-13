@@ -219,3 +219,8 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 120. Scenes 1-4: the jobs are spelled out as before. From scene 5 on: only the job name (e.g. DECOY (H: ask the director)); press H (gamepad: right shoulder) and the director tells you the job, and it stays spelled out for the rest of the scene. Running out of film also spells them out.
 121. In scenes with roles, after CUT the next take waits: Press Space to roll take N.
 122. T (gamepad: left shoulder) restarts the current take. Q in the very first take (nothing to scrap yet) also restarts it. Both are in the key hints.
+
+## Review group 3 - Judge-proofing
+123. Run out of film in any scene: the stamp now also says Q scraps an earlier take - ESC restarts the scene. ESC then shows SKIP SCENE (0 stars) (also after 3 scraps). Skipping loads the next scene and the menu marks the skipped one SKIPPED (0 stars).
+124. Earlier takes no longer push you when a take starts (they all begin on the same mark).
+125. Scene 9 scout: jump off the set into the net - you're put back on the start mark.

@@ -28,6 +28,9 @@ private:
 	UFUNCTION() void HandleResume();
 	UFUNCTION() void HandleRestart();
 	UFUNCTION() void HandleMenu();
+	UFUNCTION() void HandleSkip();
+
+	UPROPERTY(Transient) TObjectPtr<class UButton> SkipButton;
 
 	bool bOpen = false;
 };

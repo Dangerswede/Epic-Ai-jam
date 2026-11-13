@@ -358,7 +358,7 @@ void URetakeHUDWidget::HandleMarkHit(int32 MarkNumber)
 
 void URetakeHUDWidget::HandleOutOfFilm()
 {
-	ShowStamp(TEXT("OUT OF FILM!\nLast take scrapped"), RetakeUI::Red(), 1.9f);
+	ShowStamp(TEXT("OUT OF FILM!\nLast take scrapped\nQ scraps an earlier take  -  ESC restarts the scene"), RetakeUI::Red(), 3.f);
 }
 
 void URetakeHUDWidget::RebuildTimeline()

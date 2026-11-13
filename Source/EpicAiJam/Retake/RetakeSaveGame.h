@@ -30,7 +30,14 @@ public:
 	/** Save this object to disk. */
 	void SaveNow();
 
-	bool IsWrapped(const FString& MapName) const { return BestTakes.Contains(MapName); }
+	/** G5: scenes skipped from the pause menu (count as done, 0 stars). */
+	UPROPERTY()
+	TSet<FString> SkippedScenes;
+
+	bool IsWrapped(const FString& MapName) const { return BestTakes.Contains(MapName) || SkippedScenes.Contains(MapName); }
+	bool IsSkippedOnly(const FString& MapName) const { return !BestTakes.Contains(MapName) && SkippedScenes.Contains(MapName); }
+
+	static void RecordSkip(const FString& MapName);
 
 	/** A scene is unlocked if it is the first one or the previous one is wrapped. */
 	bool IsUnlocked(int32 SceneIndex) const;

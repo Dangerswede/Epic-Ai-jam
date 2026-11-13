@@ -390,6 +390,7 @@ void ARetakeSceneDirector::CutTake(ERetakeCutReason Reason)
 		Takes.Pop();
 		UE_LOG(LogRetakeDirector, Log, TEXT("Out of film: take %d scrapped."), CurrentTakeNumber);
 		++ScrapCount;
+		bRanOutOfFilm = true;
 		OnOutOfFilm.Broadcast();
 		RevealRoleTasks(); // G1: out of film - the director spells the jobs out
 	}
@@ -601,6 +602,11 @@ void ARetakeSceneDirector::NotifyMarkHit(ACameraMark* Mark)
 
 void ARetakeSceneDirector::NotifyPlayerKilled()
 {
+	if (State == ERetakeSceneState::Briefing && bLocationScout)
+	{
+		RespawnPlayer(); // K5: fell off the set while scouting - back to the start mark, nothing lost
+		return;
+	}
 	if (bDying)
 	{
 		return; // already flying from a stunt death; let the tail finish
@@ -774,6 +780,29 @@ void ARetakeSceneDirector::EnterResults()
 	SetState(ERetakeSceneState::Results);
 }
 
+bool ARetakeSceneDirector::CanSkipScene() const
+{
+	return bRanOutOfFilm || ScrapCount >= 3;
+}
+
+void ARetakeSceneDirector::SkipScene()
+{
+	if (!CanSkipScene())
+	{
+		return;
+	}
+	// G5: counts as done (0 stars) and unlocks the next scene, so nobody gets stuck on one puzzle.
+	URetakeSaveGame::RecordSkip(GetSceneId());
+	if (DirectorsCut && DirectorsCut->IsRunning())
+	{
+		DirectorsCut->End();
+	}
+	UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
+	const int32 Index = RetakeScenes::IndexOf(GetSceneId());
+	const bool bHasNext = RetakeScenes::All().IsValidIndex(Index + 1);
+	UGameplayStatics::OpenLevel(this, FName(bHasNext ? RetakeScenes::All()[Index + 1].MapName : RetakeScenes::MainMenuMap()));
+}
+
 bool ARetakeSceneDirector::ShouldAutoPlayDirectorsCut() const
 {
 	const RetakeScenes::FSceneInfo* Info = RetakeScenes::Find(GetSceneId());
@@ -807,6 +836,7 @@ void ARetakeSceneDirector::RestartScene()
 	}
 	TotalTakesShot = 0;
 	ScrapCount = 0;
+	bRanOutOfFilm = false;
 	bAnyCaught = false;
 	bAnyDied = false;
 	bReplayingTrack = false;

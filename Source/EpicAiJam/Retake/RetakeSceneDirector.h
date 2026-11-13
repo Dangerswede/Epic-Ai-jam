@@ -312,6 +312,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	bool ShouldAutoPlayDirectorsCut() const;
 
+	/** G5: SKIP SCENE is offered (pause menu) after running out of film or 3 scrapped takes. */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	bool CanSkipScene() const;
+
+	/** Marks the scene done with 0 stars and loads the next one. */
+	UFUNCTION(BlueprintCallable, Category = "Retake")
+	void SkipScene();
+
 	/** Restart the whole scene from Take 1 (e.g. from the Results screen). */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void RestartScene();
@@ -393,6 +401,7 @@ private:
 
 	int32 TotalTakesShot = 0;
 	bool bAwaitingRoll = false;
+	bool bRanOutOfFilm = false;
 	bool bRoleTasksRevealed = false;
 	UPROPERTY(Transient) TArray<TObjectPtr<ACameraMark>> Marks;
 	int32 ScrapCount = 0;

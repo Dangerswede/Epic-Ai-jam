@@ -141,6 +141,8 @@ void ATakeGhost::Play(float StartTime)
 	PlaybackTime = FMath::Max(0.f, StartTime);
 	bFinished = false;
 	bPlaying = true;
+	// K4: a replaying take never shoves the stunt double (they all start on the same mark); it only blocks once it's done.
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	// Skip actions before the start time; fire the ones exactly at it.
 	NextActionFrame = 0;
@@ -327,6 +329,7 @@ void ATakeGhost::Finish()
 	{
 		// P11: a frozen, standing stunt double is a stepping stone.
 		HeadPlatform->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 	}
 	if (Take.EndsInDeath())
 	{

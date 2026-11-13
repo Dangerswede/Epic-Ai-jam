@@ -1131,6 +1131,7 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 				return Director->GetState() == ERetakeSceneState::Rolling && Director->GetCurrentTakeNumber() == 1;
 			}, 4.f);
 		};
+		Check(TEXT("G5: no SKIP SCENE before you've struggled"), [this]() { return !Director->CanSkipScene(); });
 		ExpectRetake(TEXT("Q"), [this]() { Player->Scrap(); });
 		ExpectRetake(TEXT("T"), [this]() { Player->Retake(); });
 		// G1: reel 3 - the job is a hint until you ask the director.
@@ -1178,9 +1179,14 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 				return Director->GetState() == ERetakeSceneState::Rolling && Director->GetCurrentTakeNumber() == Take;
 			}, 10.f);
 			Wait(0.3f);
+			Check(FString::Printf(TEXT("K4: take %d - ghosts on the start mark don't shove the stunt double"), Take), [this]()
+			{
+				return FVector::Dist2D(Player->GetActorLocation(), Director->PlayerStart ? Director->PlayerStart->GetActorLocation() : FVector::ZeroVector) < 5.f;
+			});
 			Do(TEXT("Press R (cut)"), [this]() { Player->Cut(); });
 		}
 		Check(TEXT("out of film: last take scrapped, the others kept"), [this, Max]() { return Director->GetTakes().Num() == Max - 1; });
+		Check(TEXT("G5: SKIP SCENE is offered after running out of film"), [this]() { return Director->CanSkipScene(); });
 		WaitUntil(TEXT("last take rolls again"), [this, Max]()
 		{
 			if (Director->IsAwaitingRoll()) { Player->StartJump(); } // G2: Space rolls the next take

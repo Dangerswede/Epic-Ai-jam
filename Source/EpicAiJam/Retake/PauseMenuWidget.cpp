@@ -48,6 +48,9 @@ void UPauseMenuWidget::BuildTree()
 	};
 	AddButton(TEXT("RESUME"))->OnClicked.AddDynamic(this, &UPauseMenuWidget::HandleResume);
 	AddButton(TEXT("RESTART SCENE"))->OnClicked.AddDynamic(this, &UPauseMenuWidget::HandleRestart);
+	// G5: only shown after running out of film or 3 scrapped takes.
+	SkipButton = AddButton(TEXT("SKIP SCENE (0 stars)"));
+	SkipButton->OnClicked.AddDynamic(this, &UPauseMenuWidget::HandleSkip);
 	AddButton(TEXT("MAIN MENU"))->OnClicked.AddDynamic(this, &UPauseMenuWidget::HandleMenu);
 
 	UCanvasPanelSlot* S = Canvas->AddChildToCanvas(Sheet);
@@ -69,6 +72,11 @@ void UPauseMenuWidget::Open()
 		AddToViewport(20);
 	}
 	SetVisibility(ESlateVisibility::Visible);
+	if (SkipButton)
+	{
+		const ARetakeSceneDirector* D = ARetakeSceneDirector::Get(this);
+		SkipButton->SetVisibility(D && D->CanSkipScene() ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
 	UGameplayStatics::SetGamePaused(this, true);
 	PC->SetShowMouseCursor(true);
 	FInputModeGameAndUI Mode;
@@ -112,6 +120,15 @@ void UPauseMenuWidget::HandleRestart()
 	{
 		PC->SetShowMouseCursor(false);
 		PC->SetInputMode(FInputModeGameOnly());
+	}
+}
+
+void UPauseMenuWidget::HandleSkip()
+{
+	Close();
+	if (ARetakeSceneDirector* D = ARetakeSceneDirector::Get(this))
+	{
+		D->SkipScene();
 	}
 }
 

@@ -95,7 +95,7 @@ void UCallSheetMenuWidget::BuildTree()
 		const bool bUnlocked = Save && Save->IsUnlocked(i);
 		const int32* Best = Save ? Save->BestTakes.Find(Scenes[i].MapName) : nullptr;
 		const int32* Stars = Save ? Save->BestStars.Find(Scenes[i].MapName) : nullptr;
-		FString Status = !bUnlocked ? TEXT("LOCKED") : Best
+		FString Status = !bUnlocked ? TEXT("LOCKED") : (Save && Save->IsSkippedOnly(Scenes[i].MapName)) ? TEXT("SKIPPED (0 stars)") : Best
 			? FString::Printf(TEXT("WRAPPED %d/3 stars (%d takes)"), Stars ? *Stars : 1, *Best) : TEXT("READY");
 
 		UHorizontalBox* H = Row(Scenes[i].Title, Scenes[i].Logline, Status, 17, bUnlocked ? Ink() : Dim());
