@@ -170,7 +170,7 @@ public:
 	bool bFilmLook = true;
 
 	UPROPERTY(EditAnywhere, Category = "Look")
-	float FilmGrain = 0.22f;
+	float FilmGrain = 0.12f; // halved after the evening test: the grain made the suit look bumpy
 
 	UPROPERTY(EditAnywhere, Category = "Look")
 	FLinearColor FilmTint = FLinearColor(1.f, 0.93f, 0.82f);

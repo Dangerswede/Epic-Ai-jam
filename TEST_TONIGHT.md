@@ -233,3 +233,4 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 130. Results screen: Enter (gamepad Start) = NEXT SCENE.
 131. ESC in a scene: the pause menu now has MUSIC / SFX / VOICE sliders (same as the main menu).
 132. Director's Cut (and takes): earlier takes now walk/run/jump instead of sliding in an idle pose.
+133. Stunt helmet: visor now faces forward and sits on the head; the film grain is half as strong (suit should look smooth).
