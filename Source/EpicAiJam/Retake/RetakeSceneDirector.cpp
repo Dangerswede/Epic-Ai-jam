@@ -95,6 +95,10 @@ void ARetakeSceneDirector::BeginPlay()
 	{
 		SceneTitle = FText::FromString(Info->Title);
 	}
+	if (RetakeScenes::IsFinale(GetSceneId()))
+	{
+		WrapSeconds = FMath::Max(WrapSeconds, 8.f); // S5: room for the two quiet lines before the card
+	}
 
 	// The player pawn may be spawned after level actors begin play; start next tick.
 	GetWorldTimerManager().SetTimerForNextTick([this]()
@@ -637,6 +641,12 @@ void ARetakeSceneDirector::StartDirectorsCut()
 	for (int32 i = 0; i < Ghosts.Num(); ++i)
 	{
 		const bool bWinner = (i == Ghosts.Num() - 1);
+		if (RetakeScenes::IsFinale(GetSceneId()))
+		{
+			// S5: every take of Jack in warm gold, the last one brightest.
+			Ghosts[i]->SetCinematicLook(bWinner ? FLinearColor(1.f, 0.62f, 0.25f) : FLinearColor(0.75f, 0.5f, 0.28f) * (0.8f + 0.1f * i));
+			continue;
+		}
 		Ghosts[i]->SetCinematicLook(bWinner ? FLinearColor(0.85f, 0.08f, 0.06f) : Palette[i % UE_ARRAY_COUNT(Palette)]);
 	}
 

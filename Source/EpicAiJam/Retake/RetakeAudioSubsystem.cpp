@@ -18,6 +18,7 @@
 #include "Retake/PushCrate.h"
 #include "Retake/RetakeAudioSet.h"
 #include "Retake/RetakeSaveGame.h"
+#include "Retake/RetakeScenes.h"
 #include "Retake/StuntGuard.h"
 #include "Sound/SoundBase.h"
 #include "Sound/SoundClass.h"
@@ -311,6 +312,12 @@ void URetakeAudioSubsystem::HandleSceneFailed()
 void URetakeAudioSubsystem::HandleWrap()
 {
 	if (!Set) return;
+	// S5: the last wrap is quiet - the music drops out and the director's own lines follow (HUD, VoiceStoryWrap1/2).
+	if (const ARetakeSceneDirector* D = ARetakeSceneDirector::Get(GetWorld()); D && RetakeScenes::IsFinale(D->GetSceneId()))
+	{
+		PlayMusic(nullptr);
+		return;
+	}
 	PlaySound(Set->SfxGoal, ECategory::Sfx);
 	PlaySound(Set->VoiceThatsAWrap, ECategory::Voice, 0.3f);
 }

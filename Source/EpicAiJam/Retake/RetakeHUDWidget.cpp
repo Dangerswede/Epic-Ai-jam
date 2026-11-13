@@ -282,6 +282,14 @@ void URetakeHUDWidget::HandleStateChanged(ERetakeSceneState NewState, ERetakeSce
 		ShowStamp(FString::Printf(TEXT("SCENE FAILED\nBack to Take %d"), RetakeScenes::DisplayTake(1)), RetakeUI::Red(), 2.8f);
 		break;
 	case ERetakeSceneState::Wrap:
+		if (Director.IsValid() && RetakeScenes::IsFinale(Director->GetSceneId()))
+		{
+			// S5: 1 s of silence, then the director, calm.
+			ShowStoryLine(TEXT("You don't have to do it again, Jack."), 1.f, TEXT("VoiceStoryWrap1"));
+			PendingStoryLine = TEXT("That's a wrap.");
+			PendingStoryVoice = TEXT("VoiceStoryWrap2");
+			break;
+		}
 		ShowStamp(TEXT("THAT'S A WRAP!"), RetakeUI::Mustard(), 2.f);
 		break;
 	default:
@@ -431,6 +439,12 @@ void URetakeHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime
 		{
 			StoryDuration = 0.f;
 			StoryText->SetRenderOpacity(0.f);
+			if (!PendingStoryLine.IsEmpty())
+			{
+				const FString Line = PendingStoryLine;
+				PendingStoryLine.Reset();
+				ShowStoryLine(Line, 0.5f, PendingStoryVoice);
+			}
 		}
 	}
 

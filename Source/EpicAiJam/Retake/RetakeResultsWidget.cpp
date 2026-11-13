@@ -116,6 +116,23 @@ void URetakeResultsWidget::BuildTree()
 	S->SetAutoSize(true);
 	ResultsSheet = Sheet;
 
+	// S5: memorial card (finale only), typed out on black before the results.
+	MemorialCard = Panel(WidgetTree, FLinearColor::Black, FMargin(0.f));
+	MemorialCard->SetVisibility(ESlateVisibility::Collapsed);
+	{
+		UCanvasPanelSlot* MS = Canvas->AddChildToCanvas(MemorialCard);
+		MS->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
+		MS->SetOffsets(FMargin(0.f));
+		MemorialText = Text(WidgetTree, TEXT(""), 34, Chalk(), ETextJustify::Center, false);
+		MemorialText->SetAutoWrapText(false);
+		MemorialText->SetFont(FCoreStyle::GetDefaultFontStyle("Regular", 34));
+		MemorialText->SetVisibility(ESlateVisibility::HitTestInvisible);
+		UCanvasPanelSlot* TS2 = Canvas->AddChildToCanvas(MemorialText);
+		TS2->SetAnchors(FAnchors(0.5f, 0.45f));
+		TS2->SetAlignment(FVector2D(0.5f, 0.f));
+		TS2->SetAutoSize(true);
+	}
+
 	// ST1: "END OF REEL N" card in 70s film-leader style (black, crosshair, 3-2-1), shown before the next reel loads.
 	ReelCard = Panel(WidgetTree, FLinearColor(0.02f, 0.02f, 0.02f, 1.f), FMargin(0.f));
 	ReelCard->SetVisibility(ESlateVisibility::Collapsed);
@@ -168,6 +185,16 @@ void URetakeResultsWidget::ShowResults(ARetakeSceneDirector* InDirector, bool bN
 	PopupTime = 10.f;
 	LastPopup.Reset();
 	bMeterRunning = true;
+	// S5: the first time the finale's results come up, the memorial card plays first (the meter waits).
+	if (RetakeScenes::IsFinale(InDirector->GetSceneId()) && !bMemorialShown && MemorialCard)
+	{
+		bMemorialShown = true;
+		MemorialClock = 0.f;
+		MemorialCard->SetRenderOpacity(1.f);
+		MemorialCard->SetVisibility(ESlateVisibility::Visible);
+		MemorialText->SetText(FText::GetEmpty());
+		bMeterRunning = false;
+	}
 	SetMeter(0.f);
 	if (!InDirector->BonusText.IsEmpty())
 	{
@@ -224,6 +251,24 @@ void URetakeResultsWidget::Popup(const FString& Str, const FLinearColor& Color)
 void URetakeResultsWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
+	if (MemorialClock >= 0.f)
+	{
+		// Typewriter: ~16 characters a second, hold, then fade the card away and start the meter.
+		static const FString Card = TEXT("In memory of Jack Ward\n\n1941 \u2013 1977\n\nEvery take counted.");
+		MemorialClock += InDeltaTime;
+		const int32 Shown = FMath::Clamp(FMath::FloorToInt((MemorialClock - 0.8f) * 16.f), 0, Card.Len());
+		MemorialText->SetText(FText::FromString(Card.Left(Shown)));
+		const float TypedAt = 0.8f + Card.Len() / 16.f;
+		const float FadeStart = TypedAt + 2.5f;
+		MemorialCard->SetRenderOpacity(FMath::Clamp(1.f - (MemorialClock - FadeStart) / 1.f, 0.f, 1.f));
+		MemorialText->SetRenderOpacity(MemorialCard->GetRenderOpacity());
+		if (MemorialClock >= FadeStart + 1.f)
+		{
+			MemorialClock = -1.f;
+			MemorialCard->SetVisibility(ESlateVisibility::Collapsed);
+			bMeterRunning = true;
+		}
+	}
 	if (bMeterRunning)
 	{
 		const float Next = FMath::Min(TargetRating, DisplayedRating + 55.f * InDeltaTime);

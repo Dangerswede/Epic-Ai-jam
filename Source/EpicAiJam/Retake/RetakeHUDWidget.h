@@ -86,6 +86,8 @@ private:
 	float StoryClock = 0.f;
 	float StoryDuration = 0.f;
 	bool bStoryShown = false;
+	FString PendingStoryLine;
+	FString PendingStoryVoice;
 	UPROPERTY(Transient) TObjectPtr<class UBorder> FlashBorder;
 	float FlashAlpha = 0.f;
 	UPROPERTY(Transient) TObjectPtr<UWidget> BriefingPanel;

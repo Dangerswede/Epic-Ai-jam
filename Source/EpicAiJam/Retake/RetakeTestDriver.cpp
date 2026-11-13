@@ -187,6 +187,15 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 	});
 	// R1: no automatic Director's Cut - straight to the results.
 	WaitState((uint8)ERetakeSceneState::Results, 10.f);
+	if (RetakeScenes::IsFinale(Scene))
+	{
+		Check(TEXT("finale: the memorial card comes up before the results"), [this]()
+		{
+			const APlayerController* PC = GetWorld()->GetFirstPlayerController();
+			const ARetakeHUD* Hud = PC ? PC->GetHUD<ARetakeHUD>() : nullptr;
+			return Hud && Hud->GetResultsWidget() && Hud->GetResultsWidget()->IsMemorialShowing();
+		});
+	}
 	WaitUntil(TEXT("rating meter heads for the rating and ends on PRINT IT!"), [this]()
 	{
 		const APlayerController* PC = GetWorld()->GetFirstPlayerController();
@@ -211,6 +220,10 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 	});
 	// Watch the optional Director's Cut: Space on the results screen (same as the button).
 	Wait(0.5f);
+	if (RetakeScenes::IsFinale(Scene) && FParse::Param(FCommandLine::Get(), TEXT("RetakeUiShots")))
+	{
+		Wait(7.5f); // let the memorial card type out for the screenshots
+	}
 	Do(TEXT("Press Space on the results (watch Director's Cut)"), [this]() { DirectorsCutRealSeconds = 0.f; Player->StartJump(); });
 	WaitState((uint8)ERetakeSceneState::DirectorsCut, 3.f);
 	WaitUntil(TEXT("Director's Cut uses a cine camera"), [this]() { return bSawCineCamera; }, 10.f);
@@ -876,12 +889,12 @@ void ARetakeTestDriver::Tick(float DeltaSeconds)
 		const double Now = FPlatformTime::Seconds();
 		const ERetakeSceneState S = Director->GetState();
 		// Results shots after the Director's Cut (the test watches it first), so the meter has time to fill.
-		const bool bArm = (UiShots == 0 && S == ERetakeSceneState::Rolling) || (UiShots >= 1 && S == ERetakeSceneState::Results && DirectorsCutRealSeconds > 1.f);
+		const bool bArm = (UiShots == 0 && S == ERetakeSceneState::Rolling) || (UiShots >= 1 && S == ERetakeSceneState::Results && (DirectorsCutRealSeconds > 1.f || RetakeScenes::IsFinale(Director->GetSceneId())));
 		if (bArm && UiShotClock < 0.0)
 		{
 			UiShotClock = Now;
 		}
-		const double Delay = UiShots == 0 ? 1.7 : UiShots == 1 ? 0.5 : 2.6; // 1.7 s: the director's story line is up
+		const double Delay = UiShots == 0 ? 1.7 : UiShots == 1 ? 3.0 : 6.5; // 1.7 s: the director's story line is up
 		if (bArm && Now - UiShotClock >= Delay)
 		{
 			++UiShots;

@@ -189,7 +189,8 @@ void UDirectorsCutComponent::Begin(const TArray<ATakeGhost*>& InGhosts, float Lo
 		if (Overlay)
 		{
 			const ARetakeSceneDirector* D = GetDirector();
-			Overlay->ShowTitle(TEXT("DIRECTOR'S CUT"), D ? D->SceneTitle.ToString() : FString(), TitleCardSeconds);
+			const bool bForJack = D && RetakeScenes::IsFinale(D->GetSceneId());
+			Overlay->ShowTitle(bForJack ? TEXT("DIRECTOR'S CUT \u2013 FOR JACK") : TEXT("DIRECTOR'S CUT"), D ? D->SceneTitle.ToString() : FString(), TitleCardSeconds);
 			Overlay->ShowBlack(true);
 		}
 		PC->SetViewTarget(ReelCamera);

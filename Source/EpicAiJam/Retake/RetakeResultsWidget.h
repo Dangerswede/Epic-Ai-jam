@@ -29,6 +29,9 @@ public:
 
 	/** Where the meter is heading and the popup it ends on (checked by the headless playtest). */
 	int32 GetTargetRating() const { return FMath::RoundToInt(TargetRating); }
+	/** S5: the memorial card is on screen (finale). */
+	bool IsMemorialShowing() const { return MemorialClock >= 0.f; }
+
 	FString GetFinalPopup() const { return TargetStars >= 3 ? TEXT("PRINT IT!") : TEXT("..."); }
 
 protected:
@@ -75,4 +78,9 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> ReelNumber;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> ReelTitle;
 	float ReelClock = -1.f;
+
+	UPROPERTY(Transient) TObjectPtr<UBorder> MemorialCard;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> MemorialText;
+	float MemorialClock = -1.f;
+	bool bMemorialShown = false;
 };

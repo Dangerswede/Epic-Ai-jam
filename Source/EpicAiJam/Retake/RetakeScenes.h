@@ -120,4 +120,7 @@ namespace RetakeScenes
 
 	/** The map that ends the story (save flag for the menu's "Production wrapped"). */
 	inline const TCHAR* FinalMap() { return TEXT("Scene05_TheGap"); }
+
+	/** S5: the last scene gets the ending (quiet wrap lines, memorial card, FOR JACK cut). */
+	inline bool IsFinale(const FString& MapName) { return MapName.Equals(FinalMap(), ESearchCase::IgnoreCase); }
 }
