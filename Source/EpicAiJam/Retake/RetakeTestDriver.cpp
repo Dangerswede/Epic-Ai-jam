@@ -423,6 +423,67 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(3900, -50);
 		WaitUntil(TEXT("grip ghost's exit window"), [Exit]() { return Exit->GetOpenAlpha() > 0.95f; }, 3.f);
 		MoveTo(4400, 0);
+	}	else if (Scene == TEXT("Scene14_ChaseFinal"))
+	{
+		// Reel 4 remix of scene 3, tighter: GRIP presses the 4 s exit a little later.
+		AExplosiveProp* Bomb1 = nullptr;
+		AExplosiveProp* Bomb2 = nullptr;
+		for (TActorIterator<AExplosiveProp> It(GetWorld()); It; ++It) { (It->GetActorLocation().X < 2200.f ? Bomb1 : Bomb2) = *It; }
+		AGate* Exit = FindFirst<AGate>();
+		AActor* Wall2 = nullptr;
+		for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+		{
+			if (It->ActorHasTag(TEXT("BreakableWall")) && It->GetActorLocation().X > 2500.f) { Wall2 = *It; }
+		}
+		// Take 1: PYRO.
+		MoveTo(1480, 40, 40.f);
+		Interact();
+		Check(TEXT("charge 1 armed"), [Bomb1]() { return Bomb1->IsArmed(); });
+		MoveTo(1050, 0, 40.f);
+		WaitUntil(TEXT("charge 1 goes off"), [Bomb1]() { return Bomb1->HasExploded(); }, 4.f);
+		MoveTo(2780, 40, 40.f);
+		Interact();
+		WaitUntil(TEXT("pyro taken out by charge 2"), [this]() { return Director->GetState() == ERetakeSceneState::Cut; }, 5.f);
+		Check(TEXT("wall 2 broken"), [Wall2]() { return Wall2 && Wall2->IsHidden(); });
+		Check(TEXT("take 1 is a stunt death (thrown, Died on last frame)"), [this, Bomb2]()
+		{
+			const FTakeData& T = Director->GetTakes()[0];
+			const float Thrown = FVector::Dist2D(T.Frames.Last().Location, Bomb2->GetActorLocation());
+			UE_LOG(LogRetakeTest, Display, TEXT("  thrown to %.0f cm from charge 2"), Thrown);
+			return T.EndsInDeath() && T.EndReason == ERetakeCutReason::Killed && Thrown > 250.f;
+		});
+		// Take 2: GRIP - north corridor to the exit switch.
+		NextTake(2);
+		Check(TEXT("wall 2 restored for the new take"), [Wall2]() { return Wall2 && !Wall2->IsHidden(); });
+		MoveTo(700, 500);
+		MoveTo(3830, 500, 40.f);
+		Steps.Add({ TEXT("pace by the switch until 9.6 s"), 10.f, [this](float)
+		{
+			if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Failed;
+			if (Director->TakeDurationSeconds - Director->GetTakeTimeRemaining() >= 9.6f) return EStepResult::Done;
+			const float Phase = FMath::Fmod(Director->TakeDurationSeconds - Director->GetTakeTimeRemaining(), 1.2f);
+			Player->AddMovementInput(FVector(Phase < 0.6f ? -1.f : 1.f, 0.f, 0.f), 0.5f);
+			return EStepResult::Running;
+		} });
+		MoveTo(3830, 500, 40.f);
+		Interact();
+		WaitUntil(TEXT("exit gate opens"), [Exit]() { return Exit->ShouldBeOpen(); }, 1.f);
+		Cut();
+		// Take 3: HERO - follow the blasts, make the exit window.
+		NextTake(3);
+		Check(TEXT("two ghosts spawned"), [this]() { return Director->GetGhosts().Num() == 2; });
+		MoveTo(1100, -100);
+		WaitUntil(TEXT("pyro ghost's charge 1"), [Bomb1]() { return Bomb1->HasExploded(); }, 6.f);
+		MoveTo(2350, -100);
+		WaitUntil(TEXT("pyro ghost's charge 2 (ghost flies and stays down)"), [Bomb2]() { return Bomb2->HasExploded(); }, 6.f);
+		WaitUntil(TEXT("pyro ghost lies down without collision"), [this]()
+		{
+			const ATakeGhost* G = Director->GetGhosts().Num() > 0 ? Director->GetGhosts()[0].Get() : nullptr;
+			return G && G->HasFinished() && !G->GetActorEnableCollision();
+		}, 3.f);
+		MoveTo(3900, -50);
+		WaitUntil(TEXT("grip ghost's exit window"), [Exit]() { return Exit->GetOpenAlpha() > 0.95f; }, 3.f);
+		MoveTo(4400, 0);
 	}	else if (Scene == TEXT("Scene04_Finale"))
 	{
 		AGate* Gate = FindFirst<AGate>();
@@ -865,6 +926,11 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+	}
+	else if (Scene == TEXT("Scene14_ChaseFinal"))
+	{
+		MoveTo(200, -700, 40.f);
+		MoveTo(4350, 0, 60.f, 40.f); // walls and a shut gate
 	}
 	else if (Scene == TEXT("Scene11_HeistNight"))
 	{

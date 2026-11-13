@@ -56,7 +56,7 @@ namespace RetakeScenes
 			{ TEXT("Scene13_ProjectionRoom"), 13, 3, TEXT("Scene 13: The Projection Room"), TEXT("Every take, on loop."), nullptr,
 				TEXT("Stunt: J. Ward. Dailies: every take, on loop."), TEXT("I've watched this a thousand times."), true },
 			// Reel 4
-			{ nullptr, 14, 4, TEXT("Scene 14: The Chase (Final)"), TEXT("The last of the pyro. Tighter timing."), nullptr,
+			{ TEXT("Scene14_ChaseFinal"), 14, 4, TEXT("Scene 14: The Chase (Final)"), TEXT("The last of the pyro. Tighter timing."), nullptr,
 				TEXT("Stunt: J. Ward. Pyro: the last of it."), TEXT("One more. Jack always said one more."), false },
 			{ TEXT("Scene15_Rehearsal"), 15, 4, TEXT("Scene 15: The Rehearsal"), TEXT("Just a rehearsal. Land on the net."), nullptr,
 				TEXT("Safety net: MISSING. Please be careful, Jack."), TEXT("We should have used the net."), false },
