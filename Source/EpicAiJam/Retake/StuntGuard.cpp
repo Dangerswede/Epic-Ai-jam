@@ -1,4 +1,7 @@
 #include "Retake/StuntGuard.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Retake/RetakeAudioSet.h"
 
 #include "AIController.h"
 #include "Components/CapsuleComponent.h"
@@ -56,6 +59,22 @@ void AStuntGuard::BeginPlay()
 	StartTransform = GetActorTransform();
 	RetakeVisuals::Tint(BodyMesh, FLinearColor(0.15f, 0.2f, 0.45f));
 	RetakeVisuals::Tint(VisorMesh, FLinearColor(1.f, 0.9f, 0.1f));
+	// F1: same mannequin as the stunt doubles, in a dark-blue security uniform (the SECURITY sign stays).
+	if (URetakeSettings::ApplyCharacterLook(this, BodyMesh, nullptr, false))
+	{
+		VisorMesh->SetVisibility(false);
+		const URetakeSettings* S = GetDefault<URetakeSettings>();
+		if (UMaterialInterface* Base = S ? S->CinematicMaterial.LoadSynchronous() : nullptr)
+		{
+			USkeletalMeshComponent* Skel = GetMesh();
+			for (int32 i = 0; i < Skel->GetNumMaterials(); ++i)
+			{
+				UMaterialInstanceDynamic* MID = UMaterialInstanceDynamic::Create(Base, this);
+				MID->SetVectorParameterValue(TEXT("BaseColorTint"), i == 0 ? FLinearColor(0.008f, 0.014f, 0.06f) : FLinearColor(0.015f, 0.016f, 0.03f) /* linear: deep navy */);
+				Skel->SetMaterial(i, MID);
+			}
+		}
+	}
 	SetGuardState(EStuntGuardState::Patrol);
 }
 

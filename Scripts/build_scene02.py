@@ -79,9 +79,10 @@ L.film_crew((-550, 900, 0), -40, (-650, 1250, 0), -60,
                    ("StageCrate", (3350, 700, 0), 100, 10), ("StageCrate", (3350, -700, 0), 100, 35)])
 
 d = L.director(start, "Scene 2: The Heist",
-           "New trick: ROLES. Three stunt doubles, three jobs, one window. The vault only opens while all three locks are on.",
+           "New trick: ROLES. Three stunt doubles, three jobs, one window. The vault only opens while all three locks are on. "
+           "New: CAMERA MARKS - stand in a glowing tape ring while it says NOW! and the shot goes in the can.",
            par=3, max_takes=5, duration=12,
-           bonus=("NOBODY_CAUGHT", 0, "Nobody gets busted."))
+           bonus=None)
 L.set_roles(d, [("Decoy", "Get the guard's attention and keep running - south wall, all the way east."),
                 ("Inside Man", "Sneak along the north wall and hit LOCK A, B and C - fast, each lasts 6 s."),
                 ("Hero", "Run for the vault while the locks are open and grab the bag.")])

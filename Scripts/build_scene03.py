@@ -86,7 +86,7 @@ L.film_crew((-450, -350, 0), -30, (-500, -700, 0), 30,
 
 d = L.director(start, "Scene 3: The Chase",
                "New trick: EXPLOSIVES. Blow both walls - the second fuse is short, so whoever lights it takes the fall. "
-               "Old trick: the exit is a timed gate.",
+               "Old trick: the exit is a timed gate. New: the DIRECTOR'S NOTE below is an extra goal for the third star.",
                par=3, max_takes=5, duration=16,
                bonus=("FINAL_TAKE_UNDER_SECONDS", FINAL_N, "Final take in under %d seconds." % FINAL_N))
 L.set_roles(d, [("Pyro", "Light charge 1, get clear, then light charge 2 - and take the fall."),

@@ -224,3 +224,7 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 123. Run out of film in any scene: the stamp now also says Q scraps an earlier take - ESC restarts the scene. ESC then shows SKIP SCENE (0 stars) (also after 3 scraps). Skipping loads the next scene and the menu marks the skipped one SKIPPED (0 stars).
 124. Earlier takes no longer push you when a take starts (they all begin on the same mark).
 125. Scene 9 scout: jump off the set into the net - you're put back on the start mark.
+
+## Review group 5
+126. Scene 1: just two lines of shot list, no director's note, no tape marks. Scene 2 explains camera marks in one sentence, scene 3 the director's note.
+127. Guards are now mannequins in a dark-blue uniform with the SECURITY sign over their heads.

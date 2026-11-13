@@ -161,8 +161,8 @@ def build_level(ghost_class):
     director = spawn(unreal.RetakeSceneDirector, (0, 0, 200), label="SceneDirector")
     director.set_editor_property("scene_title", "Scene 1: The Bridge")
     director.set_editor_property("shot_list_text",
-                                 "New trick: TIMED SWITCHES. A switch holds its gate open for 5 seconds. "
-                                 "Take 1 opens the way, take 2 walks it. Press R to call CUT - your take replays next time.")
+                                 "A switch holds its gate open for 5 seconds. Take 1 opens the way, take 2 walks it.\n"
+                                 "Press R to call CUT - your take replays in the next one.")
     director.set_editor_property("player_start", start)
     if ghost_class:
         director.set_editor_property("ghost_class", ghost_class)
@@ -177,8 +177,7 @@ def build_level(ghost_class):
     director.set_editor_property("take_duration_seconds", 15.0)
     L.set_roles(director, [("Grip", "Hit switch A by the ramp, sprint under the bridge, hit switch B."),
                            ("Hero", "Cross the bridge while both gates are open.")])
-    FINAL_N = 9  # director's note: playtest final take + ~30%
-    L.set_bonus(director, ("FINAL_TAKE_UNDER_SECONDS", FINAL_N, "Do the final take in under %d seconds." % FINAL_N))
+    # G3: scene 1 stays light - no director's note, no camera marks (introduced in scenes 2 and 3).
     L.cameras([
         ((-700, -1600, 1300), (1500, 0, 150), 18),   # wide
         ((2400, 900, 250), (1800, 0, 350), 30),      # gate from below, near the plate
@@ -193,9 +192,6 @@ def build_level(ghost_class):
                        ("PlywoodFlat", (4100, 1300, 0), 260, 180), ("PlywoodFlat", (3900, -1100, 0), 260, 160),
                        ("StageCrate", (-900, -400, 0), 90, 20), ("StageCrate", (-900, -300, 90), 70, 50)])
 
-    L.marks([(1, (1170, -430, 0), (2, 4.5), (-500, -600, 350), "Under the bridge"),
-             (2, (1600, 0, 300), (3, 6), (-400, -700, 250), "Bridge run"),
-             (3, (2350, -480, 0), (5, 7.5), (300, -600, 300), "Switch B")])
     # S3 story dressing (off the play paths: north-west of the start).
     L.director_chairs((-800, 450, 0), yaw=-20)
     L.coffee((-650, 800, 0))
