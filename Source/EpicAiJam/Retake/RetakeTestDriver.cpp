@@ -564,6 +564,49 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(900, 0);
 		WaitUntil(TEXT("door open for the stunt"), [Door]() { return Door->GetOpenAlpha() > 0.95f; }, 4.f);
 		MoveTo(1550, 0);
+	}	else if (Scene == TEXT("Scene12_TheRig"))
+	{
+		// ST2: RIGGER bridges the pit with the crate, GRIP hits the far-away exit switch late, HERO crosses.
+		AGate* Gate = FindFirst<AGate>();
+		APushCrate* Crate = FindCrate(true);
+		auto TakeTime = [this]() { return Director->TakeDurationSeconds - Director->GetTakeTimeRemaining(); };
+		TSharedPtr<float> DropTime = MakeShared<float>(5.f);
+		auto MillUntil = [this, TakeTime](float X, float Y, TFunction<float()> UntilT)
+		{
+			TSharedPtr<int32> Leg = MakeShared<int32>(0);
+			Steps.Add({ FString::Printf(TEXT("mill around (%.0f, %.0f)"), X, Y), 20.f, [this, X, Y, UntilT, Leg, TakeTime](float)
+			{
+				if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Failed;
+				if (TakeTime() >= UntilT()) return EStepResult::Done;
+				const FVector2D Target(X + (*Leg % 2 == 0 ? 130.f : -130.f), Y);
+				const FVector2D Delta = Target - FVector2D(Player->GetActorLocation());
+				if (Delta.Size() < 40.f) { ++*Leg; }
+				Player->AddMovementInput(FVector(Delta.GetSafeNormal(), 0.f), 0.6f);
+				return EStepResult::Running;
+			} });
+		};
+		// Take 1: RIGGER.
+		MoveTo(560, 0, 30.f);
+		MoveTo(2100, 0, 40.f, 15.f);
+		WaitUntil(TEXT("crate drops into the pit"), [Crate]() { return Crate->GetActorLocation().Z < -60.f; }, 6.f);
+		Do(TEXT("remember when the bridge was in"), [this, TakeTime, DropTime]() { *DropTime = TakeTime(); UE_LOG(LogRetakeTest, Display, TEXT("  bridge in at %.1f s"), *DropTime); });
+		Cut();
+		// Take 2: GRIP - exit switch, a few seconds after the bridge is in (the hero still has to cross).
+		NextTake(2);
+		MoveTo(300, -520, 40.f);
+		MillUntil(300, -500, [DropTime]() { return *DropTime + 2.5f; });
+		MoveTo(300, -560, 30.f);
+		Interact();
+		Check(TEXT("exit switch on"), [Gate]() { return Gate->ShouldBeOpen(); });
+		Cut();
+		// Take 3: HERO.
+		NextTake(3);
+		MillUntil(700, 500, [DropTime]() { return *DropTime + 0.2f; });
+		WaitUntil(TEXT("rigger ghost has bridged the pit"), [Crate]() { return Crate->GetActorLocation().Z < -60.f; }, 3.f);
+		MoveTo(1300, 0);
+		MoveTo(2400, 0);
+		WaitUntil(TEXT("grip ghost holds the exit open"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 4.f);
+		MoveTo(3450, 0);
 	}	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
@@ -657,6 +700,13 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+	}
+	else if (Scene == TEXT("Scene12_TheRig"))
+	{
+		MoveTo(300, -560, 30.f);
+		Do(TEXT("Press E (exit switch)"), [this]() { Player->Interact(); });
+		MoveTo(1300, 0);
+		MoveTo(3450, 0, 60.f, 40.f); // no bridge: into the pit
 	}
 	else if (Scene == TEXT("Scene10_EmptyStage"))
 	{
