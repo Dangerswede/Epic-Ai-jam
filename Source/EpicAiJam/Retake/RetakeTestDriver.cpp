@@ -655,6 +655,22 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		Check(TEXT("standing on the stand-in's head"), [this]() { return Player->GetActorLocation().Z > 50.f; });
 		RunJumpTo(TEXT("RunJump to the far side"), []() { return 1560.f + 30.f; });
 		MoveTo(2300, 0);
+	}	else if (Scene == TEXT("Scene05_Rooftop"))
+	{
+		// Reel 2 extra: TECH kills the lasers from the far corner, HERO runs the door.
+		auto BeamsOff = [this]()
+		{
+			for (TActorIterator<ALaserBeam> It(GetWorld()); It; ++It) { if (It->IsBeamOn()) return false; }
+			return true;
+		};
+		MoveTo(-470, -570, 30.f);
+		Interact();
+		Check(TEXT("lasers off"), BeamsOff);
+		Cut();
+		NextTake(2);
+		MoveTo(1250, 0);
+		WaitUntil(TEXT("tech ghost has the lasers off"), BeamsOff, 3.f);
+		MoveTo(2400, 0);
 	}	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
@@ -748,6 +764,12 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+	}
+	else if (Scene == TEXT("Scene05_Rooftop"))
+	{
+		MoveTo(-470, -570, 30.f);
+		Do(TEXT("Press E (lasers off)"), [this]() { Player->Interact(); });
+		MoveTo(2400, 0, 60.f, 40.f); // the lasers come back before the door
 	}
 	else if (Scene == TEXT("Scene15_Rehearsal"))
 	{
