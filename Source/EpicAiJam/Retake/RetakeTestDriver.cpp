@@ -607,6 +607,41 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(2400, 0);
 		WaitUntil(TEXT("grip ghost holds the exit open"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 4.f);
 		MoveTo(3450, 0);
+	}	else if (Scene == TEXT("Scene15_Rehearsal"))
+	{
+		// ST2: one stand-in becomes the net (frozen in the pit), the stunt hops across its head.
+		auto RunJumpTo = [this](const FString& Name, TFunction<float()> TargetX)
+		{
+			TSharedPtr<int32> Phase = MakeShared<int32>(0);
+			Steps.Add({ Name, 8.f, [this, TargetX, Phase](float)
+			{
+				if (Director->GetState() == ERetakeSceneState::Wrap) return EStepResult::Done;
+				if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Failed;
+				UCharacterMovementComponent* Move = Player->GetCharacterMovement();
+				Player->AddMovementInput(FVector(1.f, 0.f, 0.f), 0.5f); // 250 cm/s -> ~306 cm jumps
+				if (*Phase == 0 && Move->IsMovingOnGround() && Player->GetActorLocation().X >= TargetX() - 306.f && Move->Velocity.Size2D() > 220.f)
+				{
+					Player->StartJump();
+					*Phase = 1;
+				}
+				else if (*Phase == 1 && Move->IsFalling()) { *Phase = 2; }
+				else if (*Phase == 2 && Move->IsMovingOnGround()) { return EStepResult::Done; }
+				return EStepResult::Running;
+			} });
+		};
+		// Take 1: NET - drop in, stand in the middle.
+		MoveTo(1280, 0, 30.f);
+		Wait(0.5f);
+		Cut();
+		// Take 2: STUNT.
+		NextTake(2);
+		MoveTo(450, 0);
+		WaitUntil(TEXT("the net has frozen in place"), [this]() { return Director->GetGhosts().Num() == 1 && Director->GetGhosts()[0]->HasFinished(); }, 6.f);
+		MoveTo(700, 0);
+		RunJumpTo(TEXT("RunJump onto the net's head"), [this]() { return Director->GetGhosts()[0]->GetActorLocation().X; });
+		Check(TEXT("standing on the stand-in's head"), [this]() { return Player->GetActorLocation().Z > 50.f; });
+		RunJumpTo(TEXT("RunJump to the far side"), []() { return 1560.f + 30.f; });
+		MoveTo(2300, 0);
 	}	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
@@ -700,6 +735,10 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+	}
+	else if (Scene == TEXT("Scene15_Rehearsal"))
+	{
+		MoveTo(2300, 0, 60.f, 40.f); // straight into the pit, no way out
 	}
 	else if (Scene == TEXT("Scene12_TheRig"))
 	{

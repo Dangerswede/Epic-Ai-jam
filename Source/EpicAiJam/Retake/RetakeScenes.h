@@ -58,7 +58,7 @@ namespace RetakeScenes
 			// Reel 4
 			{ nullptr, 14, 4, TEXT("Scene 14: The Chase (Final)"), TEXT("The last of the pyro. Tighter timing."), nullptr,
 				TEXT("Stunt: J. Ward. Pyro: the last of it."), TEXT("One more. Jack always said one more."), false },
-			{ nullptr, 15, 4, TEXT("Scene 15: The Rehearsal"), TEXT("Just a rehearsal. Land on the net."), nullptr,
+			{ TEXT("Scene15_Rehearsal"), 15, 4, TEXT("Scene 15: The Rehearsal"), TEXT("Just a rehearsal. Land on the net."), nullptr,
 				TEXT("Safety net: MISSING. Please be careful, Jack."), TEXT("We should have used the net."), false },
 			{ TEXT("Scene05_TheGap"), 16, 4, TEXT("Scene 16: The Gap"), TEXT("Stand on your own shoulders."), TEXT("SCENE 99: THE GAP"),
 				TEXT("Stunt performer: J. Ward (in memoriam)"), nullptr, false },
