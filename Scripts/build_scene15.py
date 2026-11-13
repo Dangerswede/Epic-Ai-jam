@@ -48,5 +48,6 @@ L.set_roles(d, [("Net", "Drop into the pit and stand in the middle. Stay standin
                 ("Stunt", "Run, jump onto the net's head, land on the far side.")])
 L.marks([(1, (1280, 0, -PIT_DEPTH), (2.5, 6), (-500, -150, 500), "Where the net should be"),
          (2, (1900, 0, 0), (6, 9.5), (500, -100, 300), "Landing")])
+L.wall_clock((-585, 120, 220), 0)  # stopped at 4:47
 L.save_map(MAP)
 L.log("Saved " + MAP)

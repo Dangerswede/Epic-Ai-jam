@@ -64,5 +64,6 @@ L.set_roles(d, [("Grip", "Switch A by the ramp. Don't hit it too early - wait fo
 L.marks([(1, (300, -330, 0), (3, 5.5), (-500, -500, 350), "Waiting on A"),
          (2, (1550, 670, 0), (3.5, 5.5), (-300, 700, 300), "Under the bridge"),
          (3, (2200, 0, 300), (7.5, 9.5), (500, -700, 250), "Last light")])
+L.wall_clock((4085, 1300, 200), 180)  # stopped at 4:47 since scene 7
 L.save_map(MAP)
 L.log("Saved " + MAP)

@@ -66,5 +66,6 @@ spot.spot_light_component.set_intensity(9000.0)
 spot.spot_light_component.set_editor_property("outer_cone_angle", 18.0)
 spot.spot_light_component.set_light_color(unreal.LinearColor(1.0, 0.85, 0.65, 1.0))
 L.clapperboard((2900, 170, 90), 180, "SCENE 99  -  TAKE 47  -  FINAL")
+L.wall_clock((2985, 0, 230), 180)  # stopped at 4:47
 L.save_map(MAP)
 L.log("Saved " + MAP)

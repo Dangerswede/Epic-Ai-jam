@@ -671,6 +671,38 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(1250, 0);
 		WaitUntil(TEXT("tech ghost has the lasers off"), BeamsOff, 3.f);
 		MoveTo(2400, 0);
+	}	else if (Scene == TEXT("Scene07_Vault"))
+	{
+		// Reel 2 extra: lobby lever + plate 1, plate 2, vault lever + walk in (order matters).
+		AGate* AnteGate = nullptr;
+		AGate* Vault = nullptr;
+		for (TActorIterator<AGate> It(GetWorld()); It; ++It)
+		{
+			(It->GetActorLocation().X < 1400.f ? AnteGate : Vault) = *It;
+		}
+		MoveTo(300, 640, 30.f);
+		Interact();
+		WaitUntil(TEXT("lobby lever opens the antechamber"), [AnteGate]() { return AnteGate->GetOpenAlpha() > 0.95f; }, 3.f);
+		MoveTo(700, 0);
+		MoveTo(1200, 600, 30.f);
+		Cut();
+		NextTake(2);
+		MoveTo(600, 0);
+		WaitUntil(TEXT("inside man ghost has the gate open"), [AnteGate]() { return AnteGate->GetOpenAlpha() > 0.95f; }, 4.f);
+		MoveTo(1000, 0);
+		MoveTo(1200, -600, 30.f);
+		Check(TEXT("both plates held, but the vault still wants its lever"), [Vault]() { return Vault->GetOpenAlpha() < 0.05f; });
+		Cut();
+		NextTake(3);
+		MoveTo(600, 0);
+		WaitUntil(TEXT("gate open again"), [AnteGate]() { return AnteGate->GetOpenAlpha() > 0.95f; }, 4.f);
+		MoveTo(1500, 300);
+		MoveTo(1880, 640, 30.f);
+		WaitUntil(TEXT("both plate ghosts in place"), [this]() { return Director->GetGhosts().Num() == 2 && Director->GetGhosts()[1]->HasFinished(); }, 6.f);
+		Interact();
+		WaitUntil(TEXT("vault door opens"), [Vault]() { return Vault->GetOpenAlpha() > 0.95f; }, 3.f);
+		MoveTo(1900, 0);
+		MoveTo(2450, 0);
 	}	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
@@ -764,6 +796,13 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+	}
+	else if (Scene == TEXT("Scene07_Vault"))
+	{
+		MoveTo(300, 640, 30.f);
+		Do(TEXT("Press E (lobby lever)"), [this]() { Player->Interact(); });
+		MoveTo(700, 0);
+		MoveTo(2450, 0, 60.f, 40.f); // the vault stays shut
 	}
 	else if (Scene == TEXT("Scene05_Rooftop"))
 	{

@@ -56,5 +56,6 @@ d = L.director(start, "Scene 10",
 L.set_roles(d, [("Stand-In", "Stand on the south mark. Stay there."),
                 ("Stand-In", "Stand on the north mark. Stay there."),
                 ("Stunt", "Walk through the door.")])
+L.wall_clock((1785, 500, 230), 180)  # stopped at 4:47
 L.save_map(MAP)
 L.log("Saved " + MAP)

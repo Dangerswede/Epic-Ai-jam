@@ -70,5 +70,6 @@ L.set_roles(d, [("Rigger", "Push the long crate into the pit. That's the bridge.
 L.marks([(1, (1200, 0, 0), (4, 6), (-500, -650, 400), "Over the edge"),
          (2, (300, -500, 0), (7, 9.5), (700, -300, 350), "Late switch"),
          (3, (2500, 0, 0), (11, 13.5), (700, 0, 260), "Across the rig")])
+L.wall_clock((-385, 400, 230), 0)  # stopped at 4:47
 L.save_map(MAP)
 L.log("Saved " + MAP)

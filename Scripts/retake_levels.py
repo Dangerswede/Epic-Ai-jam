@@ -330,3 +330,15 @@ def newspaper(loc, yaw, headline="STUNTMAN INJURED ON SET"):
     fx, fy = math.cos(math.radians(yaw)) * 3, math.sin(math.radians(yaw)) * 3
     sign(headline, (loc[0] + fx, loc[1] + fy, loc[2] + 22), yaw, 2.6, (0.08, 0.08, 0.08), "Sign_Headline")
     sign("NOV 15, 1977", (loc[0] + fx, loc[1] + fy, loc[2] + 26), yaw, 1.6, (0.08, 0.08, 0.08), "Sign_PaperDate")
+
+
+def wall_clock(loc, yaw, time_text="4:47"):
+    """S3 (scene 7 on): a wall clock stopped at 4:47. SM_WallClock swaps in when imported; the time is a sign
+    so it reads either way."""
+    import math
+    if not prop("WallClock", loc, 50, yaw, label="Dress_WallClock"):
+        cyl = unreal.load_asset("/Engine/BasicShapes/Cylinder.Cylinder")
+        face = box("Dress_WallClock", loc, (50, 50, 5), rot=(90, yaw, 0), folder="Dressing", mesh=cyl)
+        no_collision(face)
+    fx, fy = math.cos(math.radians(yaw)) * 5, math.sin(math.radians(yaw)) * 5
+    sign(time_text, (loc[0] + fx, loc[1] + fy, loc[2]), yaw, 14, (0.08, 0.08, 0.08), "Sign_Clock")
