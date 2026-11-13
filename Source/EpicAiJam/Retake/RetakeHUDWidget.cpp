@@ -125,7 +125,7 @@ void URetakeHUDWidget::BuildTree()
 	{
 		UBorder* Hints = Panel(WidgetTree, Slate(), FMargin(14.f, 6.f));
 		Hints->SetContent(Text(WidgetTree,
-			TEXT("WASD Move   SPACE Jump   E Use   R Cut   Q Scrap take   ESC Pause"), 14, Chalk(), ETextJustify::Left, false));
+			TEXT("WASD Move   SPACE Jump   E Use   R Cut   T Retake   Q Scrap take   H Ask director   ESC Pause"), 14, Chalk(), ETextJustify::Left, false));
 		UCanvasPanelSlot* S = Canvas->AddChildToCanvas(Hints);
 		S->SetAnchors(FAnchors(0.f, 1.f));
 		S->SetAlignment(FVector2D(0.f, 1.f));
@@ -162,6 +162,7 @@ void URetakeHUDWidget::SetDirector(ARetakeSceneDirector* InDirector)
 		Director->OnTakeScrapped.RemoveDynamic(this, &URetakeHUDWidget::HandleTakeScrapped);
 		Director->OnOutOfFilm.RemoveDynamic(this, &URetakeHUDWidget::HandleOutOfFilm);
 		Director->OnMarkHit.RemoveDynamic(this, &URetakeHUDWidget::HandleMarkHit);
+		Director->OnRoleTasksRevealed.RemoveDynamic(this, &URetakeHUDWidget::HandleRoleTasksRevealed);
 	}
 	Director = InDirector;
 	if (InDirector)
@@ -172,6 +173,7 @@ void URetakeHUDWidget::SetDirector(ARetakeSceneDirector* InDirector)
 		InDirector->OnTakeScrapped.AddDynamic(this, &URetakeHUDWidget::HandleTakeScrapped);
 		InDirector->OnOutOfFilm.AddDynamic(this, &URetakeHUDWidget::HandleOutOfFilm);
 	InDirector->OnMarkHit.AddDynamic(this, &URetakeHUDWidget::HandleMarkHit);
+		InDirector->OnRoleTasksRevealed.AddDynamic(this, &URetakeHUDWidget::HandleRoleTasksRevealed);
 		HandleStateChanged(InDirector->GetState(), ERetakeSceneState::None);
 	}
 	RefreshStatic();
@@ -200,13 +202,15 @@ void URetakeHUDWidget::RefreshStatic()
 	if (RoleText)
 	{
 		const FText TakeRoleName = D->GetRoleName(Take);
-		RoleText->SetText(TakeRoleName.IsEmpty() ? D->GetCastLine() : FText::FromString(FString::Printf(TEXT("%s: %s"),
-			*TakeRoleName.ToString().ToUpper(), *D->Roles[Take - 1].Task.ToString())));
+		RoleText->SetText(TakeRoleName.IsEmpty() ? D->GetCastLine()
+			: D->AreRoleTasksHidden() ? FText::FromString(FString::Printf(TEXT("%s   (H: ask the director)"), *TakeRoleName.ToString().ToUpper()))
+			: FText::FromString(FString::Printf(TEXT("%s: %s"), *TakeRoleName.ToString().ToUpper(), *D->Roles[Take - 1].Task.ToString())));
 	}
 	TakeText->SetText(FText::FromString(FString::Printf(TEXT("TAKE %d   FILM %d/%d"), RetakeScenes::DisplayTake(Take), Take, D->MaxTakes)));
-	HintText->SetText(FText::FromString(D->GetState() == ERetakeSceneState::Cut ? TEXT("Next take rolls in a moment...")
-		: (D->bLocationScout && D->GetTakes().Num() == 0) ? TEXT("LOCATION SCOUT: walk the set - nothing is recorded. Press Space to roll.")
-		: D->bWaitForRollInput ? TEXT("Press Space to roll") : TEXT("Get ready...")));
+	HintText->SetText(FText::FromString(D->IsAwaitingRoll() ? FString::Printf(TEXT("Press Space to roll take %d"), RetakeScenes::DisplayTake(D->GetTakes().Num() + 1))
+		: D->GetState() == ERetakeSceneState::Cut ? FString(TEXT("Next take rolls in a moment..."))
+		: (D->bLocationScout && D->GetTakes().Num() == 0) ? FString(TEXT("LOCATION SCOUT: walk the set - nothing is recorded. Press Space to roll."))
+		: D->bWaitForRollInput ? FString(TEXT("Press Space to roll")) : FString(TEXT("Get ready..."))));
 }
 
 void URetakeHUDWidget::ShowStoryLine(const FString& Line, float Delay, const FString& VoiceName)
@@ -327,6 +331,24 @@ void URetakeHUDWidget::HandleTakeCut(int32 TakeNumber, ERetakeCutReason Reason)
 void URetakeHUDWidget::HandleTakeScrapped(int32 TakeNumber)
 {
 	ShowStamp(FString::Printf(TEXT("SCRAPPED!\nTake %d hits the cutting room floor"), RetakeScenes::DisplayTake(TakeNumber)), RetakeUI::Red(), 1.6f);
+}
+
+void URetakeHUDWidget::HandleRoleTasksRevealed()
+{
+	// G1: the director answers - the job of the take that is rolling (or rolls next).
+	const ARetakeSceneDirector* D = Director.Get();
+	if (!D)
+	{
+		return;
+	}
+	RefreshStatic();
+	const int32 Take = D->GetState() == ERetakeSceneState::Rolling ? D->GetCurrentTakeNumber() : D->GetTakes().Num() + 1;
+	const FText Task = D->GetRoleTask(Take);
+	if (!Task.IsEmpty())
+	{
+		ShowStoryLine(FString::Printf(TEXT("%s: %s"), *D->GetRoleName(Take).ToString().ToUpper(), *Task.ToString()), 0.f, FString());
+		StoryDuration = 4.5f;
+	}
 }
 
 void URetakeHUDWidget::HandleMarkHit(int32 MarkNumber)

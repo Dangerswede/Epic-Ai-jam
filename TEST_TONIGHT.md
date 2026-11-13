@@ -214,3 +214,8 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 ## Review group 1 - Director's Cut is core
 118. Wrap scene 1 for the first time: the Director's Cut plays by itself (Space skips), then the results. Same at the end of scenes 4, 8, 13 and in scene 16 (FOR JACK, then the memorial card). Other scenes go straight to the results with the WATCH button.
 119. During any Director's Cut: ESC -> RESTART SCENE. You should be back at take 46 with the normal camera, normal speed, no letterbox.
+
+## Review group 2 - The take loop
+120. Scenes 1-4: the jobs are spelled out as before. From scene 5 on: only the job name (e.g. DECOY (H: ask the director)); press H (gamepad: right shoulder) and the director tells you the job, and it stays spelled out for the rest of the scene. Running out of film also spells them out.
+121. In scenes with roles, after CUT the next take waits: Press Space to roll take N.
+122. T (gamepad: left shoulder) restarts the current take. Q in the very first take (nothing to scrap yet) also restarts it. Both are in the key hints.

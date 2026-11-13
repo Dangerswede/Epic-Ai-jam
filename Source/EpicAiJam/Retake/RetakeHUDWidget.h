@@ -57,6 +57,9 @@ private:
 	UFUNCTION()
 	void HandleMarkHit(int32 MarkNumber);
 
+	UFUNCTION()
+	void HandleRoleTasksRevealed();
+
 	TWeakObjectPtr<ARetakeSceneDirector> Director;
 
 	UPROPERTY(Transient) TObjectPtr<UWidget> Clapper;

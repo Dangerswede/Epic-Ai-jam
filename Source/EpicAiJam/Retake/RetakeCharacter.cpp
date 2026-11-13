@@ -94,6 +94,8 @@ void ARetakeCharacter::BuildDefaultInput()
 	if (!InteractAction) { InteractAction = MakeAction(TEXT("IA_Interact"), EInputActionValueType::Boolean); }
 	if (!CutAction)      { CutAction = MakeAction(TEXT("IA_Cut"), EInputActionValueType::Boolean); }
 	if (!ScrapAction)    { ScrapAction = MakeAction(TEXT("IA_Scrap"), EInputActionValueType::Boolean); }
+	if (!RetakeAction)   { RetakeAction = MakeAction(TEXT("IA_Retake"), EInputActionValueType::Boolean); }
+	if (!AskAction)      { AskAction = MakeAction(TEXT("IA_AskDirector"), EInputActionValueType::Boolean); }
 	if (!PauseAction)
 	{
 		PauseAction = MakeAction(TEXT("IA_Pause"), EInputActionValueType::Boolean);
@@ -152,6 +154,10 @@ void ARetakeCharacter::BuildDefaultInput()
 	MappingContext->MapKey(ScrapAction, EKeys::BackSpace);
 	MappingContext->MapKey(ScrapAction, EKeys::Q);
 	MappingContext->MapKey(ScrapAction, EKeys::Gamepad_FaceButton_Right);
+	MappingContext->MapKey(RetakeAction, EKeys::T);
+	MappingContext->MapKey(RetakeAction, EKeys::Gamepad_LeftShoulder);
+	MappingContext->MapKey(AskAction, EKeys::H);
+	MappingContext->MapKey(AskAction, EKeys::Gamepad_RightShoulder);
 
 	// Esc stops PIE in the editor, so P works there too.
 	MappingContext->MapKey(PauseAction, EKeys::Escape);
@@ -195,6 +201,8 @@ void ARetakeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	Input->BindAction(InteractAction, ETriggerEvent::Started, this, &ARetakeCharacter::Interact);
 	Input->BindAction(CutAction, ETriggerEvent::Started, this, &ARetakeCharacter::Cut);
 	Input->BindAction(ScrapAction, ETriggerEvent::Started, this, &ARetakeCharacter::Scrap);
+	Input->BindAction(RetakeAction, ETriggerEvent::Started, this, &ARetakeCharacter::Retake);
+	Input->BindAction(AskAction, ETriggerEvent::Started, this, &ARetakeCharacter::AskDirector);
 	Input->BindAction(PauseAction, ETriggerEvent::Started, this, &ARetakeCharacter::TogglePause);
 }
 
@@ -287,6 +295,20 @@ void ARetakeCharacter::Scrap()
 		return;
 	}
 	OnScrapRequested.Broadcast();
+}
+
+void ARetakeCharacter::Retake()
+{
+	if (!bActionsEnabled)
+	{
+		return;
+	}
+	OnRetakeRequested.Broadcast();
+}
+
+void ARetakeCharacter::AskDirector()
+{
+	OnAskDirector.Broadcast(); // allowed during the briefing and the CUT pause too
 }
 
 void ARetakeCharacter::TogglePause()

@@ -41,9 +41,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeCharacterSignature OnScrapRequested;
 
-	/** Fired when the player presses Retake (Q): restart the current take from the top. */
+	/** Fired when the player presses Retake (T / left shoulder): restart the current take from the top. */
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeCharacterSignature OnRetakeRequested;
+
+	/** G1: H / right shoulder - ask the director what this take's job is. Works outside takes too. */
+	UPROPERTY(BlueprintAssignable, Category = "Retake")
+	FRetakeCharacterSignature OnAskDirector;
 
 	/** Fired whenever Space/Jump is pressed, even when a jump isn't possible (used for "roll" / "skip"). */
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
@@ -118,6 +122,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> ScrapAction;
 
+	/** T / left shoulder: retake the current take from the top (K2). */
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> RetakeAction;
+
+	/** H / right shoulder: ask the director (G1). */
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> AskAction;
+
 	/** Esc / P / Start: pause menu (works while paused). */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> PauseAction;
@@ -135,6 +147,8 @@ public:
 	void Interact();
 	void Cut();
 	void Scrap();
+	void Retake();
+	void AskDirector();
 	void TogglePause();
 
 private:

@@ -217,6 +217,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Retake")
 	FRetakeMarkHit OnMarkHit;
 
+	/** G1: the player asked the director (H) or ran out of film - full job texts are shown from now on. */
+	UPROPERTY(BlueprintAssignable, Category = "Retake")
+	FRetakeSceneEvent OnRoleTasksRevealed;
+
 	// --- API ------------------------------------------------------------------
 
 	/** First director in the world (there should be exactly one). */
@@ -264,6 +268,24 @@ public:
 	/** Role name for a take number (empty if none). */
 	UFUNCTION(BlueprintPure, Category = "Retake")
 	FText GetRoleName(int32 TakeNumber) const;
+
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	FText GetRoleTask(int32 TakeNumber) const;
+
+	/** G1: from reel 2 the job text is hidden until the player asks the director (H) or runs out of film. */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	bool AreRoleTasksHidden() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Retake")
+	void RevealRoleTasks();
+
+	/** H / right shoulder. */
+	UFUNCTION()
+	void AskDirector();
+
+	/** G2: CUT pause is over and the next take waits for Space. */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	bool IsAwaitingRoll() const { return bAwaitingRoll; }
 
 	/** Stars for the current result: 1 wrap, 2 at/under par, 3 at/under par + director's note. */
 	UFUNCTION(BlueprintPure, Category = "Retake")
@@ -370,6 +392,8 @@ private:
 	bool AbortRollingTake();
 
 	int32 TotalTakesShot = 0;
+	bool bAwaitingRoll = false;
+	bool bRoleTasksRevealed = false;
 	UPROPERTY(Transient) TArray<TObjectPtr<ACameraMark>> Marks;
 	int32 ScrapCount = 0;
 	bool bAnyCaught = false;

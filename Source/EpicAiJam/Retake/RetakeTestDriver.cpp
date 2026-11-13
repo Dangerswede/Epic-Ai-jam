@@ -307,6 +307,7 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 	{
 		WaitUntil(FString::Printf(TEXT("take %d rolling"), N), [this, N]()
 		{
+			if (Director->IsAwaitingRoll()) { Player->StartJump(); } // G2: Space rolls the next take
 			return Director->GetState() == ERetakeSceneState::Rolling && Director->GetCurrentTakeNumber() == N;
 		}, 10.f);
 	};
@@ -1116,6 +1117,26 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	}
 	else if (Scene == TEXT("Scene10_EmptyStage"))
 	{
+		// K3: Q in take 1 has nothing to scrap -> it restarts the take. K2: T restarts the take.
+		auto ExpectRetake = [this](const TCHAR* Key, TFunction<void()> Press)
+		{
+			Wait(0.4f);
+			Do(FString::Printf(TEXT("Press %s in take 1"), Key), Press);
+			Check(FString::Printf(TEXT("%s: take thrown away, nothing scrapped"), Key), [this]()
+			{
+				return Director->GetState() == ERetakeSceneState::Cut && Director->GetTakes().Num() == 0;
+			});
+			WaitUntil(FString::Printf(TEXT("%s: take 1 rolls again"), Key), [this]()
+			{
+				return Director->GetState() == ERetakeSceneState::Rolling && Director->GetCurrentTakeNumber() == 1;
+			}, 4.f);
+		};
+		ExpectRetake(TEXT("Q"), [this]() { Player->Scrap(); });
+		ExpectRetake(TEXT("T"), [this]() { Player->Retake(); });
+		// G1: reel 3 - the job is a hint until you ask the director.
+		Check(TEXT("job text hidden (reel 3)"), [this]() { return Director->AreRoleTasksHidden(); });
+		Do(TEXT("Press H (ask the director)"), [this]() { Player->AskDirector(); });
+		Check(TEXT("job text shown after asking"), [this]() { return !Director->AreRoleTasksHidden(); });
 		MoveTo(600, -650, 30.f);
 		MoveTo(1550, 0, 60.f, 40.f); // one mark held only while standing on it
 	}
@@ -1153,6 +1174,7 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 		{
 			WaitUntil(FString::Printf(TEXT("take %d rolling"), Take), [this, Take]()
 			{
+				if (Director->IsAwaitingRoll()) { Player->StartJump(); } // G2: Space rolls the next take
 				return Director->GetState() == ERetakeSceneState::Rolling && Director->GetCurrentTakeNumber() == Take;
 			}, 10.f);
 			Wait(0.3f);
@@ -1161,6 +1183,7 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 		Check(TEXT("out of film: last take scrapped, the others kept"), [this, Max]() { return Director->GetTakes().Num() == Max - 1; });
 		WaitUntil(TEXT("last take rolls again"), [this, Max]()
 		{
+			if (Director->IsAwaitingRoll()) { Player->StartJump(); } // G2: Space rolls the next take
 			return Director->GetState() == ERetakeSceneState::Rolling && Director->GetCurrentTakeNumber() == Max;
 		}, 10.f);
 	}

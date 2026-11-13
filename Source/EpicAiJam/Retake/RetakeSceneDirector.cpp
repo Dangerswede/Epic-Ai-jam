@@ -140,7 +140,7 @@ void ARetakeSceneDirector::HandlePlayerJumpPressed()
 
 void ARetakeSceneDirector::HandleRollOrSkipInput()
 {
-	if (State == ERetakeSceneState::Briefing)
+	if (State == ERetakeSceneState::Briefing || (State == ERetakeSceneState::Cut && bAwaitingRoll))
 	{
 		StartRolling();
 	}
@@ -184,6 +184,7 @@ bool ARetakeSceneDirector::FindPlayer()
 		Player->OnJumpPressed.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerJumpPressed);
 		Player->OnScrapRequested.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerScrap);
 		Player->OnRetakeRequested.AddUniqueDynamic(this, &ARetakeSceneDirector::HandlePlayerRetake);
+		Player->OnAskDirector.AddUniqueDynamic(this, &ARetakeSceneDirector::AskDirector);
 	}
 	return Player != nullptr;
 }
@@ -309,6 +310,7 @@ void ARetakeSceneDirector::StartRolling()
 	GetWorldTimerManager().ClearTimer(StateTimer);
 	GetWorldTimerManager().ClearTimer(DeathTimer);
 	bDying = false;
+	bAwaitingRoll = false;
 	bResultsRecorded = false;
 	UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
 	CurrentTakeNumber = Takes.Num() + 1;
@@ -389,8 +391,21 @@ void ARetakeSceneDirector::CutTake(ERetakeCutReason Reason)
 		UE_LOG(LogRetakeDirector, Log, TEXT("Out of film: take %d scrapped."), CurrentTakeNumber);
 		++ScrapCount;
 		OnOutOfFilm.Broadcast();
+		RevealRoleTasks(); // G1: out of film - the director spells the jobs out
 	}
-	ScheduleState(CutPauseSeconds, [this]() { StartRolling(); });
+	if (Roles.Num() > 0 && bWaitForRollInput)
+	{
+		// G2: with roles, the next take waits for Space (time to read the job), like the briefing.
+		ScheduleState(CutPauseSeconds, [this]()
+		{
+			bAwaitingRoll = true;
+			OnStateChanged.Broadcast(State, State); // refresh the HUD hint
+		});
+	}
+	else
+	{
+		ScheduleState(CutPauseSeconds, [this]() { StartRolling(); });
+	}
 }
 
 void ARetakeSceneDirector::HandlePlayerScrap()
@@ -439,7 +454,12 @@ void ARetakeSceneDirector::RetakeCurrentTake()
 
 void ARetakeSceneDirector::ScrapLastTake()
 {
-	if (Takes.Num() == 0 || !AbortRollingTake())
+	if (Takes.Num() == 0)
+	{
+		RetakeCurrentTake(); // K3: nothing to scrap yet (take 1) - Q just starts this take again
+		return;
+	}
+	if (!AbortRollingTake())
 	{
 		return;
 	}
@@ -452,6 +472,34 @@ void ARetakeSceneDirector::ScrapLastTake()
 	SetState(ERetakeSceneState::Cut);
 	OnTakeScrapped.Broadcast(Scrapped);
 	ScheduleState(ScrapPauseSeconds, [this]() { StartRolling(); });
+}
+
+bool ARetakeSceneDirector::AreRoleTasksHidden() const
+{
+	// G1: reel 1 teaches with full job descriptions; from reel 2 on the job name is a hint and H asks for the rest.
+	const RetakeScenes::FSceneInfo* Info = RetakeScenes::Find(GetSceneId());
+	return Info && Info->Reel >= 2 && !bRoleTasksRevealed && Roles.Num() > 0;
+}
+
+void ARetakeSceneDirector::RevealRoleTasks()
+{
+	if (Roles.Num() == 0)
+	{
+		return;
+	}
+	bRoleTasksRevealed = true;
+	OnRoleTasksRevealed.Broadcast();
+	OnStateChanged.Broadcast(State, State); // refresh the HUD texts
+}
+
+void ARetakeSceneDirector::AskDirector()
+{
+	RevealRoleTasks();
+}
+
+FText ARetakeSceneDirector::GetRoleTask(int32 TakeNumber) const
+{
+	return Roles.IsValidIndex(TakeNumber - 1) ? Roles[TakeNumber - 1].Task : FText::GetEmpty();
 }
 
 FText ARetakeSceneDirector::GetRoleName(int32 TakeNumber) const
@@ -494,6 +542,11 @@ FText ARetakeSceneDirector::GetRoleLine(int32 TakeNumber) const
 		return FText::GetEmpty();
 	}
 	const FTakeRole& R = Roles[TakeNumber - 1];
+	if (AreRoleTasksHidden())
+	{
+		return FText::FromString(FString::Printf(TEXT("TAKE %d - %s\n(H: ask the director what the job is)"), RetakeScenes::DisplayTake(TakeNumber),
+			*R.Name.ToString().ToUpper()));
+	}
 	return FText::FromString(FString::Printf(TEXT("TAKE %d - %s: %s"), RetakeScenes::DisplayTake(TakeNumber),
 		*R.Name.ToString().ToUpper(), *R.Task.ToString()));
 }
