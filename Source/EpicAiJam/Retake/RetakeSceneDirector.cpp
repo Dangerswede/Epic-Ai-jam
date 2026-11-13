@@ -624,7 +624,9 @@ void ARetakeSceneDirector::NotifyGoalReached(AActor* Who)
 	SetState(ERetakeSceneState::Wrap);
 	OnWrap.Broadcast();
 	// R1: straight to the results; the Director's Cut is optional (button / Space there).
-	ScheduleState(WrapSeconds, [this]() { EnterResults(); });
+	// G4: the Director's Cut is part of the show - it plays by itself at the big moments (Space skips).
+	const bool bAutoCut = ShouldAutoPlayDirectorsCut();
+	ScheduleState(WrapSeconds, [this, bAutoCut]() { if (bAutoCut) { StartDirectorsCut(); } else { EnterResults(); } });
 }
 
 void ARetakeSceneDirector::StartDirectorsCut()
@@ -719,10 +721,33 @@ void ARetakeSceneDirector::EnterResults()
 	SetState(ERetakeSceneState::Results);
 }
 
+bool ARetakeSceneDirector::ShouldAutoPlayDirectorsCut() const
+{
+	const RetakeScenes::FSceneInfo* Info = RetakeScenes::Find(GetSceneId());
+	if (!Info || !bCinematicDirectorsCut)
+	{
+		return false;
+	}
+	if (Info->bEndsReel || RetakeScenes::IsFinale(GetSceneId()))
+	{
+		return true; // end of every reel + the FOR JACK cut
+	}
+	// Scene 1, the first time it's wrapped: show what the Director's Cut is.
+	const URetakeSaveGame* Save = URetakeSaveGame::LoadOrCreate();
+	return Info->Number == 1 && !(Save && Save->IsWrapped(GetSceneId()));
+}
+
 void ARetakeSceneDirector::RestartScene()
 {
+	// K1: restarting from the pause menu during the Director's Cut must hand back the camera, overlay and time.
+	if (DirectorsCut && DirectorsCut->IsRunning())
+	{
+		DirectorsCut->End();
+	}
+	UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
 	GetWorldTimerManager().ClearTimer(TakeTimer);
 	GetWorldTimerManager().ClearTimer(StateTimer);
+	GetWorldTimerManager().ClearTimer(DeathTimer);
 	if (Player && Player->GetRecorder() && Player->GetRecorder()->IsRecording())
 	{
 		Player->GetRecorder()->StopRecording();

@@ -185,8 +185,21 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 		UE_LOG(LogRetakeTest, Display, TEXT("  rating %d (wrap %d, par %d, note %d, marks %d = %d of %d hit)"), R.Total(), R.Wrap, R.Par, R.Note, R.Marks, R.MarksHit, Director->GetMarks().Num());
 		return Director->GetMarks().Num() == 0 || R.MarksHit >= 1;
 	});
-	// R1: no automatic Director's Cut - straight to the results.
-	WaitState((uint8)ERetakeSceneState::Results, 10.f);
+	// G4: some scenes play the Director's Cut by themselves (scene 1 first time, reel ends, finale), the rest go
+	// straight to the results.
+	TSharedPtr<bool> ExpectAutoCut = MakeShared<bool>(false);
+	TSharedPtr<bool> SawAutoCut = MakeShared<bool>(false);
+	Do(TEXT("remember whether this wrap plays the cut by itself"), [this, ExpectAutoCut]() { *ExpectAutoCut = Director->ShouldAutoPlayDirectorsCut(); });
+	WaitUntil(TEXT("results (through the automatic Director's Cut where there is one)"), [this, SawAutoCut]()
+	{
+		*SawAutoCut |= Director->GetState() == ERetakeSceneState::DirectorsCut;
+		return Director->GetState() == ERetakeSceneState::Results;
+	}, 60.f);
+	Check(TEXT("automatic Director's Cut played exactly where it should"), [ExpectAutoCut, SawAutoCut]()
+	{
+		UE_LOG(LogRetakeTest, Display, TEXT("  auto cut expected %d, played %d"), *ExpectAutoCut ? 1 : 0, *SawAutoCut ? 1 : 0);
+		return *ExpectAutoCut == *SawAutoCut;
+	});
 	if (RetakeScenes::IsFinale(Scene))
 	{
 		Check(TEXT("finale: the memorial card comes up before the results"), [this]()
@@ -269,6 +282,21 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 	Check(TEXT("game paused"), [this]() { return UGameplayStatics::IsGamePaused(this); });
 	Do(TEXT("Press P (resume)"), [this]() { Player->TogglePause(); });
 	Check(TEXT("game resumed"), [this]() { return !UGameplayStatics::IsGamePaused(this); });
+	if (Scene == TEXT("Scene01_Bridge"))
+	{
+		// K1: RESTART SCENE in the middle of the Director's Cut hands back camera, time and input.
+		Do(TEXT("Press Space (watch the cut again)"), [this]() { Player->StartJump(); });
+		WaitState((uint8)ERetakeSceneState::DirectorsCut, 3.f);
+		Wait(1.f);
+		Do(TEXT("Pause -> RESTART SCENE during the cut"), [this]() { Director->RestartScene(); });
+		Check(TEXT("restart: cut stopped, normal time, camera on the stunt double, take 1 rolling"), [this]()
+		{
+			const APlayerController* PC = GetWorld()->GetFirstPlayerController();
+			return !Director->DirectorsCut->IsRunning() && FMath::IsNearlyEqual(UGameplayStatics::GetGlobalTimeDilation(this), 1.f)
+				&& PC && PC->GetViewTarget() == Player && Director->GetState() == ERetakeSceneState::Rolling
+				&& Director->GetCurrentTakeNumber() == 1 && Director->GetTakes().Num() == 0 && !Player->IsHidden();
+		});
+	}
 }
 void ARetakeTestDriver::BuildSolution(const FString& Scene)
 {

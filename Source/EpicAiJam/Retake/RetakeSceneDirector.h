@@ -286,6 +286,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void WatchDirectorsCut();
 
+	/** G4: after scene 1 (first time), at the end of each reel and in the finale the cut plays by itself. */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	bool ShouldAutoPlayDirectorsCut() const;
+
 	/** Restart the whole scene from Take 1 (e.g. from the Results screen). */
 	UFUNCTION(BlueprintCallable, Category = "Retake")
 	void RestartScene();

@@ -57,6 +57,12 @@ void ARetakeHUD::HandleStateChanged(ERetakeSceneState NewState, ERetakeSceneStat
 	else if (ResultsWidget->GetVisibility() != ESlateVisibility::Collapsed)
 	{
 		ResultsWidget->SetVisibility(ESlateVisibility::Collapsed);
+		// K1: e.g. RESTART SCENE from the pause menu while the results were up - give the game its input back.
+		if (APlayerController* PC = GetOwningPlayerController())
+		{
+			PC->SetShowMouseCursor(false);
+			PC->SetInputMode(FInputModeGameOnly());
+		}
 	}
 }
 
