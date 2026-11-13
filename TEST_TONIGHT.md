@@ -232,3 +232,4 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 129. Scene 16: after In memory of Jack Ward, the card shows THE END and the credits, then the results.
 130. Results screen: Enter (gamepad Start) = NEXT SCENE.
 131. ESC in a scene: the pause menu now has MUSIC / SFX / VOICE sliders (same as the main menu).
+132. Director's Cut (and takes): earlier takes now walk/run/jump instead of sliding in an idle pose.

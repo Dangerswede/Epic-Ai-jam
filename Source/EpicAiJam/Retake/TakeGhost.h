@@ -23,7 +23,7 @@ class EPICAIJAM_API ATakeGhost : public ACharacter
 	GENERATED_BODY()
 
 public:
-	ATakeGhost();
+	ATakeGhost(const FObjectInitializer& ObjectInitializer);
 
 	/** Load the take to replay. Puts the ghost at the take's first frame. */
 	UFUNCTION(BlueprintCallable, Category = "Retake")

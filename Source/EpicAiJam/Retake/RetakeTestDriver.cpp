@@ -1,6 +1,8 @@
 #include "Retake/RetakeTestDriver.h"
 
 #include "CineCameraActor.h"
+#include "Animation/AnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Camera/CameraActor.h"
 #include "Components/TextRenderComponent.h"
 #include "Misc/App.h"
@@ -240,6 +242,26 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 	Do(TEXT("Press Space on the results (watch Director's Cut)"), [this]() { DirectorsCutRealSeconds = 0.f; Player->StartJump(); });
 	WaitState((uint8)ERetakeSceneState::DirectorsCut, 3.f);
 	WaitUntil(TEXT("Director's Cut uses a cine camera"), [this]() { return bSawCineCamera; }, 10.f);
+	// Bug fix (13 Nov): ghosts must walk/run in the cut, not slide in idle - the anim BP needs ShouldMove.
+	WaitUntil(TEXT("a take is animating (anim BP ShouldMove) in the Director's Cut"), [this]()
+	{
+		for (const ATakeGhost* G : Director->GetGhosts())
+		{
+			const UAnimInstance* Anim = G && G->GetMesh() ? G->GetMesh()->GetAnimInstance() : nullptr;
+			const FBoolProperty* Prop = Anim ? FindFProperty<FBoolProperty>(Anim->GetClass(), TEXT("ShouldMove")) : nullptr;
+			if (!Anim || !Prop)
+			{
+				UE_LOG(LogRetakeTest, Display, TEXT("  no ShouldMove anim BP on the ghosts - check skipped"));
+				return true; // no mannequin anim BP configured: nothing to check
+			}
+			if (Prop->GetPropertyValue_InContainer(Anim))
+			{
+				UE_LOG(LogRetakeTest, Display, TEXT("  %s animates (ShouldMove, speed %.0f)"), *G->GetName(), G->GetVelocity().Size2D());
+				return true;
+			}
+		}
+		return false;
+	}, 15.f);
 	Check(TEXT("all takes replay as ghosts"), [this]()
 	{
 		return Director->GetGhosts().Num() == Director->GetTakes().Num();

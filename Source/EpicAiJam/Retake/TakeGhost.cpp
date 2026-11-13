@@ -1,4 +1,5 @@
 #include "Retake/TakeGhost.h"
+#include "Retake/GhostMovementComponent.h"
 #include "Retake/RetakeScenes.h"
 
 #include "Camera/PlayerCameraManager.h"
@@ -18,7 +19,8 @@
 #include "Retake/RetakeInteractable.h"
 #include "UObject/ConstructorHelpers.h"
 
-ATakeGhost::ATakeGhost()
+ATakeGhost::ATakeGhost(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGhostMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
@@ -214,7 +216,14 @@ void ATakeGhost::ApplyFrameAt(float Time)
 	// Feed the anim blueprint (speed + falling) without simulating movement.
 	if (UCharacterMovementComponent* Move = GetCharacterMovement())
 	{
-		Move->Velocity = Velocity;
+		if (UGhostMovementComponent* GhostMove = Cast<UGhostMovementComponent>(Move))
+		{
+			GhostMove->SetReplayKinematics(Velocity); // speed + acceleration for the anim blueprint
+		}
+		else
+		{
+			Move->Velocity = Velocity;
+		}
 		const bool bAirborne = FMath::Abs(Velocity.Z) > 10.f;
 		const EMovementMode Wanted = bAirborne ? MOVE_Falling : MOVE_Walking;
 		if (Move->MovementMode != Wanted)
@@ -319,6 +328,10 @@ void ATakeGhost::Finish()
 	// Freeze in the last pose (keeps standing on a pressure plate).
 	if (UCharacterMovementComponent* Move = GetCharacterMovement())
 	{
+		if (UGhostMovementComponent* GhostMove = Cast<UGhostMovementComponent>(Move))
+		{
+			GhostMove->SetReplayKinematics(FVector::ZeroVector); // stand still (idle) once the take is over
+		}
 		Move->Velocity = FVector::ZeroVector;
 		Move->SetMovementMode(MOVE_Walking);
 	}
