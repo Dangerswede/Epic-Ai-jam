@@ -1,4 +1,5 @@
 #include "Retake/TakeGhost.h"
+#include "Retake/RetakeScenes.h"
 
 #include "Camera/PlayerCameraManager.h"
 #include "Components/BoxComponent.h"
@@ -121,7 +122,7 @@ void ATakeGhost::Init(const FTakeData& InTake)
 	bPlaying = false;
 	bFinished = false;
 
-	TakeLabel->SetText(FText::FromString(FString::Printf(TEXT("TAKE %d"), Take.TakeNumber)));
+	TakeLabel->SetText(FText::FromString(FString::Printf(TEXT("TAKE %d"), RetakeScenes::DisplayTake(Take.TakeNumber))));
 
 	if (Take.Frames.Num() > 0)
 	{

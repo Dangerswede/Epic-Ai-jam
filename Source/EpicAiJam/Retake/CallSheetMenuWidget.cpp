@@ -4,6 +4,8 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
+#include "Components/ScrollBox.h"
+#include "Components/ScrollBoxSlot.h"
 #include "Components/SizeBox.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
@@ -47,7 +49,12 @@ void UCallSheetMenuWidget::BuildTree()
 	Box->AddChildToVerticalBox(Text(WidgetTree, TEXT("CALL SHEET"), 16, Red()));
 	Box->AddChildToVerticalBox(Text(WidgetTree, TEXT("RETAKE"), 64, Ink()));
 	Box->AddChildToVerticalBox(Text(WidgetTree,
-		TEXT("Production: Retake  |  Role: Stunt Double (you)  |  Director: very impatient"), 14, Ink(), ETextJustify::Left, false));
+		TEXT("Production: Retake  |  Role: Stunt Double (you)  |  Director: still waiting"), 14, Ink(), ETextJustify::Left, false));
+	// S6: after the last scene is wrapped.
+	if (Save && Save->IsWrapped(RetakeScenes::FinalMap()))
+	{
+		Box->AddChildToVerticalBox(Text(WidgetTree, TEXT("Production wrapped. Nov 14, 1977."), 16, Red(), ETextJustify::Left, false));
+	}
 	Box->AddChildToVerticalBox(Text(WidgetTree,
 		TEXT("Every failed take stays in the shot. Make your past takes work together."), 16, Ink(), ETextJustify::Left, false))
 		->SetPadding(FMargin(0.f, 8.f, 0.f, 16.f));
@@ -70,31 +77,39 @@ void UCallSheetMenuWidget::BuildTree()
 	};
 	Box->AddChildToVerticalBox(Row(TEXT("SCENE"), TEXT("NOTES"), TEXT("STATUS"), 14, Red()));
 
+	// ST1: every playable scene, grouped by reel, in a scroll list (16 rows don't fit the sheet).
+	UScrollBox* List = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass());
+	USizeBox* ListBox = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+	ListBox->SetMaxDesiredHeight(430.f);
+	ListBox->SetContent(List);
+	Box->AddChildToVerticalBox(ListBox);
 	const TArray<RetakeScenes::FSceneInfo>& Scenes = RetakeScenes::All();
-	for (int32 i = 0; i < Scenes.Num() && i < 5; ++i)
+	int32 LastReel = 0;
+	for (int32 i = 0; i < Scenes.Num(); ++i)
 	{
+		if (Scenes[i].Reel != LastReel)
+		{
+			LastReel = Scenes[i].Reel;
+			List->AddChild(Text(WidgetTree, FString::Printf(TEXT("REEL %d"), LastReel), 13, Red()));
+		}
 		const bool bUnlocked = Save && Save->IsUnlocked(i);
 		const int32* Best = Save ? Save->BestTakes.Find(Scenes[i].MapName) : nullptr;
 		const int32* Stars = Save ? Save->BestStars.Find(Scenes[i].MapName) : nullptr;
 		FString Status = !bUnlocked ? TEXT("LOCKED") : Best
 			? FString::Printf(TEXT("WRAPPED %d/3 stars (%d takes)"), Stars ? *Stars : 1, *Best) : TEXT("READY");
 
-		UHorizontalBox* H = Row(Scenes[i].Title, Scenes[i].Logline, Status, 18, bUnlocked ? Ink() : Dim());
-		UButton* Play = Button(WidgetTree, bUnlocked ? TEXT("PLAY") : TEXT("---"), 16);
+		UHorizontalBox* H = Row(Scenes[i].Title, Scenes[i].Logline, Status, 17, bUnlocked ? Ink() : Dim());
+		UButton* Play = Button(WidgetTree, bUnlocked ? TEXT("PLAY") : TEXT("---"), 15);
 		Play->SetIsEnabled(bUnlocked);
 		H->AddChildToHorizontalBox(Play)->SetVerticalAlignment(VAlign_Center);
-		// AddDynamic needs a literal function name.
-		switch (i)
-		{
-		case 0: Play->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandlePlay0); break;
-		case 1: Play->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandlePlay1); break;
-		case 2: Play->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandlePlay2); break;
-		case 3: Play->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandlePlay3); break;
-		default: Play->OnClicked.AddDynamic(this, &UCallSheetMenuWidget::HandlePlay4); break;
-		}
-		Box->AddChildToVerticalBox(H)->SetPadding(FMargin(0.f, 8.f));
+		URetakeScenePlayProxy* Proxy = NewObject<URetakeScenePlayProxy>(this);
+		Proxy->SceneIndex = i;
+		Proxy->Menu = this;
+		Play->OnClicked.AddDynamic(Proxy, &URetakeScenePlayProxy::Click);
+		PlayProxies.Add(Proxy);
+		List->AddChild(H);
+		if (UScrollBoxSlot* LS = Cast<UScrollBoxSlot>(H->Slot)) { LS->SetPadding(FMargin(0.f, 4.f)); }
 	}
-
 	// Sound department: three volume sliders (saved).
 	Box->AddChildToVerticalBox(Text(WidgetTree, TEXT("SOUND DEPARTMENT"), 14, Red()))->SetPadding(FMargin(0.f, 20.f, 0.f, 4.f));
 	UHorizontalBox* Sound = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
@@ -151,11 +166,13 @@ void UCallSheetMenuWidget::PlayScene(int32 Index)
 	UGameplayStatics::OpenLevel(this, FName(Scenes[Index].MapName));
 }
 
-void UCallSheetMenuWidget::HandlePlay0() { PlayScene(0); }
-void UCallSheetMenuWidget::HandlePlay1() { PlayScene(1); }
-void UCallSheetMenuWidget::HandlePlay2() { PlayScene(2); }
-void UCallSheetMenuWidget::HandlePlay3() { PlayScene(3); }
-void UCallSheetMenuWidget::HandlePlay4() { PlayScene(4); }
+void URetakeScenePlayProxy::Click()
+{
+	if (UCallSheetMenuWidget* M = Menu.Get())
+	{
+		M->PlayScene(SceneIndex);
+	}
+}
 
 void UCallSheetMenuWidget::HandleVolumeChanged(float)
 {

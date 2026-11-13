@@ -28,6 +28,9 @@ public:
 	/** F3: full-screen white flash (explosions), fades out in ~0.3 s. */
 	void FlashScreen(float Strength);
 
+	/** ST1: the director's story line (pop text, 2-3 s) after Delay seconds, with its voice slot. */
+	void ShowStoryLine(const FString& Line, float Delay, const FString& VoiceName);
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
@@ -77,6 +80,12 @@ private:
 	void RebuildTimeline();
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TimerText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> StampText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> StoryText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> CallSheetHeaderText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> CallSheetNotesText;
+	float StoryClock = 0.f;
+	float StoryDuration = 0.f;
+	bool bStoryShown = false;
 	UPROPERTY(Transient) TObjectPtr<class UBorder> FlashBorder;
 	float FlashAlpha = 0.f;
 	UPROPERTY(Transient) TObjectPtr<UWidget> BriefingPanel;

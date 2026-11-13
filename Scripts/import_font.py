@@ -8,9 +8,9 @@ import os
 import unreal
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-SRC = os.path.join(ROOT, "ArtSource", "Fonts", "Shrikhand-Regular.ttf")
+SRC = os.path.join(ROOT, "ArtSource", "Fonts", "BowlbyOne-Regular.ttf")
 DST_DIR = "/Game/Retake/UI/Fonts"
-NAME = "FF_Shrikhand"
+NAME = "FF_BowlbyOne"
 
 task = unreal.AssetImportTask()
 task.set_editor_property("filename", SRC)

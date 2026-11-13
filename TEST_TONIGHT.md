@@ -183,3 +183,9 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 
 ## F4 – 70s popping text
 98. Stamps (ACTION!, CUT!, ON MARK!, THAT'S A WRAP!), the rating popups and PRINT IT! now pop in big with an overshoot, a little wobble and a lean, plus a thick brown outline and a drop shadow. Check that they're readable and don't cover the action for too long.
+
+## ST1 – Story plumbing (The Last Take)
+99. **Menu:** says Director: still waiting; scenes are listed under REEL 1 / REEL 4 (the Gap is now Scene 16). After wrapping the Gap the menu also shows Production wrapped. Nov 14, 1977.
+100. **Scene start:** the card shows CALL SHEET - NOV 14, 1977 - SCENE N: TITLE and a notes line; QUIET ON SET! pops, then the director's line (e.g. scene 3: Somebody check that gap rig...). The Gap shows SCENE 99: THE GAP and the director stays silent.
+101. **Take numbers** start at 46 (clapper TAKE 46  FILM 1/5, CUT! Take 46, ghost labels).
+102. **After scene 4, NEXT SCENE** shows a black leader card with a crosshair, 3-2-1 and END OF REEL 1, then loads the next scene.

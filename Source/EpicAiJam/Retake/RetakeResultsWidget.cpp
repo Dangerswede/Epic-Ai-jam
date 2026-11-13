@@ -114,6 +114,35 @@ void URetakeResultsWidget::BuildTree()
 	S->SetAnchors(FAnchors(0.5f, 0.5f));
 	S->SetAlignment(FVector2D(0.5f, 0.5f));
 	S->SetAutoSize(true);
+	ResultsSheet = Sheet;
+
+	// ST1: "END OF REEL N" card in 70s film-leader style (black, crosshair, 3-2-1), shown before the next reel loads.
+	ReelCard = Panel(WidgetTree, FLinearColor(0.02f, 0.02f, 0.02f, 1.f), FMargin(0.f));
+	ReelCard->SetVisibility(ESlateVisibility::Collapsed);
+	UCanvasPanelSlot* RS = Canvas->AddChildToCanvas(ReelCard);
+	RS->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
+	RS->SetOffsets(FMargin(0.f));
+	UCanvasPanel* Leader = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass());
+	ReelCard->SetContent(Leader);
+	auto Line = [&](const FAnchors& A)
+	{
+		UBorder* L = Panel(WidgetTree, FLinearColor(0.45f, 0.42f, 0.36f, 1.f), FMargin(0.f));
+		UCanvasPanelSlot* LS = Leader->AddChildToCanvas(L);
+		LS->SetAnchors(A);
+		LS->SetOffsets(FMargin(0.f));
+	};
+	Line(FAnchors(0.f, 0.499f, 1.f, 0.501f));
+	Line(FAnchors(0.4995f, 0.f, 0.5005f, 1.f));
+	ReelNumber = PopText(WidgetTree, TEXT("3"), 260, Chalk());
+	UCanvasPanelSlot* NS = Leader->AddChildToCanvas(ReelNumber);
+	NS->SetAnchors(FAnchors(0.5f, 0.5f));
+	NS->SetAlignment(FVector2D(0.5f, 0.5f));
+	NS->SetAutoSize(true);
+	ReelTitle = PopText(WidgetTree, TEXT("END OF REEL 1"), 54, Mustard());
+	UCanvasPanelSlot* TS = Leader->AddChildToCanvas(ReelTitle);
+	TS->SetAnchors(FAnchors(0.5f, 0.82f));
+	TS->SetAlignment(FVector2D(0.5f, 0.5f));
+	TS->SetAutoSize(true);
 }
 
 void URetakeResultsWidget::ShowResults(ARetakeSceneDirector* InDirector, bool bNewBest)
@@ -210,6 +239,25 @@ void URetakeResultsWidget::NativeTick(const FGeometry& MyGeometry, float InDelta
 			Popup(GetFinalPopup(), TargetStars >= 3 ? RetakeUI::Mustard() : RetakeUI::Dim());
 		}
 	}
+	if (ReelClock >= 0.f)
+	{
+		ReelClock += InDeltaTime;
+		const float Step = 0.8f;
+		const int32 Count = FMath::Max(1, 3 - FMath::FloorToInt(ReelClock / Step));
+		ReelNumber->SetText(FText::AsNumber(Count));
+		ReelNumber->SetRenderScale(FVector2D(RetakeUI::PopScale(FMath::Fmod(ReelClock, Step))));
+		// Old-leader flicker.
+		ReelCard->SetRenderOpacity(0.88f + 0.12f * FMath::Abs(FMath::Sin(ReelClock * 37.f)));
+		ReelTitle->SetRenderScale(FVector2D(RetakeUI::PopScale(ReelClock)));
+		ReelTitle->SetRenderTransformAngle(RetakeUI::PopTilt(ReelClock, -3.f));
+		if (ReelClock >= Step * 3.f)
+		{
+			ReelClock = -1.f;
+			ReelCard->SetVisibility(ESlateVisibility::Collapsed);
+			ResultsSheet->SetVisibility(ESlateVisibility::Visible);
+			OpenNextScene();
+		}
+	}
 	// Pop: scale 0 -> 1.3 -> 1 in 0.25 s with a slight tilt, then hold.
 	PopupTime += InDeltaTime;
 	if (PopupText)
@@ -236,6 +284,25 @@ void URetakeResultsWidget::HandleNext()
 	{
 		return;
 	}
+	// ST1: a reel ends here -> leader countdown first (NativeTick opens the level when it's done).
+	const RetakeScenes::FSceneInfo* Info = Director.IsValid() ? RetakeScenes::Find(Director->GetSceneId()) : nullptr;
+	if (Info && Info->bEndsReel && ReelCard)
+	{
+		ReelTitle->SetText(FText::FromString(FString::Printf(TEXT("END OF REEL %d"), Info->Reel)));
+		ResultsSheet->SetVisibility(ESlateVisibility::Collapsed);
+		ReelCard->SetVisibility(ESlateVisibility::HitTestInvisible);
+		ReelClock = 0.f;
+		if (APlayerController* PC = GetOwningPlayer())
+		{
+			PC->SetShowMouseCursor(false);
+		}
+		return;
+	}
+	OpenNextScene();
+}
+
+void URetakeResultsWidget::OpenNextScene()
+{
 	CloseAndRestoreInput();
 	UGameplayStatics::OpenLevel(this, FName(RetakeScenes::All()[NextSceneIndex].MapName));
 }

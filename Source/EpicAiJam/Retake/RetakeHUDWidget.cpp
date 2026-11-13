@@ -1,4 +1,6 @@
 #include "Retake/RetakeHUDWidget.h"
+#include "Retake/RetakeScenes.h"
+#include "Retake/RetakeAudioSubsystem.h"
 
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
@@ -79,10 +81,26 @@ void URetakeHUDWidget::BuildTree()
 		S->SetAutoSize(true);
 	}
 
+	// ST1: the director's story line, upper centre (pops once per scene, and on some CUTs later on).
+	{
+		StoryText = PopText(WidgetTree, TEXT(""), 40, Chalk());
+		StoryText->SetAutoWrapText(false);
+		StoryText->SetRenderOpacity(0.f);
+		UCanvasPanelSlot* S = Canvas->AddChildToCanvas(StoryText);
+		S->SetAnchors(FAnchors(0.5f, 0.2f));
+		S->SetAlignment(FVector2D(0.5f, 0.5f));
+		S->SetAutoSize(true);
+	}
+
 	// Briefing / shot list, lower center.
 	{
 		UBorder* Sheet = Panel(WidgetTree, Paper(), FMargin(28.f, 20.f));
 		UVerticalBox* Box = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		// ST1: call sheet header + notes line, then the shot list.
+		CallSheetHeaderText = Text(WidgetTree, TEXT(""), 14, Red(), ETextJustify::Left, false);
+		Box->AddChildToVerticalBox(CallSheetHeaderText);
+		CallSheetNotesText = Text(WidgetTree, TEXT(""), 16, Ink(), ETextJustify::Left, false);
+		Box->AddChildToVerticalBox(CallSheetNotesText)->SetPadding(FMargin(0.f, 2.f, 0.f, 8.f));
 		Box->AddChildToVerticalBox(Text(WidgetTree, TEXT("SHOT LIST"), 14, Red()));
 		ShotListText = Text(WidgetTree, TEXT(""), 22, Ink(), ETextJustify::Left, false);
 		Box->AddChildToVerticalBox(ShotListText)->SetPadding(FMargin(0.f, 6.f));
@@ -168,6 +186,11 @@ void URetakeHUDWidget::RefreshStatic()
 	}
 	SceneTitleText->SetText(D->SceneTitle);
 	ShotListText->SetText(D->ShotListText);
+	if (const RetakeScenes::FSceneInfo* Info = RetakeScenes::Find(D->GetSceneId()))
+	{
+		CallSheetHeaderText->SetText(FText::FromString(RetakeScenes::CallSheetHeader(*Info)));
+		CallSheetNotesText->SetText(FText::FromString(Info->CallSheetNotes));
+	}
 	NoteText->SetText(D->BonusText.IsEmpty() ? FText::GetEmpty()
 		: FText::FromString(FString::Printf(TEXT("DIRECTOR'S NOTE: %s"), *D->BonusText.ToString())));
 	const int32 Take = FMath::Max(1, D->GetCurrentTakeNumber());
@@ -180,9 +203,27 @@ void URetakeHUDWidget::RefreshStatic()
 		RoleText->SetText(TakeRoleName.IsEmpty() ? D->GetCastLine() : FText::FromString(FString::Printf(TEXT("%s: %s"),
 			*TakeRoleName.ToString().ToUpper(), *D->Roles[Take - 1].Task.ToString())));
 	}
-	TakeText->SetText(FText::FromString(FString::Printf(TEXT("TAKE %d / %d"), Take, D->MaxTakes)));
+	TakeText->SetText(FText::FromString(FString::Printf(TEXT("TAKE %d   FILM %d/%d"), RetakeScenes::DisplayTake(Take), Take, D->MaxTakes)));
 	HintText->SetText(FText::FromString(D->GetState() == ERetakeSceneState::Cut ? TEXT("Next take rolls in a moment...")
 		: D->bWaitForRollInput ? TEXT("Press Space to roll") : TEXT("Get ready...")));
+}
+
+void URetakeHUDWidget::ShowStoryLine(const FString& Line, float Delay, const FString& VoiceName)
+{
+	if (!StoryText)
+	{
+		return;
+	}
+	StoryText->SetText(FText::FromString(Line));
+	StoryClock = -Delay;
+	StoryDuration = FMath::Clamp(1.2f + Line.Len() * 0.04f, 2.f, 3.2f);
+	if (UWorld* World = GetWorld())
+	{
+		if (URetakeAudioSubsystem* Audio = World->GetSubsystem<URetakeAudioSubsystem>())
+		{
+			Audio->PlayNamedVoice(VoiceName, Delay);
+		}
+	}
 }
 
 void URetakeHUDWidget::FlashScreen(float Strength)
@@ -223,10 +264,22 @@ void URetakeHUDWidget::HandleStateChanged(ERetakeSceneState NewState, ERetakeSce
 	if (KeyHints) KeyHints->SetVisibility(NewState == ERetakeSceneState::Rolling ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	if (StampText && bHideAll) StampDuration = 0.f, StampText->SetRenderOpacity(0.f);
 
+	// ST1: once per scene, "Quiet on set!" and the director's line (silent scenes skip both).
+	if (bBriefing && !bStoryShown && Director.IsValid())
+	{
+		bStoryShown = true;
+		const RetakeScenes::FSceneInfo* Info = RetakeScenes::Find(Director->GetSceneId());
+		if (Info && Info->StoryLine)
+		{
+			ShowStamp(TEXT("QUIET ON SET!"), RetakeUI::Mustard(), 1.3f);
+			ShowStoryLine(Info->StoryLine, 1.3f, FString::Printf(TEXT("VoiceStory%02d"), Info->Number));
+		}
+	}
+
 	switch (NewState)
 	{
 	case ERetakeSceneState::SceneFailed:
-		ShowStamp(TEXT("SCENE FAILED\nBack to Take 1"), RetakeUI::Red(), 2.8f);
+		ShowStamp(FString::Printf(TEXT("SCENE FAILED\nBack to Take %d"), RetakeScenes::DisplayTake(1)), RetakeUI::Red(), 2.8f);
 		break;
 	case ERetakeSceneState::Wrap:
 		ShowStamp(TEXT("THAT'S A WRAP!"), RetakeUI::Mustard(), 2.f);
@@ -253,12 +306,18 @@ void URetakeHUDWidget::HandleTakeCut(int32 TakeNumber, ERetakeCutReason Reason)
 	case ERetakeCutReason::Caught: Why = TEXT("\nBusted."); break;
 	default: break;
 	}
-	ShowStamp(FString::Printf(TEXT("CUT! Take %d%s"), TakeNumber, Why), RetakeUI::Red(), 1.8f);
+	ShowStamp(FString::Printf(TEXT("CUT! Take %d%s"), RetakeScenes::DisplayTake(TakeNumber), Why), RetakeUI::Red(), 1.8f);
+	// ST1: from reel 3 on (scene 9+), about one CUT in six gets the director's sigh.
+	const RetakeScenes::FSceneInfo* Info = Director.IsValid() ? RetakeScenes::Find(Director->GetSceneId()) : nullptr;
+	if (Info && Info->Number >= 9 && Info->StoryLine && Director->GetTotalTakesShot() > 0 && Director->GetTotalTakesShot() % 6 == 0)
+	{
+		ShowStoryLine(TEXT("Again. It has to be perfect this time."), 1.f, TEXT("VoiceStoryCut"));
+	}
 }
 
 void URetakeHUDWidget::HandleTakeScrapped(int32 TakeNumber)
 {
-	ShowStamp(FString::Printf(TEXT("SCRAPPED!\nTake %d hits the cutting room floor"), TakeNumber), RetakeUI::Red(), 1.6f);
+	ShowStamp(FString::Printf(TEXT("SCRAPPED!\nTake %d hits the cutting room floor"), RetakeScenes::DisplayTake(TakeNumber)), RetakeUI::Red(), 1.6f);
 }
 
 void URetakeHUDWidget::HandleMarkHit(int32 MarkNumber)
@@ -357,6 +416,21 @@ void URetakeHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime
 			const int32 Secs = FMath::CeilToInt(Left);
 			TimerText->SetText(FText::FromString(FString::Printf(TEXT("%d:%02d"), Secs / 60, Secs % 60)));
 			TimerText->SetColorAndOpacity(FSlateColor(Left <= 5.f ? RetakeUI::Red() : RetakeUI::Chalk()));
+		}
+	}
+
+	if (StoryText && StoryDuration > 0.f)
+	{
+		StoryClock += InDeltaTime;
+		const float T = StoryClock;
+		const float Out = FMath::Clamp((StoryDuration - T) / 0.4f, 0.f, 1.f);
+		StoryText->SetRenderOpacity(T < 0.f ? 0.f : Out);
+		StoryText->SetRenderScale(FVector2D(RetakeUI::PopScale(T)));
+		StoryText->SetRenderTransformAngle(RetakeUI::PopTilt(T, -2.f));
+		if (T >= StoryDuration)
+		{
+			StoryDuration = 0.f;
+			StoryText->SetRenderOpacity(0.f);
 		}
 	}
 

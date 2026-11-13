@@ -1,4 +1,5 @@
 #include "Retake/RetakeSceneDirector.h"
+#include "Retake/RetakeScenes.h"
 
 #include "Components/BillboardComponent.h"
 #include "Engine/World.h"
@@ -62,6 +63,12 @@ void ARetakeSceneDirector::BeginPlay()
 		Marks.Add(*It);
 	}
 	Marks.Sort([](const ACameraMark& A, const ACameraMark& B) { return A.MarkNumber < B.MarkNumber; });
+
+	// ST1: the story table owns the scene titles (the Gap moved to scene 16).
+	if (const RetakeScenes::FSceneInfo* Info = RetakeScenes::Find(GetSceneId()))
+	{
+		SceneTitle = FText::FromString(Info->Title);
+	}
 
 	// The player pawn may be spawned after level actors begin play; start next tick.
 	GetWorldTimerManager().SetTimerForNextTick([this]()
@@ -212,7 +219,7 @@ void ARetakeSceneDirector::SpawnGhosts(const TArray<FTakeData>& TakesToPlay)
 			const FText TakeRoleName = GetRoleName(Take.TakeNumber);
 			if (!TakeRoleName.IsEmpty())
 			{
-				Ghost->SetLabelText(FString::Printf(TEXT("TAKE %d - %s"), Take.TakeNumber, *TakeRoleName.ToString().ToUpper()));
+				Ghost->SetLabelText(FString::Printf(TEXT("TAKE %d - %s"), RetakeScenes::DisplayTake(Take.TakeNumber), *TakeRoleName.ToString().ToUpper()));
 			}
 			Ghosts.Add(Ghost);
 		}
@@ -442,14 +449,14 @@ FText ARetakeSceneDirector::GetRoleLine(int32 TakeNumber) const
 		{
 			Jobs.Add(FString::Printf(TEXT("%s - %s"), *R.Name.ToString().ToUpper(), *R.Task.ToString()));
 		}
-		return FText::FromString(FString::Printf(TEXT("TAKE %d - YOUR CALL. Pick a job:\n%s"), TakeNumber, *FString::Join(Jobs, TEXT("\n"))));
+		return FText::FromString(FString::Printf(TEXT("TAKE %d - YOUR CALL. Pick a job:\n%s"), RetakeScenes::DisplayTake(TakeNumber), *FString::Join(Jobs, TEXT("\n"))));
 	}
 	if (!Roles.IsValidIndex(TakeNumber - 1))
 	{
 		return FText::GetEmpty();
 	}
 	const FTakeRole& R = Roles[TakeNumber - 1];
-	return FText::FromString(FString::Printf(TEXT("TAKE %d - %s: %s"), TakeNumber,
+	return FText::FromString(FString::Printf(TEXT("TAKE %d - %s: %s"), RetakeScenes::DisplayTake(TakeNumber),
 		*R.Name.ToString().ToUpper(), *R.Task.ToString()));
 }
 

@@ -28,3 +28,9 @@ SFX
 
 Volume sliders (Music / SFX / Voice) are in the main menu (call sheet).
 Rules: no third-party IP, everything in English, list every external sound in ASSETS.md.
+
+Story voice lines (ST1, The Last Take) - drop the files here with these exact names, then run Scripts/import_audio.py:
+  VoiceStory01.wav ... VoiceStory15.wav  director's line at the start of scene N (scenes 10 and 16 are silent)
+  VoiceStoryCut.wav                       'Again. It has to be perfect this time.' (some CUTs from scene 9 on)
+  VoiceStoryWrap1.wav, VoiceStoryWrap2.wav  ending of scene 16 (S5)
+The game plays /Game/Retake/Audio/Sounds/<name> if it exists, otherwise stays silent.

@@ -40,6 +40,7 @@ private:
 	void CloseAndRestoreInput();
 	void Popup(const FString& Str, const FLinearColor& Color);
 	void SetMeter(float Rating);
+	void OpenNextScene();
 
 	UFUNCTION() void HandleNext();
 	UFUNCTION() void HandleRetry();
@@ -68,4 +69,10 @@ private:
 	float PopupTime = 10.f;
 	bool bMeterRunning = false;
 	FString LastPopup;
+
+	UPROPERTY(Transient) TObjectPtr<UBorder> ResultsSheet;
+	UPROPERTY(Transient) TObjectPtr<UBorder> ReelCard;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> ReelNumber;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> ReelTitle;
+	float ReelClock = -1.f;
 };

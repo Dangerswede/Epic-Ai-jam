@@ -716,7 +716,7 @@ void ARetakeTestDriver::Tick(float DeltaSeconds)
 		{
 			UiShotClock = Now;
 		}
-		const double Delay = UiShots == 0 ? 0.2 : UiShots == 1 ? 0.5 : 2.6;
+		const double Delay = UiShots == 0 ? 1.7 : UiShots == 1 ? 0.5 : 2.6; // 1.7 s: the director's story line is up
 		if (bArm && Now - UiShotClock >= Delay)
 		{
 			++UiShots;

@@ -35,6 +35,9 @@ public:
 	/** Play a UI click (used by menus). */
 	void PlayUIClick();
 
+	/** Story voice slots by file name (ST1/F5): plays /Game/Retake/Audio/Sounds/<Name> if it was imported from AudioSource/, else stays silent. */
+	void PlayNamedVoice(const FString& Name, float Delay = 0.f);
+
 protected:
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 

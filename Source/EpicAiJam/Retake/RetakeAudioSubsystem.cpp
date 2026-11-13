@@ -149,6 +149,15 @@ USoundClass* URetakeAudioSubsystem::ClassFor(ECategory Category) const
 	}
 }
 
+void URetakeAudioSubsystem::PlayNamedVoice(const FString& Name, float Delay)
+{
+	const FString Path = FString::Printf(TEXT("/Game/Retake/Audio/Sounds/%s.%s"), *Name, *Name);
+	if (USoundBase* Sound = LoadObject<USoundBase>(nullptr, *Path, nullptr, LOAD_NoWarn | LOAD_Quiet))
+	{
+		PlaySound(Sound, ECategory::Voice, Delay);
+	}
+}
+
 void URetakeAudioSubsystem::PlaySound(USoundBase* Sound, ECategory Category, float Delay)
 {
 	UWorld* World = GetWorld();

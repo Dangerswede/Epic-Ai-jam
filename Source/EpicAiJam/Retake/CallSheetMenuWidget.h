@@ -4,6 +4,17 @@
 #include "Blueprint/UserWidget.h"
 #include "CallSheetMenuWidget.generated.h"
 
+/** One PLAY button's click target (dynamic delegates need a UFUNCTION per receiver). */
+UCLASS()
+class URetakeScenePlayProxy : public UObject
+{
+	GENERATED_BODY()
+public:
+	int32 SceneIndex = 0;
+	TWeakObjectPtr<class UCallSheetMenuWidget> Menu;
+	UFUNCTION() void Click();
+};
+
 /**
  * Main menu styled as a film call sheet: one row per scene (Play, locked until the
  * previous scene is wrapped, best takes) and Quit. Built in C++.
@@ -19,13 +30,12 @@ protected:
 
 private:
 	void BuildTree();
+public:
 	void PlayScene(int32 Index);
 
-	UFUNCTION() void HandlePlay0();
-	UFUNCTION() void HandlePlay1();
-	UFUNCTION() void HandlePlay2();
-	UFUNCTION() void HandlePlay3();
-	UFUNCTION() void HandlePlay4();
+private:
+
+	UPROPERTY(Transient) TArray<TObjectPtr<URetakeScenePlayProxy>> PlayProxies;
 	UFUNCTION() void HandleQuit();
 	UFUNCTION() void HandleVolumeChanged(float Value);
 

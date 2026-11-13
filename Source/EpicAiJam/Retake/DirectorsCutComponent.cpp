@@ -1,4 +1,5 @@
 #include "Retake/DirectorsCutComponent.h"
+#include "Retake/RetakeScenes.h"
 
 #include "CineCameraActor.h"
 #include "CineCameraComponent.h"
@@ -455,8 +456,8 @@ void UDirectorsCutComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			const ARetakeSceneDirector* D = GetDirector();
 			const FText Role = (G && D) ? D->GetRoleName(G->GetTakeNumber()) : FText::GetEmpty();
 			CurrentShotLabel = !G ? FString(TEXT("ALL TAKES")) : Role.IsEmpty()
-				? FString::Printf(TEXT("TAKE %d"), G->GetTakeNumber())
-				: FString::Printf(TEXT("TAKE %d - %s"), G->GetTakeNumber(), *Role.ToString().ToUpper());
+				? FString::Printf(TEXT("TAKE %d"), RetakeScenes::DisplayTake(G->GetTakeNumber()))
+				: FString::Printf(TEXT("TAKE %d - %s"), RetakeScenes::DisplayTake(G->GetTakeNumber()), *Role.ToString().ToUpper());
 			Overlay->ShowShotLabel(CurrentShotLabel);
 			LastMarkCam.Reset(); // new moment = new shot
 		}
