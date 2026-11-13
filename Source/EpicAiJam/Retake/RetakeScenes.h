@@ -42,7 +42,7 @@ namespace RetakeScenes
 				TEXT("Stunt: J. Ward. Extras: 0. Wanted posters: 1."), TEXT("Jack loved the saloon gags. Roll it."), false },
 			{ nullptr, 7, 2, TEXT("Scene 7: The Vault"), TEXT("Levers in order. Mind the clock."), nullptr,
 				TEXT("Stunt: J. Ward. All clocks stopped at 4:47."), TEXT("What time is it? ...Never mind. Action."), false },
-			{ nullptr, 8, 2, TEXT("Scene 8: The Bridge (Reshoot)"), TEXT("Again, at dusk. Three takes this time."), nullptr,
+			{ TEXT("Scene08_BridgeReshoot"), 8, 2, TEXT("Scene 8: The Bridge (Reshoot)"), TEXT("Again, at dusk. Three takes this time."), nullptr,
 				TEXT("Stunt: J. Ward. Reshoot. Light: fading."), TEXT("Same as yesterday. Same as every day."), true },
 			// Reel 3
 			{ nullptr, 9, 3, TEXT("Scene 9: The Backlot"), TEXT("Night. Nobody is supposed to be here."), nullptr,

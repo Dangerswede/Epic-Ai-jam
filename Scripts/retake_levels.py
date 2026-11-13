@@ -225,3 +225,42 @@ def marks(items):
         m.set_editor_property("window_end", float(win[1]))
         m.set_editor_property("camera_location", unreal.Vector(*[float(v) for v in cam]))
         m.set_editor_property("shot_name", name)
+
+
+# ---------------------------------------------------------------------------- ST2/S3: story scenes
+def mood(sun_rot=(-12, 200, 0), sun_color=(1.0, 0.55, 0.3), sun_intensity=2.0, sky_intensity=0.25, spot_scale=0.6):
+    """Re-light a level after studio_lights(): low warm sun (dusk), dimmer sky and spots."""
+    for a in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors():
+        if isinstance(a, unreal.DirectionalLight):
+            a.set_actor_rotation(unreal.Rotator(roll=sun_rot[2], pitch=sun_rot[0], yaw=sun_rot[1]), False)
+            a.light_component.set_intensity(sun_intensity)
+            a.light_component.set_light_color(unreal.LinearColor(*sun_color, 1.0))
+        elif isinstance(a, unreal.SkyLight):
+            a.light_component.set_intensity(sky_intensity)
+        elif isinstance(a, unreal.SpotLight):
+            comp = a.spot_light_component
+            comp.set_intensity(comp.intensity * spot_scale)
+
+
+def dressing(name, loc, size, yaw=0.0, color=(0.35, 0.3, 0.25)):
+    """S3 set dressing, never in the player's path: the Tripo prop SM_<name> if it is imported (height = size[2]),
+    otherwise a graybox placeholder of `size` cm. No collision either way."""
+    a = prop(name, loc, size[2], yaw, label="Dress_" + name)
+    if a:
+        return a
+    b = box("Dress_" + name, (loc[0], loc[1], loc[2] + size[2] / 2.0), size, rot=(0, yaw, 0), folder="Dressing")
+    b.static_mesh_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    b.static_mesh_component.set_editor_property("can_ever_affect_navigation", False)
+    return b
+
+
+def sign(text, loc, yaw=0.0, size=40.0, color=(0.95, 0.9, 0.75), label=None):
+    """Readable text in the world (posters, tags, chalk boards). Faces +X rotated by yaw."""
+    t = spawn(unreal.TextRenderActor, loc, (0, yaw, 0), label or ("Sign_" + text[:16]), "Dressing")
+    comp = t.text_render
+    comp.set_text(text)
+    comp.set_world_size(size)
+    comp.set_horizontal_alignment(unreal.HorizTextAligment.EHTA_CENTER)
+    comp.set_vertical_alignment(unreal.VerticalTextAligment.EVRTA_TEXT_CENTER)
+    comp.set_text_render_color(unreal.Color(int(color[2] * 255), int(color[1] * 255), int(color[0] * 255), 255))
+    return t

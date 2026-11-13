@@ -193,3 +193,6 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 ## F6 – 70s film look
 103. The whole game is a little warmer and grainier with a soft vignette. Check that it isn't too dark or muddy on your screen.
 104. In the Director's Cut you also get flickering and thin white scratches that jump around (only in the replay). Too much or just right?
+
+## ST2 – New scenes
+105. **Scene 8: The Bridge (Reshoot)** (after scene 4 and the END OF REEL 1 card): dusk light; one gate needs SWITCH A and SWITCH B on at the same time (4 s each). Take 46 GRIP: wait by switch A until ~5 s, then press it. Take 47 BEST BOY: run under the bridge to switch B and press it. Take 48 HERO: wait a couple of seconds, then up the ramp - the gate opens in front of you.

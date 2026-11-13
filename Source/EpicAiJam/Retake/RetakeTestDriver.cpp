@@ -29,6 +29,7 @@
 #include "Retake/RetakeSceneDirector.h"
 #include "Retake/StuntGuard.h"
 #include "Retake/TakeGhost.h"
+#include "Retake/TimedSwitch.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogRetakeTest, Log, All);
 
@@ -501,6 +502,53 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(6250, 0);
 		MoveTo(7150, 0);
 		MoveTo(7600, 0);
+	}	else if (Scene == TEXT("Scene08_BridgeReshoot"))
+	{
+		// ST2: one gate needs switch A AND switch B (4 s each) - two grips time their presses, the hero crosses.
+		AGate* Gate = FindFirst<AGate>();
+		ATimedSwitch* SwitchA = nullptr;
+		ATimedSwitch* SwitchB = nullptr;
+		for (TActorIterator<ATimedSwitch> It(GetWorld()); It; ++It)
+		{
+			(It->GetActorLocation().X < 1000.f ? SwitchA : SwitchB) = *It;
+		}
+		auto TakeTime = [this]() { return Director->TakeDurationSeconds - Director->GetTakeTimeRemaining(); };
+		// Walk small loops around (X, Y) until the take clock reaches T (busy, never idle).
+		auto MillUntil = [this, TakeTime](float X, float Y, float T)
+		{
+			TSharedPtr<int32> Leg = MakeShared<int32>(0);
+			Steps.Add({ FString::Printf(TEXT("mill around (%.0f, %.0f) until %.1f s"), X, Y, T), 20.f, [this, X, Y, T, Leg, TakeTime](float)
+			{
+				if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Failed;
+				if (TakeTime() >= T) return EStepResult::Done;
+				const FVector2D Target(X + (*Leg % 2 == 0 ? 130.f : -130.f), Y);
+				const FVector2D Delta = Target - FVector2D(Player->GetActorLocation());
+				if (Delta.Size() < 40.f) { ++*Leg; }
+				Player->AddMovementInput(FVector(Delta.GetSafeNormal(), 0.f), 0.6f);
+				return EStepResult::Running;
+			} });
+		};
+		// Take 1: GRIP - switch A, pressed late so its window overlaps switch B's.
+		MoveTo(300, -380, 40.f);
+		MillUntil(300, -330, 5.0f);
+		MoveTo(300, -440, 30.f);
+		Interact();
+		Check(TEXT("switch A on, but one switch is not enough"), [SwitchA, Gate]() { return SwitchA->IsActive() && Gate->GetOpenAlpha() < 0.05f; });
+		Cut();
+		// Take 2: BEST BOY - under the bridge to switch B.
+		NextTake(2);
+		MoveTo(900, 700);
+		MoveTo(2600, 640, 40.f);
+		Interact();
+		WaitUntil(TEXT("A (ghost) + B -> gate opens"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 3.f);
+		Cut();
+		// Take 3: HERO - time the run up the ramp, cross in the overlap.
+		NextTake(3);
+		MillUntil(-100, 0, 2.2f);
+		MoveTo(950, 0);
+		MoveTo(1650, 0);
+		WaitUntil(TEXT("both switches on -> gate open for the hero"), [Gate]() { return Gate->GetOpenAlpha() > 0.95f; }, 4.f);
+		MoveTo(2650, 0);
 	}	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
@@ -594,6 +642,14 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+	}
+	else if (Scene == TEXT("Scene08_BridgeReshoot"))
+	{
+		MoveTo(300, -440, 30.f);
+		Do(TEXT("Press E (switch A alone)"), [this]() { Player->Interact(); });
+		MoveTo(100, 0);
+		MoveTo(1050, 0);
+		MoveTo(2650, 0, 60.f, 40.f); // one switch never opens the gate
 	}
 	// The MoveTo above is expected to time out or the take to be cut; either way: no wrap.
 	Steps.Last().Fn = [Inner = Steps.Last().Fn, this](float Dt)
