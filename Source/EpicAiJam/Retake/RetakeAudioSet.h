@@ -30,10 +30,6 @@ public:
 	// --- Director voice lines -----------------------------------------------------------------
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voice") TObjectPtr<USoundBase> VoiceAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voice") TObjectPtr<USoundBase> VoiceCut;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voice") TObjectPtr<USoundBase> VoiceTakeTwo;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voice") TObjectPtr<USoundBase> VoiceTakeThree;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voice") TObjectPtr<USoundBase> VoiceTakeFour;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voice") TObjectPtr<USoundBase> VoiceTakeFive;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voice") TObjectPtr<USoundBase> VoiceThatsAWrap;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voice") TObjectPtr<USoundBase> VoicePrintIt;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Voice") TObjectPtr<USoundBase> VoiceFromTheTop;

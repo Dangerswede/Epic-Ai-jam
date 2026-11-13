@@ -261,13 +261,14 @@ void URetakeAudioSubsystem::HandleStateChanged(ERetakeSceneState NewState, EReta
 	if (!Set) return;
 	switch (NewState)
 	{
-	case ERetakeSceneState::Briefing:     PlayMusic(Set->MusicBriefing); break;
+	// Two loops are enough: MusicMenu covers briefing, Director's Cut and results when their own slots are empty.
+	case ERetakeSceneState::Briefing:     PlayMusic(Set->MusicBriefing ? Set->MusicBriefing.Get() : Set->MusicMenu.Get()); break;
 	case ERetakeSceneState::Rolling:      PlayMusic(Set->MusicRollingLoop); break;
 	case ERetakeSceneState::Cut:
 	case ERetakeSceneState::SceneFailed:  PlayMusic(nullptr); break;
-	case ERetakeSceneState::DirectorsCut: PlayMusic(Set->MusicDirectorsCut); break;
+	case ERetakeSceneState::DirectorsCut: PlayMusic(Set->MusicDirectorsCut ? Set->MusicDirectorsCut.Get() : Set->MusicMenu.Get()); break;
 	case ERetakeSceneState::Results:
-		PlayMusic(Set->MusicResults);
+		PlayMusic(Set->MusicResults ? Set->MusicResults.Get() : Set->MusicMenu.Get());
 		PlaySound(Set->VoicePrintIt, ECategory::Voice);
 		break;
 	default: break;
@@ -278,16 +279,8 @@ void URetakeAudioSubsystem::HandleTakeStarted(int32 TakeNumber)
 {
 	if (!Set) return;
 	PlaySound(Set->SfxClapperboard, ECategory::Sfx);
-	USoundBase* TakeLine = nullptr;
-	switch (TakeNumber)
-	{
-	case 1: TakeLine = bRestartedFromTop ? Set->VoiceFromTheTop.Get() : nullptr; break;
-	case 2: TakeLine = Set->VoiceTakeTwo; break;
-	case 3: TakeLine = Set->VoiceTakeThree; break;
-	case 4: TakeLine = Set->VoiceTakeFour; break;
-	case 5: TakeLine = Set->VoiceTakeFive; break;
-	default: break;
-	}
+	// A2: no "Take two!" call-outs (the HUD says TAKE 47) - just "Action!", after "From the top!" on a restart.
+	USoundBase* TakeLine = (TakeNumber == 1 && bRestartedFromTop) ? Set->VoiceFromTheTop.Get() : nullptr;
 	bRestartedFromTop = false;
 	PlaySound(TakeLine, ECategory::Voice);
 	// "Action!" right after the take call-out.
