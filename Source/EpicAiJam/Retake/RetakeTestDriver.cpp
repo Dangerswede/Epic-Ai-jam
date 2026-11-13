@@ -719,6 +719,59 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(950, -100);
 		WaitUntil(TEXT("all three levers -> exit open"), [Exit]() { return Exit->GetOpenAlpha() > 0.95f; }, 3.f);
 		MoveTo(1500, 0);
+	}	else if (Scene == TEXT("Scene11_HeistNight"))
+	{
+		// Reel 3 remix: two decoys circle their guards, inside man, hero.
+		AStuntGuard* Guard1 = nullptr;
+		AStuntGuard* Guard2 = nullptr;
+		for (TActorIterator<AStuntGuard> It(GetWorld()); It; ++It) { (It->GetActorLocation().Y > -500.f ? Guard1 : Guard2) = *It; }
+		AGate* Vault = FindFirst<AGate>();
+		auto CircleUntilEnd = [this](FVector2D Center, float Radius)
+		{
+			Steps.Add({ TEXT("circle until the take ends"), 20.f, [this, Center, Radius](float)
+			{
+				if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Done;
+				const FVector2D P = FVector2D(Player->GetActorLocation()) - Center;
+				const float Ang = FMath::Atan2(P.Y, P.X) + FMath::DegreesToRadians(40.f);
+				const FVector2D Aim = Center + FVector2D(FMath::Cos(Ang), FMath::Sin(Ang)) * Radius;
+				Player->AddMovementInput(FVector((Aim - FVector2D(Player->GetActorLocation())).GetSafeNormal(), 0.f), 1.f);
+				return EStepResult::Running;
+			} });
+		};
+		// Take 1: DECOY - guard 1, circle in the south-west.
+		MoveTo(500, 350);
+		WaitUntil(TEXT("guard 1 spots the decoy"), [Guard1]() { return Guard1->GetGuardState() == EStuntGuardState::Chase; }, 3.f);
+		CircleUntilEnd(FVector2D(150.f, -900.f), 650.f); // margin R*(1 - 380/500) = 156 > catch distance 110
+		// Take 2: SECOND DECOY - guard 2, circle in the south-east.
+		NextTake(2);
+		MoveTo(1600, -500);
+		WaitUntil(TEXT("guard 2 spots the second decoy"), [Guard2]() { return Guard2->GetGuardState() == EStuntGuardState::Chase; }, 3.f);
+		CircleUntilEnd(FVector2D(2850.f, -1060.f), 530.f); // margin 127; stays clear of the vault's south wall
+		// Take 3: INSIDE MAN.
+		NextTake(3);
+		MoveTo(-300, 900);
+		MoveTo(1000, 1180, 40.f);
+		Interact();
+		MoveTo(1300, 1180, 40.f);
+		Interact();
+		MoveTo(1600, 1180, 40.f);
+		Interact();
+		WaitUntil(TEXT("all three locks on -> vault open"), [Vault]() { return Vault->ShouldBeOpen(); }, 1.f);
+		Cut();
+		// Take 4: HERO.
+		NextTake(4);
+		Check(TEXT("three ghosts spawned"), [this]() { return Director->GetGhosts().Num() == 3; });
+		// North route (behind guard 1's back), then wait in the north-east until the vault guard takes the bait.
+		MoveTo(-200, 700);
+		MoveTo(600, 1000);
+		MoveTo(2300, 800);
+		WaitUntil(TEXT("both guards busy with decoys"), [Guard1, Guard2]()
+		{
+			return Guard1->GetGuardState() != EStuntGuardState::Patrol && Guard2->GetGuardState() != EStuntGuardState::Patrol;
+		}, 4.f);
+		MoveTo(2300, -100);
+		WaitUntil(TEXT("ghost locks open the vault"), [Vault]() { return Vault->GetOpenAlpha() > 0.95f; }, 3.f);
+		MoveTo(3000, 0);
 	}	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
@@ -812,6 +865,11 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
 		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+	}
+	else if (Scene == TEXT("Scene11_HeistNight"))
+	{
+		MoveTo(1900, -250);
+		MoveTo(3000, 0, 60.f, 40.f); // guards + a locked vault
 	}
 	else if (Scene == TEXT("Scene13_ProjectionRoom"))
 	{
