@@ -160,6 +160,22 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Timing")
 	bool bCinematicDirectorsCut = true;
 
+	/** F6: 70s film look on the whole scene (warm grade, grain, vignette) via an unbound post-process volume. */
+	UPROPERTY(EditAnywhere, Category = "Look")
+	bool bFilmLook = true;
+
+	UPROPERTY(EditAnywhere, Category = "Look")
+	float FilmGrain = 0.22f;
+
+	UPROPERTY(EditAnywhere, Category = "Look")
+	FLinearColor FilmTint = FLinearColor(1.f, 0.93f, 0.82f);
+
+	UPROPERTY(EditAnywhere, Category = "Look")
+	float FilmSaturation = 0.86f;
+
+	UPROPERTY(EditAnywhere, Category = "Look")
+	float FilmVignette = 0.5f;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Retake")
 	TObjectPtr<UDirectorsCutComponent> DirectorsCut;
 

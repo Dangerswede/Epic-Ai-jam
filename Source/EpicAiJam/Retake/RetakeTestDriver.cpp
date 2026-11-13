@@ -773,7 +773,7 @@ void ARetakeTestDriver::Tick(float DeltaSeconds)
 			NextShot = DirectorsCutRealSeconds + 1.f;
 			if (APlayerController* ShotPC = GetWorld()->GetFirstPlayerController())
 			{
-				ShotPC->ConsoleCommand(TEXT("HighResShot 1"));
+				ShotPC->ConsoleCommand(TEXT("Shot showui")); // with the overlay: letterbox, scratches
 			}
 		}
 	}

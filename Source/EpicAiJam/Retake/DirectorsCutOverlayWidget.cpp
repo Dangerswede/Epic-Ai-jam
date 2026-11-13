@@ -39,6 +39,25 @@ void UDirectorsCutOverlayWidget::BuildTree()
 	Bar(0.f, 0.12f);
 	Bar(0.88f, 1.f);
 
+	// F6: replay-only film damage: a flickering dark veil and a few vertical scratches that jump around.
+	FlickerVeil = Panel(WidgetTree, FLinearColor::Black, FMargin(0.f));
+	FlickerVeil->SetRenderOpacity(0.f);
+	FlickerVeil->SetVisibility(ESlateVisibility::HitTestInvisible);
+	{
+		UCanvasPanelSlot* FS = Canvas->AddChildToCanvas(FlickerVeil);
+		FS->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
+		FS->SetOffsets(FMargin(0.f));
+	}
+	for (int32 i = 0; i < 3; ++i)
+	{
+		UBorder* Scratch = Panel(WidgetTree, FLinearColor(0.92f, 0.88f, 0.8f, 0.45f), FMargin(0.f));
+		Scratch->SetVisibility(ESlateVisibility::Hidden);
+		UCanvasPanelSlot* SS2 = Canvas->AddChildToCanvas(Scratch);
+		SS2->SetAnchors(FAnchors(0.5f, 0.12f, 0.5f, 0.88f));
+		SS2->SetOffsets(FMargin(0.f, 0.f, 2.f, 0.f));
+		Scratches.Add(Scratch);
+	}
+
 	TitleText = PopText(WidgetTree, TEXT(""), 72, Mustard());
 	TitleText->SetRenderOpacity(0.f);
 	UCanvasPanelSlot* T = Canvas->AddChildToCanvas(TitleText);
@@ -54,6 +73,7 @@ void UDirectorsCutOverlayWidget::BuildTree()
 	ST->SetAutoSize(true);
 
 	ShotLabel = Text(WidgetTree, TEXT(""), 16, Chalk(), ETextJustify::Left);
+	ShotLabel->SetAutoWrapText(false);
 	UCanvasPanelSlot* SL = Canvas->AddChildToCanvas(ShotLabel);
 	SL->SetAnchors(FAnchors(0.f, 0.94f));
 	SL->SetAlignment(FVector2D(0.f, 0.5f));
@@ -99,6 +119,7 @@ void UDirectorsCutOverlayWidget::ShowBlack(bool bBlack)
 void UDirectorsCutOverlayWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
+	TickFilmDamage(InDeltaTime);
 	if (TitleDuration <= 0.f || !TitleText)
 	{
 		return;
@@ -117,5 +138,32 @@ void UDirectorsCutOverlayWidget::NativeTick(const FGeometry& MyGeometry, float I
 		TitleDuration = 0.f;
 		TitleText->SetRenderOpacity(0.f);
 		SubtitleText->SetRenderOpacity(0.f);
+	}
+}
+
+void UDirectorsCutOverlayWidget::TickFilmDamage(float DeltaTime)
+{
+	DamageClock += DeltaTime;
+	if (FlickerVeil)
+	{
+		FlickerVeil->SetRenderOpacity(FMath::FRandRange(0.f, 0.07f));
+	}
+	if (DamageClock < 0.09f)
+	{
+		return;
+	}
+	DamageClock = 0.f;
+	// New frame of "damage": each scratch is shown at a random column with some chance.
+	for (UBorder* Scratch : Scratches)
+	{
+		const bool bShow = FMath::FRand() < 0.35f;
+		Scratch->SetVisibility(bShow ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
+		if (UCanvasPanelSlot* S = Cast<UCanvasPanelSlot>(Scratch->Slot); S && bShow)
+		{
+			const float X = FMath::FRandRange(0.05f, 0.95f);
+			const float Top = FMath::FRandRange(0.12f, 0.5f);
+			S->SetAnchors(FAnchors(X, Top, X, FMath::FRandRange(Top + 0.1f, 0.88f)));
+			S->SetOffsets(FMargin(0.f, 0.f, FMath::FRandRange(1.f, 3.f), 0.f));
+		}
 	}
 }

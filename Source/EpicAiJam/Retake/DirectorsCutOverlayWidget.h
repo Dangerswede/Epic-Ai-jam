@@ -27,11 +27,15 @@ protected:
 
 private:
 	void BuildTree();
+	void TickFilmDamage(float DeltaTime);
 
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TitleText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> SubtitleText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> ShotLabel;
 	UPROPERTY(Transient) TObjectPtr<class UBorder> BlackFrame;
+	UPROPERTY(Transient) TObjectPtr<class UBorder> FlickerVeil;
+	UPROPERTY(Transient) TArray<TObjectPtr<class UBorder>> Scratches;
+	float DamageClock = 0.f;
 
 	float TitleTime = 0.f;
 	float TitleDuration = 0.f;

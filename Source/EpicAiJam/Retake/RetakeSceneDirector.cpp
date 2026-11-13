@@ -4,6 +4,7 @@
 #include "Components/BillboardComponent.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "Engine/PostProcessVolume.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Retake/CameraMark.h"
@@ -63,6 +64,31 @@ void ARetakeSceneDirector::BeginPlay()
 		Marks.Add(*It);
 	}
 	Marks.Sort([](const ACameraMark& A, const ACameraMark& B) { return A.MarkNumber < B.MarkNumber; });
+
+	// F6: 70s film look for the whole scene (the Director's Cut camera adds its own sepia on top).
+	if (bFilmLook)
+	{
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		if (APostProcessVolume* Look = GetWorld()->SpawnActor<APostProcessVolume>(Params))
+		{
+			Look->bUnbound = true;
+			Look->Priority = -10.f; // anything placed in the level wins
+			FPostProcessSettings& PP = Look->Settings;
+			PP.bOverride_FilmGrainIntensity = true;
+			PP.FilmGrainIntensity = FilmGrain;
+			PP.bOverride_SceneColorTint = true;
+			PP.SceneColorTint = FilmTint;
+			PP.bOverride_ColorSaturation = true;
+			PP.ColorSaturation = FVector4(FilmSaturation, FilmSaturation, FilmSaturation, 1.f);
+			PP.bOverride_ColorContrast = true;
+			PP.ColorContrast = FVector4(1.06f, 1.06f, 1.06f, 1.f);
+			PP.bOverride_ColorGain = true;
+			PP.ColorGain = FVector4(1.03f, 1.f, 0.94f, 1.f);
+			PP.bOverride_VignetteIntensity = true;
+			PP.VignetteIntensity = FilmVignette;
+		}
+	}
 
 	// ST1: the story table owns the scene titles (the Gap moved to scene 16).
 	if (const RetakeScenes::FSceneInfo* Info = RetakeScenes::Find(GetSceneId()))

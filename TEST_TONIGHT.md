@@ -189,3 +189,7 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 100. **Scene start:** the card shows CALL SHEET - NOV 14, 1977 - SCENE N: TITLE and a notes line; QUIET ON SET! pops, then the director's line (e.g. scene 3: Somebody check that gap rig...). The Gap shows SCENE 99: THE GAP and the director stays silent.
 101. **Take numbers** start at 46 (clapper TAKE 46  FILM 1/5, CUT! Take 46, ghost labels).
 102. **After scene 4, NEXT SCENE** shows a black leader card with a crosshair, 3-2-1 and END OF REEL 1, then loads the next scene.
+
+## F6 – 70s film look
+103. The whole game is a little warmer and grainier with a soft vignette. Check that it isn't too dark or muddy on your screen.
+104. In the Director's Cut you also get flickering and thin white scratches that jump around (only in the replay). Too much or just right?
