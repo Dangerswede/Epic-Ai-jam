@@ -264,3 +264,69 @@ def sign(text, loc, yaw=0.0, size=40.0, color=(0.95, 0.9, 0.75), label=None):
     comp.set_vertical_alignment(unreal.VerticalTextAligment.EVRTA_TEXT_CENTER)
     comp.set_text_render_color(unreal.Color(int(color[2] * 255), int(color[1] * 255), int(color[0] * 255), 255))
     return t
+
+
+# S3 story props. Tripo names (ArtSource/SM_<Name>.glb via import_art.py) swap in automatically when imported.
+def director_chairs(loc, yaw=0.0, n=2, gap=90):
+    """Empty director's chairs side by side."""
+    import math
+    dx, dy = math.cos(math.radians(yaw + 90)) * gap, math.sin(math.radians(yaw + 90)) * gap
+    for i in range(n):
+        dressing("DirectorChair", (loc[0] + dx * i, loc[1] + dy * i, loc[2]), (55, 55, 105), yaw)
+
+
+def coffee(loc, yaw=0.0):
+    """A small table with a coffee cup on it (nobody drinking)."""
+    dressing("SideTable", loc, (60, 60, 75), yaw)
+    dressing("CoffeeCup", (loc[0], loc[1], loc[2] + 75), (9, 9, 12), yaw)
+
+
+def clapperboard(loc, yaw, text):
+    """Clapperboard (placeholder: a slate) with chalk text facing yaw."""
+    dressing("Clapperboard", loc, (6, 32, 28), yaw)
+    import math
+    off = (math.cos(math.radians(yaw)) * 4, math.sin(math.radians(yaw)) * 4)
+    sign(text, (loc[0] + off[0], loc[1] + off[1], loc[2] + 12), yaw, 3.2, (0.95, 0.95, 0.9), "Sign_Clapper")
+
+
+def call_board(loc, yaw, names, keep):
+    """Crew board: every name crossed out (red bar) except `keep`."""
+    import math
+    dressing("CallBoard", loc, (8, 180, 150), yaw)
+    fx, fy = math.cos(math.radians(yaw)) * 6, math.sin(math.radians(yaw)) * 6
+    sign("CREW - NOV 14, 1977", (loc[0] + fx, loc[1] + fy, loc[2] + 135), yaw, 12, (0.6, 0.08, 0.05), "Sign_CrewHeader")
+    lamp = spawn(unreal.PointLight, (loc[0] + fx * 20, loc[1] + fy * 20, loc[2] + 170), label="CrewBoardLamp", folder="Lights")
+    lamp.point_light_component.set_intensity(250.0)
+    lamp.point_light_component.set_attenuation_radius(450.0)
+    lamp.point_light_component.set_light_color(unreal.LinearColor(1.0, 0.85, 0.6, 1.0))
+    for i, name in enumerate(names):
+        z = loc[2] + 112 - i * 15
+        sign(name, (loc[0] + fx, loc[1] + fy, z), yaw, 11, (0.06, 0.06, 0.08), "Sign_Crew_" + name)
+        if name != keep:
+            sx, sy = -math.sin(math.radians(yaw)), math.cos(math.radians(yaw))
+            bar = box("CrossOut", (loc[0] + fx * 1.3, loc[1] + fy * 1.3, z), (2, 3, 2), rot=(0, yaw, 0), folder="Dressing")
+            bar.set_actor_scale3d(unreal.Vector(0.02, len(name) * 0.075, 0.02))
+            no_collision(bar)
+
+
+def wreath(loc, yaw, text="FOR JACK"):
+    """Funeral wreath on a stand; the ribbon text is small - readable only up close."""
+    import math
+    if not prop("Wreath", loc, 120, yaw, label="Dress_Wreath"):
+        # Placeholder: an upright ring-ish disc on a thin stand.
+        cyl = unreal.load_asset("/Engine/BasicShapes/Cylinder.Cylinder")
+        disc = box("Dress_Wreath", (loc[0], loc[1], loc[2] + 85), (70, 70, 12), rot=(90, yaw, 0), folder="Dressing", mesh=cyl)
+        no_collision(disc)
+        stand = box("Dress_WreathStand", (loc[0], loc[1], loc[2] + 25), (4, 4, 50), folder="Dressing")
+        no_collision(stand)
+    fx, fy = math.cos(math.radians(yaw)) * 14, math.sin(math.radians(yaw)) * 14
+    sign(text, (loc[0] + fx, loc[1] + fy, loc[2] + 70), yaw, 6, (0.45, 0.04, 0.04), "Sign_Wreath")
+
+
+def newspaper(loc, yaw, headline="STUNTMAN INJURED ON SET"):
+    """A newspaper propped up; small headline, readable up close."""
+    dressing("Newspaper", loc, (3, 38, 28), yaw)
+    import math
+    fx, fy = math.cos(math.radians(yaw)) * 3, math.sin(math.radians(yaw)) * 3
+    sign(headline, (loc[0] + fx, loc[1] + fy, loc[2] + 22), yaw, 2.6, (0.08, 0.08, 0.08), "Sign_Headline")
+    sign("NOV 15, 1977", (loc[0] + fx, loc[1] + fy, loc[2] + 26), yaw, 1.6, (0.08, 0.08, 0.08), "Sign_PaperDate")

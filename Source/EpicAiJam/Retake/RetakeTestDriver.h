@@ -79,7 +79,9 @@ private:
 	float DirectorsCutRealSeconds = 0.f;
 	double BlastSeenAt = -1.0;   // F3: -RetakeBlastShot screenshots after the first explosion
 	int32 BlastShots = 0;
-	int32 UiShots = 0;          // F4: -RetakeUiShots screenshots with the HUD (ACTION! stamp, results popups)
+	int32 UiShots = 0;
+	int32 LookAtStage = 0;      // -RetakeLookAt=x,y,z,tx,ty,tz: one 1080p shot from that camera during the briefing
+	double LookAtClock = 0.0;          // F4: -RetakeUiShots screenshots with the HUD (ACTION! stamp, results popups)
 	double UiShotClock = -1.0;
 
 	UFUNCTION()

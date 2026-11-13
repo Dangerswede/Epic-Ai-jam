@@ -883,7 +883,38 @@ void ARetakeTestDriver::Tick(float DeltaSeconds)
 		IdleTake = 0;
 	}
 	bActedThisTick = false;
-	// F4: -RetakeUiShots: frames with the HUD in them (popping stamp on take 1, rating popups on the results).
+	// -RetakeLookAt=x,y,z,tx,ty,tz: look at set dressing from a fixed camera, take one shot, then carry on.
+	FString LookAt;
+	if (LookAtStage < 3 && FParse::Value(FCommandLine::Get(), TEXT("RetakeLookAt="), LookAt, false))
+	{
+		TArray<FString> N;
+		LookAt.ParseIntoArray(N, TEXT(","));
+		APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		if (N.Num() == 6 && PC)
+		{
+			const FVector From(FCString::Atof(*N[0]), FCString::Atof(*N[1]), FCString::Atof(*N[2]));
+			const FVector To(FCString::Atof(*N[3]), FCString::Atof(*N[4]), FCString::Atof(*N[5]));
+			if (LookAtStage == 0)
+			{
+				FActorSpawnParameters P;
+				P.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+				if (ACameraActor* Cam = GetWorld()->SpawnActor<ACameraActor>(From, (To - From).Rotation(), P)) { PC->SetViewTarget(Cam); }
+				LookAtClock = FPlatformTime::Seconds();
+				LookAtStage = 1;
+			}
+			else if (LookAtStage == 1 && FPlatformTime::Seconds() - LookAtClock > 2.0)
+			{
+				PC->ConsoleCommand(TEXT("HighResShot 1920x1080"));
+				LookAtStage = 2;
+			}
+			else if (LookAtStage == 2 && FPlatformTime::Seconds() - LookAtClock > 3.0)
+			{
+				if (PC->GetPawn()) { PC->SetViewTarget(PC->GetPawn()); }
+				LookAtStage = 3;
+			}
+			if (LookAtStage < 3) { return; } // hold the test until the shot is taken
+		}
+	}	// F4: -RetakeUiShots: frames with the HUD in them (popping stamp on take 1, rating popups on the results).
 	if (UiShots < 3 && FParse::Param(FCommandLine::Get(), TEXT("RetakeUiShots")))
 	{
 		const double Now = FPlatformTime::Seconds();

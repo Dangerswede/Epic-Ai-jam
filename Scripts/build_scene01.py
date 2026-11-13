@@ -196,6 +196,10 @@ def build_level(ghost_class):
     L.marks([(1, (1170, -430, 0), (2, 4.5), (-500, -600, 350), "Under the bridge"),
              (2, (1600, 0, 300), (3, 6), (-400, -700, 250), "Bridge run"),
              (3, (2350, -480, 0), (5, 7.5), (300, -600, 300), "Switch B")])
+    # S3 story dressing (off the play paths: north-west of the start).
+    L.director_chairs((-800, 450, 0), yaw=-20)
+    L.coffee((-650, 800, 0))
+    L.clapperboard((-560, 330, 0), -30, "RETAKE  -  NOV 14 1977")
     L.save_map(MAP_PATH)
     log("Saved " + MAP_PATH)
 

@@ -58,5 +58,13 @@ L.director(start, "Scene 5: The Gap",
 L.marks([(1, (900, 0, 0), (1.5, 3), (-400, 0, 350), "Over the edge"),
          (2, (500, 0, 0), (4.5, 6.5), (-500, 0, 400), "Run-up"),
          (3, (2250, 0, 0), (10, 14), (500, 0, 350), "Landing")])
+# S3 / scene 16: the same wreath under a single spotlight, and the last clapperboard.
+L.wreath((2930, -170, 0), 180)
+spot = L.spawn(unreal.SpotLight, (2850, -170, 700), label="WreathSpot", folder="Lights")
+spot.set_actor_rotation(L.look_at((2850, -170, 700), (2930, -170, 0)), False)
+spot.spot_light_component.set_intensity(9000.0)
+spot.spot_light_component.set_editor_property("outer_cone_angle", 18.0)
+spot.spot_light_component.set_light_color(unreal.LinearColor(1.0, 0.85, 0.65, 1.0))
+L.clapperboard((2900, 170, 90), 180, "SCENE 99  -  TAKE 47  -  FINAL")
 L.save_map(MAP)
 L.log("Saved " + MAP)

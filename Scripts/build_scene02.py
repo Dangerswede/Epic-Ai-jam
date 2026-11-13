@@ -88,5 +88,10 @@ L.set_roles(d, [("Decoy", "Get the guard's attention and keep running - south wa
 L.marks([(1, (1200, -1260, 0), (8, 11), (0, 700, 500), "Decoy run"),
          (2, (800, 1130, 0), (3.5, 6), (0, -700, 500), "Inside job"),
          (3, (2350, -100, 0), (7, 10), (-600, -600, 450), "The vault")])
+# S3 story dressing: empty chairs, coffee, clapper, and the crew board by the west wall.
+L.director_chairs((-720, 150, 0), yaw=0)
+L.coffee((-700, -120, 0))
+L.clapperboard((-620, 330, 0), 0, "RETAKE  -  NOV 14 1977")
+L.call_board((-790, 650, 0), 0, ["D. KOWALSKI - DIRECTOR", "M. REYES - CAMERA", "T. OKAFOR - SOUND", "L. BAUER - GRIP", "S. PATEL - SAFETY", "J. WARD - STUNTS"], "J. WARD - STUNTS")
 L.save_map(MAP)
 L.log("Saved " + MAP)
