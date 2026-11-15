@@ -75,8 +75,23 @@ def lum(rgb):
     return rgb[..., 0] * 0.299 + rgb[..., 1] * 0.587 + rgb[..., 2] * 0.114
 
 
-def make_tileable(rgb):
-    """Offset-and-blend: edges come from the half-shifted copy, the middle from the original."""
+def is_seamless(rgb):
+    """True when the wrap-around edge differs no more than ~2x a normal neighbouring-pixel step."""
+    seam = (np.mean(np.abs(rgb[0] - rgb[-1])) + np.mean(np.abs(rgb[:, 0] - rgb[:, -1]))) / 2
+    inner = (np.mean(np.abs(np.diff(rgb, axis=0))) + np.mean(np.abs(np.diff(rgb, axis=1)))) / 2
+    return seam < inner * 2.0
+
+
+STRUCTURED = {"Metal", "Wood", "Brick"}
+
+
+def make_tileable(rgb, name=""):
+    """Leave seamless images alone; feather edges of panel/plank/brick images; offset-and-blend the rest."""
+    if is_seamless(rgb):
+        print(name, ": already seamless")
+        return rgb
+    if name in STRUCTURED:
+        return feather_seams(rgb, 40)
     h, w = rgb.shape[:2]
     shifted = np.roll(rgb, (h // 2, w // 2), axis=(0, 1))
     y = np.abs(np.linspace(-1, 1, h))[:, None]
@@ -151,7 +166,11 @@ def save(arr, name):
 
 
 def load(path, mode="RGB"):
-    return np.asarray(Image.open(path).convert(mode).resize((N, N), Image.LANCZOS), dtype=np.float64) / 255.0
+    img = Image.open(path).convert(mode)
+    w, h = img.size
+    s = min(w, h)   # centre-crop non-square sources instead of squashing them
+    img = img.crop(((w - s) // 2, (h - s) // 2, (w - s) // 2 + s, (h - s) // 2 + s))
+    return np.asarray(img.resize((N, N), Image.LANCZOS), dtype=np.float64) / 255.0
 
 
 # ---------------------------------------------------------------------------- procedural fallbacks
@@ -292,11 +311,14 @@ def find_raw_set(name):
 def build(name):
     strength, rbase, rlum, metal = PARAMS.get(name, (3.0, 0.7, 0.2, 0.0))
     rawset = find_raw_set(name)
-    single = next((os.path.join(RAW, name + e) for e in (".png", ".jpg", ".jpeg") if os.path.isfile(os.path.join(RAW, name + e))), None)
+    single = next((os.path.join(d, f) for d in (RAW, os.path.join(SURF, "incoming")) if os.path.isdir(d)
+                   for f in sorted(os.listdir(d))
+                   if os.path.isfile(os.path.join(d, f)) and os.path.splitext(f)[0].lower() == name.lower()
+                   and os.path.splitext(f)[1].lower() in (".png", ".jpg", ".jpeg")), None)
     normal = rough = ao = met = None
     if rawset:
         print(name, ": PBR set from", os.path.relpath(os.path.join(RAW, name), ROOT))
-        col = load(rawset["color"])
+        col = make_tileable(load(rawset["color"]), name)
         hgt = load(rawset["height"], "L") if "height" in rawset else blur(lum(col), 1)
         if "normal" in rawset:
             normal = load(rawset["normal"])
@@ -313,7 +335,7 @@ def build(name):
         hgt = (hgt - hgt.min()) / (np.ptp(hgt) + 1e-6)
     elif single:
         print(name, ": single image", os.path.relpath(single, ROOT), "-> tileable + derived maps")
-        col = make_tileable(load(single))
+        col = make_tileable(load(single), name)
         l = lum(col)
         hgt = l - blur(l, 24) * 0.7   # keep detail, drop big lighting gradients
         hgt = (hgt - hgt.min()) / (np.ptp(hgt) + 1e-6)

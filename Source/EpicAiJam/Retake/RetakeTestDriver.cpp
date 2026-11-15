@@ -835,7 +835,20 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		Cut();
 		// Take 2: STUNT.
 		NextTake(2);
-		WaitUntil(TEXT("the net stands still (head is solid)"), [Net]() { return Net() && Net()->IsHeadSolid(); }, 8.f);
+		// Pace around near the start while the net settles (busy, never idle: D1 idle check).
+		{
+			TSharedPtr<int32> Leg = MakeShared<int32>(0);
+			Steps.Add({ TEXT("pace until the net stands still (head is solid)"), 8.f, [this, Net, Leg](float)
+			{
+				if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Failed;
+				if (Net() && Net()->IsHeadSolid()) return EStepResult::Done;
+				const FVector2D Target(*Leg % 2 == 0 ? 630.f : 370.f, 0.f);
+				const FVector2D Delta = Target - FVector2D(Player->GetActorLocation());
+				if (Delta.Size() < 40.f) { ++*Leg; }
+				Player->AddMovementInput(FVector(Delta.GetSafeNormal(), 0.f), 0.6f);
+				return EStepResult::Running;
+			} });
+		}
 		MoveTo(500, 0);
 		HopTo(TEXT("RunJump onto the net's head"), [Net]() { return Net()->GetActorLocation().X; }, [Net]() { return Net()->GetActorLocation().Z + 101.5f; });
 		Check(TEXT("standing on the stand-in's head (not pushed off)"), [this]() { return IsStandingOnGhost(); });

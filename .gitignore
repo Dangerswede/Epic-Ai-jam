@@ -33,3 +33,4 @@ desktop.ini
 Scripts/__pycache__/
 ArtSource/Originals/
 ArtSource/Surfaces/Raw/
+ArtSource/Surfaces/incoming/
