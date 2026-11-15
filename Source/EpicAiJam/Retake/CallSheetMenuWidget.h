@@ -27,6 +27,7 @@ class EPICAIJAM_API UCallSheetMenuWidget : public UUserWidget
 
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual void NativeConstruct() override;
 
 private:
 	void BuildTree();
@@ -42,4 +43,5 @@ private:
 	UPROPERTY(Transient) TObjectPtr<class USlider> MusicSlider;
 	UPROPERTY(Transient) TObjectPtr<class USlider> SfxSlider;
 	UPROPERTY(Transient) TObjectPtr<class USlider> VoiceSlider;
+	UPROPERTY(Transient) TObjectPtr<class UBorder> SheetPanel;
 };

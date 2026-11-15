@@ -234,3 +234,12 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 131. ESC in a scene: the pause menu now has MUSIC / SFX / VOICE sliders (same as the main menu).
 132. Director's Cut (and takes): earlier takes now walk/run/jump instead of sliding in an idle pose.
 133. Stunt helmet: visor now faces forward and sits on the head; the film grain is half as strong (suit should look smooth).
+
+## UI and button finish (15 Nov)
+134. Main menu: the call sheet fades/slides in, then the PLAY buttons pop in one after another down the list.
+135. Hover a menu button: it grows a little, tilts, wobbles and turns red. Press: it squashes, then springs back. (Click/hover sound only if SfxUIClick has a sound.)
+136. ESC in a scene: the pause sheet pops in and the buttons pop one by one, even though the game is paused. Hover/press works the same there.
+137. Results screen: WATCH / NEXT / RETRY / MAIN MENU pop in about half a second after the sheet.
+138. Pressure plate: steps down with a thump (dips a bit too far, settles), flashes bright green, pops back up when you step off. With the art prop it squashes flat.
+139. Lever: walk up to it and the [E] grows, turns white and pulses. Press E: the handle swings over with a bounce instead of snapping. On a new take it swings back.
+140. Timed switch: [E] grows near it; pressing makes the bar jump thick and flash; the last 1.5 s the bar and the countdown blink orange.
