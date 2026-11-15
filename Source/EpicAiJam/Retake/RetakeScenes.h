@@ -114,8 +114,8 @@ namespace RetakeScenes
 		return FString::Printf(TEXT("CALL SHEET  -  NOV 14, 1977  -  %s"), *Name);
 	}
 
-	/** S4: the crew has been at this a while. Displayed take numbers only; logic counts from 1. */
-	constexpr int32 TakeDisplayOffset = 45;
+	/** S4 (dropped 15 Nov): displayed take = logic take. Offset read as a bug in playtest, so it is 0. */
+	constexpr int32 TakeDisplayOffset = 0;
 	inline int32 DisplayTake(int32 TakeNumber) { return TakeNumber + TakeDisplayOffset; }
 
 	/** The map that ends the story (save flag for the menu's "Production wrapped"). */
