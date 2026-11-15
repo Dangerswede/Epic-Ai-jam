@@ -243,3 +243,6 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 138. Pressure plate: steps down with a thump (dips a bit too far, settles), flashes bright green, pops back up when you step off. With the art prop it squashes flat.
 139. Lever: walk up to it and the [E] grows, turns white and pulses. Press E: the handle swings over with a bounce instead of snapping. On a new take it swings back.
 140. Timed switch: [E] grows near it; pressing makes the bar jump thick and flash; the last 1.5 s the bar and the countdown blink orange.
+
+## Surfaces (15 Nov)
+141. Texturer på väggar/golv i alla scener – ser något sträckt, för mörkt eller fel ut?
