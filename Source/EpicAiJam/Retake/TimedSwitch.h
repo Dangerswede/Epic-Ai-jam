@@ -67,4 +67,10 @@ private:
 	void UpdateVisuals();
 
 	float TimeLeft = 0.f;
+
+	// Finish pass: press punch, [E] prompt pulse near the player, blinking bar when time runs low.
+	float Punch = 0.f;
+	float LabelScale = 1.f;
+	float Clock = 0.f;
+	FVector ArtBaseScale = FVector::OneVector;
 };

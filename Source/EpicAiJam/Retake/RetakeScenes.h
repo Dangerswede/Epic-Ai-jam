@@ -114,9 +114,51 @@ namespace RetakeScenes
 		return FString::Printf(TEXT("CALL SHEET  -  NOV 14, 1977  -  %s"), *Name);
 	}
 
-	/** S4: the crew has been at this a while. Displayed take numbers only; logic counts from 1. */
-	constexpr int32 TakeDisplayOffset = 45;
+	/** S4 (dropped 15 Nov): displayed take = logic take. Offset read as a bug in playtest, so it is 0. */
+	constexpr int32 TakeDisplayOffset = 0;
 	inline int32 DisplayTake(int32 TakeNumber) { return TakeNumber + TakeDisplayOffset; }
+
+	/**
+	 * ST2 "The Director's Notebook": one dated page per story scene, shown on the results sheet after a wrap.
+	 * The dates run from 1977 to 2007: the director has been re-cutting Jack's last day for thirty years.
+	 */
+	struct FNotebookPage
+	{
+		const TCHAR* Date;
+		const TCHAR* Line;
+	};
+
+	/** Notebook page for a story scene number (1..16), or nullptr. */
+	inline const FNotebookPage* NotebookPage(int32 SceneNumber)
+	{
+		static const FNotebookPage Pages[] = {
+			{ TEXT("Nov 14, 1977"), TEXT("Jack's first take was perfect. I asked for another one anyway.") },
+			{ TEXT("Nov 14, 1977"), TEXT("Jack's girl Annie is on set today. She wants to see her dad fly.") },
+			{ TEXT("Nov 14, 1977"), TEXT("Studio cut the safety net from the budget. Jack shrugged: \"Never needed one.\"") },
+			{ TEXT("Nov 14, 1977"), TEXT("Behind schedule. Losing the light. Gap jump is next. I signed it off.") },
+			{ TEXT("Nov 15, 1977"), TEXT("Nobody came to set today. I came anyway. Made coffee for everyone.") },
+			{ TEXT("Dec 2, 1977"),  TEXT("The studio shelved the picture. I kept the reels.") },
+			{ TEXT("Nov 14, 1978"), TEXT("One year. Every clock in the house says 4:47. I won't fix them.") },
+			{ TEXT("Nov 14, 1979"), TEXT("Recut the bridge scene again. It still doesn't end right.") },
+			{ TEXT("Mar 3, 1984"),  TEXT("They're tearing down the backlot. I stood at the fence all night.") },
+			{ TEXT("Nov 14, 1991"), TEXT("Annie wrote to me. She's grown now. I haven't answered.") },
+			{ TEXT("Nov 14, 1996"), TEXT("I dream about the heist set. The guards walk where Jack walked.") },
+			{ TEXT("Nov 14, 2001"), TEXT("Found the rig inspection form in a box. Never signed. Not by anyone. Not by me.") },
+			{ TEXT("Nov 14, 2006"), TEXT("I've watched every take a thousand times. In every one, he jumps.") },
+			{ TEXT("Nov 13, 2007"), TEXT("Annie called. She asked if she could see the film. Just once.") },
+			{ TEXT("Nov 14, 2007"), TEXT("Thirty years. I owe them both an ending. One last cut.") },
+			{ TEXT("Nov 14, 2007"), TEXT("Print it. Send it to Annie. Let him rest.") },
+		};
+		return (SceneNumber >= 1 && SceneNumber <= static_cast<int32>(UE_ARRAY_COUNT(Pages))) ? &Pages[SceneNumber - 1] : nullptr;
+	}
+
+	/** "FROM THE DIRECTOR'S NOTEBOOK  -  NOV 14, 1977\n<line>" for a map, or empty. */
+	inline FString NotebookText(const FString& MapName)
+	{
+		const FSceneInfo* S = Find(MapName);
+		const FNotebookPage* P = S ? NotebookPage(S->Number) : nullptr;
+		return P ? FString::Printf(TEXT("FROM THE DIRECTOR'S NOTEBOOK  -  %s\n%s"), *FString(P->Date).ToUpper(), P->Line) : FString();
+	}
 
 	/** The map that ends the story (save flag for the menu's "Production wrapped"). */
 	inline const TCHAR* FinalMap() { return TEXT("Scene05_TheGap"); }

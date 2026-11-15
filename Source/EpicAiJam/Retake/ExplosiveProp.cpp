@@ -299,7 +299,17 @@ void AExplosiveProp::ThrowDebris(const AActor* Wall, const FVector& Center)
 		Mesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
 		Mesh->SetCanEverAffectNavigation(false);
 		Mesh->SetSimulatePhysics(true);
-		RetakeVisuals::Tint(Mesh, FLinearColor(0.35f, 0.3f, 0.26f));
+		// Debris looks like the wall it came from (surface material from setup_surfaces.py), else a dusty tint.
+		const AStaticMeshActor* WallMesh = Cast<AStaticMeshActor>(Wall);
+		UMaterialInterface* WallMat = WallMesh ? WallMesh->GetStaticMeshComponent()->GetMaterial(0) : nullptr;
+		if (WallMat && WallMat->GetName().StartsWith(TEXT("MI_Surf_")))
+		{
+			Mesh->SetMaterial(0, WallMat);
+		}
+		else
+		{
+			RetakeVisuals::Tint(Mesh, FLinearColor(0.35f, 0.3f, 0.26f));
+		}
 		const FVector Away = (At - Center).GetSafeNormal() + FVector(0.f, 0.f, 0.6f);
 		Mesh->AddImpulse(Away.GetSafeNormal() * ImpulseStrength * Rng.FRandRange(0.6f, 1.2f), NAME_None, true);
 		Mesh->AddAngularImpulseInDegrees(FVector(Rng.FRandRange(-600.f, 600.f), Rng.FRandRange(-600.f, 600.f), 0.f), NAME_None, true);

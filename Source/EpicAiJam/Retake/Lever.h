@@ -23,6 +23,7 @@ public:
 	virtual void RetakeInteract(AActor* Interactor) override;
 	virtual void ResetForTake() override;
 	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	/** Art pass: optional prop mesh shown instead of the graybox (which stays as the collision). Pivot bottom-centre. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Art")
@@ -62,4 +63,14 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Retake")
 	FLinearColor OnColor = FLinearColor(0.1f, 0.8f, 0.2f);
+
+private:
+	// Finish pass: the handle swings over with a bounce, the [E] prompt grows when the player is in reach.
+	void ApplyHandleVisuals();
+	bool bVisualsReady = false;
+	float HandleT = 0.f;   // 0 = off, 1 = on (overshoots while swinging)
+	float HandleVel = 0.f;
+	float LabelScale = 1.f;
+	float LabelPunch = 0.f;
+	float Clock = 0.f;
 };

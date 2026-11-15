@@ -21,6 +21,7 @@ public:
 
 	virtual void ResetForTake() override;
 	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	/** Art pass: optional prop mesh shown instead of the graybox (which stays as the collision). Pivot bottom-centre. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Art")
@@ -70,4 +71,12 @@ private:
 	void Reevaluate();
 
 	FVector PlateRestLocation = FVector::ZeroVector;
+
+	// Finish pass: the plate springs down with a little bounce and flashes when pressed.
+	void ApplyPressVisuals();
+	bool bVisualsReady = false;
+	float PressAlpha = 0.f;
+	float PressVel = 0.f;
+	float Flash = 0.f;
+	FVector ArtBaseScale = FVector::OneVector;
 };

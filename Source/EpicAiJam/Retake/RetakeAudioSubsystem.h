@@ -35,6 +35,9 @@ public:
 	/** Play a UI click (used by menus). */
 	void PlayUIClick();
 
+	/** Quiet tick when the mouse moves onto a menu button. */
+	void PlayUIHover();
+
 	/** Story voice slots by file name (ST1/F5): plays /Game/Retake/Audio/Sounds/<Name> if it was imported from AudioSource/, else stays silent. */
 	void PlayNamedVoice(const FString& Name, float Delay = 0.f);
 
@@ -46,6 +49,7 @@ private:
 
 	void PlaySound(USoundBase* Sound, ECategory Category, float Delay = 0.f);
 	void PlayMusic(USoundBase* Music);
+	void PlayUISound(USoundBase* Sound, float Volume, float Pitch);
 	void ApplySavedVolumes();
 	USoundClass* ClassFor(ECategory Category) const;
 

@@ -6,6 +6,7 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Fonts/SlateFontInfo.h"
+#include "Retake/RetakeButton.h"
 
 /**
  * Small helpers to build UMG widget trees in C++ (no widget blueprints needed).
@@ -65,8 +66,9 @@ namespace RetakeUI
 	/** Button with a text label. Returns the button; label via OutLabel if wanted. */
 	inline UButton* Button(UWidgetTree* Tree, const FString& Label, int32 Size, UTextBlock** OutLabel = nullptr)
 	{
-		UButton* Btn = Tree->ConstructWidget<UButton>(UButton::StaticClass());
-		Btn->SetBackgroundColor(FLinearColor(0.15f, 0.15f, 0.15f, 1.f));
+		// Juiced button: hover/press springs, colour fade, click sounds (see URetakeButton).
+		URetakeButton* Btn = Tree->ConstructWidget<URetakeButton>(URetakeButton::StaticClass());
+		Btn->SetBackgroundColor(Btn->IdleColor);
 		UTextBlock* T = Text(Tree, Label, Size, Chalk(), ETextJustify::Center);
 		Btn->AddChild(T);
 		if (OutLabel)

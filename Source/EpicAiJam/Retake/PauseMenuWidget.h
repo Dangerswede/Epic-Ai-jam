@@ -36,6 +36,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<class USlider> VoiceSlider;
 
 	UPROPERTY(Transient) TObjectPtr<class UButton> SkipButton;
+	UPROPERTY(Transient) TObjectPtr<class UBorder> SheetPanel;
 
 	bool bOpen = false;
 };

@@ -58,6 +58,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> TakesText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> BestText;
 	UPROPERTY(Transient) TObjectPtr<UTextBlock> NoteText;
+	UPROPERTY(Transient) TObjectPtr<UTextBlock> NotebookText;
 	UPROPERTY(Transient) TArray<TObjectPtr<UBorder>> Stars;
 	UPROPERTY(Transient) TObjectPtr<UButton> NextButton;
 	UPROPERTY(Transient) TObjectPtr<class USizeBox> MeterFill;
