@@ -251,7 +251,29 @@ void URetakeAudioSubsystem::SetVolumes(const UObject* WorldContext, float Music,
 
 void URetakeAudioSubsystem::PlayUIClick()
 {
-	if (Set) PlaySound(Set->SfxUIClick, ECategory::Sfx);
+	if (Set) PlayUISound(Set->SfxUIClick, 1.f, 1.f);
+}
+
+void URetakeAudioSubsystem::PlayUIHover()
+{
+	// No own slot: a quiet, higher tick of the click.
+	if (Set) PlayUISound(Set->SfxUIClick, 0.3f, 1.6f);
+}
+
+void URetakeAudioSubsystem::PlayUISound(USoundBase* Sound, float Volume, float Pitch)
+{
+	UWorld* World = GetWorld();
+	if (!Sound || !World)
+	{
+		return; // empty slot = silent
+	}
+	// UI sound: keeps playing in the paused game and across the level change a PLAY click starts.
+	if (UAudioComponent* Comp = UGameplayStatics::CreateSound2D(World, Sound, Volume, Pitch, 0.f, nullptr, true, true))
+	{
+		Comp->SoundClassOverride = ClassFor(ECategory::Sfx);
+		Comp->bIsUISound = true;
+		Comp->Play();
+	}
 }
 
 // ------------------------------------------------------------------------------------ director

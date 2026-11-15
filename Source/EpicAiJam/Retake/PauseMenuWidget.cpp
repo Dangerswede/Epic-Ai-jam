@@ -37,6 +37,7 @@ void UPauseMenuWidget::BuildTree()
 	DS->SetOffsets(FMargin(0.f));
 
 	UBorder* Sheet = Panel(WidgetTree, Paper(), FMargin(40.f, 28.f));
+	SheetPanel = Sheet;
 	UVerticalBox* Box = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
 	Sheet->SetContent(Box);
 	Box->AddChildToVerticalBox(Text(WidgetTree, TEXT("HOLD THE ROLL"), 14, Red(), ETextJustify::Center));
@@ -109,6 +110,9 @@ void UPauseMenuWidget::Open()
 		const ARetakeSceneDirector* D = ARetakeSceneDirector::Get(this);
 		SkipButton->SetVisibility(D && D->CanSkipScene() ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	}
+	// Juice: the sheet drops in and the buttons pop one after another (real time, works while paused).
+	RetakeUI::PopIn(SheetPanel.Get(), 0.12f);
+	RetakeUI::PlayButtonIntros(WidgetTree, 0.06f, 0.05f);
 	UGameplayStatics::SetGamePaused(this, true);
 	PC->SetShowMouseCursor(true);
 	FInputModeGameAndUI Mode;

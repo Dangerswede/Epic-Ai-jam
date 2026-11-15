@@ -170,6 +170,7 @@ void URetakeResultsWidget::ShowResults(ARetakeSceneDirector* InDirector, bool bN
 	{
 		return;
 	}
+	RetakeUI::PlayButtonIntros(WidgetTree, 0.5f, 0.08f); // buttons pop in after the sheet
 	const int32 Used = InDirector->GetTakes().Num();
 	const int32 Par = InDirector->ParTakes;
 	const bool bBonus = InDirector->IsBonusMet();

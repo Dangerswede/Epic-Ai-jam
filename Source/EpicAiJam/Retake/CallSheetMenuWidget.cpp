@@ -43,6 +43,7 @@ void UCallSheetMenuWidget::BuildTree()
 	}
 
 	UBorder* Sheet = Panel(WidgetTree, Paper(), FMargin(48.f, 36.f));
+	SheetPanel = Sheet;
 	UVerticalBox* Box = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
 	Sheet->SetContent(Box);
 
@@ -149,6 +150,14 @@ void UCallSheetMenuWidget::BuildTree()
 	S->SetAnchors(FAnchors(0.5f, 0.5f));
 	S->SetAlignment(FVector2D(0.5f, 0.5f));
 	S->SetAutoSize(true);
+}
+
+void UCallSheetMenuWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	// Juice: the call sheet slides in, then the PLAY buttons pop down the list.
+	RetakeUI::PopIn(SheetPanel.Get(), 0.08f);
+	RetakeUI::PlayButtonIntros(WidgetTree, 0.25f, 0.035f, 18);
 }
 
 void UCallSheetMenuWidget::PlayScene(int32 Index)

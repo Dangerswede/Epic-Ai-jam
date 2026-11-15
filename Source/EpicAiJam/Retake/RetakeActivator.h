@@ -71,4 +71,12 @@ namespace RetakeVisuals
 
 	/** Creates the (collision-free) art mesh component; call from a constructor. */
 	EPICAIJAM_API UStaticMeshComponent* CreateArtComponent(AActor* Owner, USceneComponent* Parent);
+
+	// --- Juice (finish pass): code-driven animation, no animation assets -------------------------
+
+	/** Damped spring step toward Target (sub-stepped, stable on long frames). Low damping = bouncy. */
+	EPICAIJAM_API void SpringStep(float& X, float& V, float Target, float DeltaTime, float Stiffness, float Damping);
+
+	/** True if the (visible) player pawn is within Radius cm of Self. Used for "you can use this" prompts. */
+	EPICAIJAM_API bool IsPlayerNear(const AActor* Self, float Radius);
 }
