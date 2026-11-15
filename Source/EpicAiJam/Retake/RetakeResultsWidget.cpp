@@ -89,6 +89,15 @@ void URetakeResultsWidget::BuildTree()
 	BestText = Text(WidgetTree, TEXT(""), 18, Red(), ETextJustify::Center);
 	Box->AddChildToVerticalBox(BestText);
 
+	// ST2: a dated page from the director's notebook (fixed width so the sheet doesn't grow sideways).
+	NotebookText = Text(WidgetTree, TEXT(""), 16, Ink(), ETextJustify::Center);
+	USizeBox* NotebookBox = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+	NotebookBox->SetWidthOverride(560.f);
+	NotebookBox->SetContent(NotebookText);
+	UVerticalBoxSlot* NotebookSlot = Box->AddChildToVerticalBox(NotebookBox);
+	NotebookSlot->SetHorizontalAlignment(HAlign_Center);
+	NotebookSlot->SetPadding(FMargin(0.f, 12.f, 0.f, 0.f));
+
 	UHorizontalBox* Buttons = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
 	UButton* Watch = Button(WidgetTree, TEXT("WATCH DIRECTOR'S CUT  [SPACE]"), 18);
 	Watch->OnClicked.AddDynamic(this, &URetakeResultsWidget::HandleWatch);
@@ -208,6 +217,10 @@ void URetakeResultsWidget::ShowResults(ARetakeSceneDirector* InDirector, bool bN
 	}
 
 	TitleText->SetText(InDirector->SceneTitle);
+	if (NotebookText)
+	{
+		NotebookText->SetText(FText::FromString(RetakeScenes::NotebookText(InDirector->GetSceneId())));
+	}
 	TakesText->SetText(FText::FromString(FString::Printf(TEXT("Takes in the cut: %d   (par %d)\nFilm shot: %d takes"), Used, Par, InDirector->GetTotalTakesShot())));
 	BestText->SetText(FText::FromString(bNewBest ? TEXT("NEW BEST!") : TEXT("")));
 
@@ -255,7 +268,7 @@ void URetakeResultsWidget::NativeTick(const FGeometry& MyGeometry, float InDelta
 	if (MemorialClock >= 0.f)
 	{
 		// Typewriter: ~16 characters a second, hold, then fade the card away and start the meter.
-		static const FString Card = TEXT("In memory of Jack Ward\n\n1941 \u2013 1977\n\nEvery take counted.");
+		static const FString Card = TEXT("In memory of Jack Ward\n\n1941 \u2013 1977\n\nEvery take counted.\n\nRetake premiered on Nov 14, 2007,\nfor an audience of one: Annie Ward.");
 		MemorialClock += InDeltaTime;
 		const int32 Shown = FMath::Clamp(FMath::FloorToInt((MemorialClock - 0.8f) * 16.f), 0, Card.Len());
 		MemorialText->SetText(FText::FromString(Card.Left(Shown)));
