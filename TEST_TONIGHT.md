@@ -234,3 +234,9 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 131. ESC in a scene: the pause menu now has MUSIC / SFX / VOICE sliders (same as the main menu).
 132. Director's Cut (and takes): earlier takes now walk/run/jump instead of sliding in an idle pose.
 133. Stunt helmet: visor now faces forward and sits on the head; the film grain is half as strong (suit should look smooth).
+
+## Ghost-hop fix (scenes 15 and 16)
+- Scene 15: run and jump straight over the pit. Expected: you can't make it, and once in the pit you can't climb out (CUT on time).
+- Scene 15: take 1 stand on the yellow tape mark in the pit (just stand still, no need to press R). Take 2: jump onto that take's head, then hop to the far side. Expected: you stay on the head (no longer pushed off) and the hop up to the floor works.
+- Scene 16: the pit is much longer now. One stand-in should NOT be enough; two (on the two tape marks) should be: edge -> head -> head -> edge.
+- Any scene: a take standing still mid-replay can now be stood on; it stops being a platform as soon as it moves.

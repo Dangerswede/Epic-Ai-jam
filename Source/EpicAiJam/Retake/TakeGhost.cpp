@@ -47,12 +47,14 @@ ATakeGhost::ATakeGhost(const FObjectInitializer& ObjectInitializer)
 
 	HeadPlatform = CreateDefaultSubobject<UBoxComponent>(TEXT("HeadPlatform"));
 	HeadPlatform->SetupAttachment(RootComponent);
-	HeadPlatform->SetRelativeLocation(FVector(0.f, 0.f, 96.f));
-	HeadPlatform->SetBoxExtent(FVector(40.f, 40.f, 2.5f)); // 80 x 80 x 5 cm
+	// Bottom sits just above a stunt double's capsule top (192 cm), so walking through a replaying take never
+	// catches on it; top at 197.5 cm above the feet. 110 x 110 cm: forgiving to land on at a run.
+	HeadPlatform->SetRelativeLocation(FVector(0.f, 0.f, 99.f));
+	HeadPlatform->SetBoxExtent(FVector(55.f, 55.f, 2.5f));
 	HeadPlatform->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 	HeadPlatform->SetCanEverAffectNavigation(false);
 	HeadPlatform->CanCharacterStepUpOn = ECB_Yes;
-	HeadPlatform->SetCollisionEnabled(ECollisionEnabled::NoCollision); // only once the take has finished
+	HeadPlatform->SetCollisionEnabled(ECollisionEnabled::NoCollision); // only while standing still / once finished
 
 	TakeLabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TakeLabel"));
 	TakeLabel->SetupAttachment(RootComponent);
@@ -118,6 +120,8 @@ void ATakeGhost::ApplyGhostMaterial()
 void ATakeGhost::Init(const FTakeData& InTake)
 {
 	Take = InTake;
+	HeadPlatform->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	StillTime = 0.f;
 	PlaybackTime = 0.f;
 	LastActionTime = -1.f;
 	NextActionFrame = 0;
@@ -143,6 +147,8 @@ void ATakeGhost::Play(float StartTime)
 	PlaybackTime = FMath::Max(0.f, StartTime);
 	bFinished = false;
 	bPlaying = true;
+	StillTime = 0.f;
+	SetHeadSolid(false);
 	// K4: a replaying take never shoves the stunt double (they all start on the same mark); it only blocks once it's done.
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
@@ -186,6 +192,56 @@ void ATakeGhost::Tick(float DeltaSeconds)
 
 	ApplyFrameAt(PlaybackTime);
 	FireActionsUpTo(PlaybackTime);
+	UpdateHeadWhilePlaying(DeltaSeconds);
+}
+
+bool ATakeGhost::CanBeBaseForCharacter(APawn* Pawn) const
+{
+	return IsHeadSolid();
+}
+
+bool ATakeGhost::IsHeadSolid() const
+{
+	return HeadPlatform && HeadPlatform->GetCollisionEnabled() != ECollisionEnabled::NoCollision;
+}
+
+void ATakeGhost::SetHeadSolid(bool bSolid)
+{
+	if (!HeadPlatform || bSolid == IsHeadSolid())
+	{
+		return;
+	}
+	if (bSolid)
+	{
+		// Don't switch on while any pawn (stunt double, guard, another take) is inside this take's column
+		// (feet to head): it would shove them or put a lid over their head. Retried every tick until clear.
+		// Object-type query, so walls and floors next to the take never count.
+		FCollisionQueryParams Params(SCENE_QUERY_STAT(GhostHead), false, this);
+		const FVector Extent = HeadPlatform->GetScaledBoxExtent();
+		const float Bottom = GetActorLocation().Z - GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+		const float Top = HeadPlatform->GetComponentLocation().Z + Extent.Z;
+		const FVector Center(GetActorLocation().X, GetActorLocation().Y, (Bottom + Top) * 0.5f);
+		const FCollisionShape Shape = FCollisionShape::MakeBox(FVector(Extent.X, Extent.Y, (Top - Bottom) * 0.5f));
+		if (GetWorld() && GetWorld()->OverlapAnyTestByObjectType(Center, GetActorQuat(), FCollisionObjectQueryParams(ECC_Pawn), Shape, Params))
+		{
+			return; // try again next tick
+		}
+	}
+	HeadPlatform->SetCollisionEnabled(bSolid ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+}
+
+void ATakeGhost::UpdateHeadWhilePlaying(float DeltaSeconds)
+{
+	// A take that stands still mid-replay (waiting in a pit, holding a mark) is already a stepping stone,
+	// so the next take doesn't have to wait for it to run out. It stops being one as soon as it moves on.
+	if (!bPlaying || Take.Frames.Num() == 0)
+	{
+		return;
+	}
+	const FVector V = Take.Frames[FMath::Clamp(CurrentFrame, 0, Take.Frames.Num() - 1)].Velocity;
+	const bool bStill = V.Size2D() < 20.f && FMath::Abs(V.Z) < 10.f;
+	StillTime = bStill ? StillTime + DeltaSeconds : 0.f;
+	SetHeadSolid(StillTime >= 0.3f);
 }
 
 void ATakeGhost::ApplyFrameAt(float Time)

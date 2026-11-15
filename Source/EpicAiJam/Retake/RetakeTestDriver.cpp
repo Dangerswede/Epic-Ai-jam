@@ -2,6 +2,7 @@
 
 #include "CineCameraActor.h"
 #include "Animation/AnimInstance.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Camera/CameraActor.h"
 #include "Components/TextRenderComponent.h"
@@ -320,6 +321,78 @@ void ARetakeTestDriver::AddRollAndResultsChecks(const FString& Scene)
 		});
 	}
 }
+void ARetakeTestDriver::HopTo(const FString& Name, TFunction<float()> TargetX, TFunction<float()> TargetFloorZ)
+{
+	TSharedPtr<int32> Phase = MakeShared<int32>(0);
+	Steps.Add({ Name, 10.f, [this, TargetX, TargetFloorZ, Phase](float)
+	{
+		if (Director->GetState() == ERetakeSceneState::Wrap) return EStepResult::Done;
+		if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Failed;
+		UCharacterMovementComponent* Move = Player->GetCharacterMovement();
+		const FVector Loc = Player->GetActorLocation();
+		const float G = FMath::Max(1.f, -Move->GetGravityZ());
+		const float FeetZ = static_cast<float>(Loc.Z) - Player->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+		const float Target = TargetX();
+		const float Floor = TargetFloorZ();
+		auto AirTime = [G, FeetZ, Floor](float Vz) { return (Vz + FMath::Sqrt(FMath::Max(0.f, Vz * Vz + 2.f * G * (FeetZ - Floor)))) / G; };
+		if (*Phase == 0)
+		{
+			Player->AddMovementInput(FVector(1.f, 0.f, 0.f), 1.f);
+			const float Reach = Move->GetMaxSpeed() * AirTime(Move->JumpZVelocity);
+			if (Move->IsMovingOnGround() && Loc.X >= Target - Reach)
+			{
+				Player->StartJump();
+				*Phase = 1;
+			}
+			return EStepResult::Running;
+		}
+		if (*Phase == 1 && Move->IsFalling()) { *Phase = 2; }
+		else if (*Phase == 2 && Move->IsMovingOnGround()) { return EStepResult::Done; }
+		// In the air: steer (air control) so we come down on the target, like a player correcting mid-jump.
+		const float TimeLeft = FMath::Max(0.1f, AirTime(static_cast<float>(Move->Velocity.Z)));
+		const FVector2D Want((Target - Loc.X) / TimeLeft, -Loc.Y / TimeLeft); // also pull back to the corridor's middle
+		const FVector2D In = ((Want - FVector2D(Move->Velocity)) / 100.f).ClampAxes(-1.f, 1.f);
+		Player->AddMovementInput(FVector(In.X, In.Y, 0.f), 1.f);
+		return EStepResult::Running;
+	} });
+}
+
+void ARetakeTestDriver::LeapAndClimb(float EdgeX)
+{
+	TSharedPtr<int32> Phase = MakeShared<int32>(0);
+	TSharedPtr<float> InPitTime = MakeShared<float>(0.f);
+	Steps.Add({ TEXT("full-speed run-jump at the edge, then jump at the far wall"), 14.f, [this, EdgeX, Phase, InPitTime](float Dt)
+	{
+		if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Done; // cut - fine
+		UCharacterMovementComponent* Move = Player->GetCharacterMovement();
+		Player->AddMovementInput(FVector(1.f, 0.f, 0.f), 1.f);
+		if (*Phase == 0)
+		{
+			if (Move->IsMovingOnGround() && Player->GetActorLocation().X >= EdgeX + 20.f) { Player->StartJump(); *Phase = 1; }
+			else if (Move->IsFalling() && Player->GetActorLocation().X > EdgeX) { *Phase = 1; }
+		}
+		else if (*Phase == 1)
+		{
+			if (Move->IsMovingOnGround()) { *Phase = 2; }
+		}
+		else
+		{
+			*InPitTime += Dt;
+			if (Move->IsMovingOnGround()) { Player->StartJump(); }
+			if (*InPitTime > 4.f) return EStepResult::Done;
+		}
+		return EStepResult::Running;
+	} });
+}
+
+bool ARetakeTestDriver::IsStandingOnGhost() const
+{
+	const UPrimitiveComponent* Base = Player ? Player->GetMovementBase() : nullptr;
+	return Base && Cast<ATakeGhost>(Base->GetOwner()) && Player->GetCharacterMovement()->IsMovingOnGround();
+}
+
+// ---------------------------------------------------------------------------- scenes
+
 void ARetakeTestDriver::BuildSolution(const FString& Scene)
 {
 	auto Roll = [this]() { Do(TEXT("Press Space (roll)"), [this]() { Player->StartJump(); }); };
@@ -754,39 +827,21 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(3450, 0);
 	}	else if (Scene == TEXT("Scene15_Rehearsal"))
 	{
-		// ST2: one stand-in becomes the net (frozen in the pit), the stunt hops across its head.
-		auto RunJumpTo = [this](const FString& Name, TFunction<float()> TargetX)
-		{
-			TSharedPtr<int32> Phase = MakeShared<int32>(0);
-			Steps.Add({ Name, 8.f, [this, TargetX, Phase](float)
-			{
-				if (Director->GetState() == ERetakeSceneState::Wrap) return EStepResult::Done;
-				if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Failed;
-				UCharacterMovementComponent* Move = Player->GetCharacterMovement();
-				Player->AddMovementInput(FVector(1.f, 0.f, 0.f), 0.5f); // 250 cm/s -> ~306 cm jumps
-				if (*Phase == 0 && Move->IsMovingOnGround() && Player->GetActorLocation().X >= TargetX() - 306.f && Move->Velocity.Size2D() > 220.f)
-				{
-					Player->StartJump();
-					*Phase = 1;
-				}
-				else if (*Phase == 1 && Move->IsFalling()) { *Phase = 2; }
-				else if (*Phase == 2 && Move->IsMovingOnGround()) { return EStepResult::Done; }
-				return EStepResult::Running;
-			} });
-		};
-		// Take 1: NET - drop in, stand in the middle.
-		MoveTo(1280, 0, 30.f);
+		// ST2: one stand-in becomes the net (stands still in the pit), the stunt hops across its head.
+		auto Net = [this]() -> ATakeGhost* { return Director->GetGhosts().Num() > 0 ? Director->GetGhosts()[0] : nullptr; };
+		// Take 1: NET - drop in, stand in the middle (pit x 1000..1800).
+		MoveTo(1400, 0, 30.f);
 		Wait(0.5f);
 		Cut();
 		// Take 2: STUNT.
 		NextTake(2);
-		MoveTo(450, 0);
-		WaitUntil(TEXT("the net has frozen in place"), [this]() { return Director->GetGhosts().Num() == 1 && Director->GetGhosts()[0]->HasFinished(); }, 6.f);
-		MoveTo(700, 0);
-		RunJumpTo(TEXT("RunJump onto the net's head"), [this]() { return Director->GetGhosts()[0]->GetActorLocation().X; });
-		Check(TEXT("standing on the stand-in's head"), [this]() { return Player->GetActorLocation().Z > 50.f; });
-		RunJumpTo(TEXT("RunJump to the far side"), []() { return 1560.f + 30.f; });
-		MoveTo(2300, 0);
+		WaitUntil(TEXT("the net stands still (head is solid)"), [Net]() { return Net() && Net()->IsHeadSolid(); }, 8.f);
+		MoveTo(500, 0);
+		HopTo(TEXT("RunJump onto the net's head"), [Net]() { return Net()->GetActorLocation().X; }, [Net]() { return Net()->GetActorLocation().Z + 101.5f; });
+		Check(TEXT("standing on the stand-in's head (not pushed off)"), [this]() { return IsStandingOnGhost(); });
+		HopTo(TEXT("Hop to the far side"), []() { return 1800.f + 90.f; }, []() { return 0.f; });
+		Check(TEXT("made it out of the pit"), [this]() { return Player->GetActorLocation().Z > 50.f; });
+		MoveTo(2500, 0);
 	}	else if (Scene == TEXT("Scene05_Rooftop"))
 	{
 		// Reel 2 extra: TECH kills the lasers from the far corner, HERO runs the door.
@@ -997,57 +1052,34 @@ void ARetakeTestDriver::BuildSolution(const FString& Scene)
 		MoveTo(2800, -250);
 	}	else if (Scene == TEXT("Scene05_TheGap"))
 	{
-		// P11: two takes drop into the pit and stay standing; the third hops across their heads.
-		auto GhostX = [this](int32 Index) { return Director->GetGhosts().IsValidIndex(Index) ? Director->GetGhosts()[Index]->GetActorLocation().X : 0.f; };
-		auto RunJumpOnto = [this](const FString& Name, TFunction<float()> TargetX)
-		{
-			TSharedPtr<int32> Phase = MakeShared<int32>(0);
-			Steps.Add({ Name, 8.f, [this, TargetX, Phase](float)
-			{
-				if (Director->GetState() == ERetakeSceneState::Wrap) return EStepResult::Done;
-				if (Director->GetState() != ERetakeSceneState::Rolling) return EStepResult::Failed;
-				UCharacterMovementComponent* Move = Player->GetCharacterMovement();
-				Player->AddMovementInput(FVector(1.f, 0.f, 0.f), 0.5f); // half speed (250 cm/s) -> ~306 cm jumps
-				const float JumpAt = TargetX() - 306.f;
-				if (*Phase == 0 && Move->IsMovingOnGround() && Player->GetActorLocation().X >= JumpAt && Move->Velocity.Size2D() > 220.f)
-				{
-					Player->StartJump();
-					*Phase = 1;
-				}
-				else if (*Phase == 1 && Move->IsFalling())
-				{
-					*Phase = 2;
-				}
-				else if (*Phase == 2 && Move->IsMovingOnGround())
-				{
-					return EStepResult::Done;
-				}
-				return EStepResult::Running;
-			} });
-		};
-		// Take 1: drop in, stand at the far end of the pit.
-		MoveTo(1550, 0, 30.f);
+		// P11: two takes drop into the 1500 cm pit and stand still; the third hops edge -> head -> head -> edge.
+		auto Ghost = [this](int32 Index) -> ATakeGhost* { return Director->GetGhosts().IsValidIndex(Index) ? Director->GetGhosts()[Index] : nullptr; };
+		auto HeadX = [Ghost](int32 Index) { return [Ghost, Index]() { return Ghost(Index)->GetActorLocation().X; }; };
+		auto HeadZ = [Ghost](int32 Index) { return [Ghost, Index]() { return Ghost(Index)->GetActorLocation().Z + 101.5f; }; };
+		// Take 1: drop in, stand at the far tape mark.
+		MoveTo(2060, 0, 30.f);
 		Wait(0.5f);
 		Cut();
-		// Take 2: drop in, stand at the near end.
+		// Take 2: drop in, stand at the near tape mark.
 		NextTake(2);
-		MoveTo(1250, 0, 30.f);
+		MoveTo(1560, 0, 30.f);
 		Wait(0.5f);
 		Cut();
-		// Take 3: wait until both ghosts are frozen, then hop across their heads.
+		// Take 3: wait until both stand still, then hop across their heads.
 		NextTake(3);
-		WaitUntil(TEXT("both ghosts frozen (heads are platforms now)"), [this]()
+		WaitUntil(TEXT("both stand-ins stand still (heads are platforms now)"), [this]()
 		{
-			for (const ATakeGhost* G : Director->GetGhosts()) { if (!G->HasFinished()) return false; }
+			for (const ATakeGhost* G : Director->GetGhosts()) { if (!G->IsHeadSolid()) return false; }
 			return Director->GetGhosts().Num() == 2;
 		}, 10.f);
-		MoveTo(600, 0);
-		RunJumpOnto(TEXT("RunJump onto ghost 2's head"), [GhostX]() { return GhostX(1); });
-		Check(TEXT("standing on a ghost's head"), [this]() { return Player->GetActorLocation().Z > 50.f; });
-		RunJumpOnto(TEXT("RunJump onto ghost 1's head"), [GhostX]() { return GhostX(0); });
-		Check(TEXT("standing on the other ghost's head"), [this]() { return Player->GetActorLocation().Z > 50.f; });
-		RunJumpOnto(TEXT("RunJump to the far side"), []() { return 1830.f + 30.f; });
-		MoveTo(2600, 0);
+		MoveTo(500, 0);
+		HopTo(TEXT("RunJump onto the near stand-in's head"), HeadX(1), HeadZ(1));
+		Check(TEXT("standing on a stand-in's head (not pushed off)"), [this]() { return IsStandingOnGhost(); });
+		HopTo(TEXT("Hop onto the far stand-in's head"), HeadX(0), HeadZ(0));
+		Check(TEXT("standing on the other stand-in's head"), [this]() { return IsStandingOnGhost(); });
+		HopTo(TEXT("Hop to the far side"), []() { return 2500.f + 90.f; }, []() { return 0.f; });
+		Check(TEXT("made it out of the pit"), [this]() { return Player->GetActorLocation().Z > 50.f; });
+		MoveTo(3300, 0);
 	}
 	else
 	{
@@ -1087,7 +1119,8 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	}
 	else if (Scene == TEXT("Scene05_TheGap"))
 	{
-		MoveTo(2600, 0, 60.f, 40.f); // walks straight into the pit and can't climb out
+		LeapAndClimb(1000.f);            // the gap is too wide for a run-jump, and the pit too deep to climb out of
+		MoveTo(3300, 0, 60.f, 40.f);
 	}
 	else if (Scene == TEXT("Scene09_Backlot"))
 	{
@@ -1128,7 +1161,8 @@ void ARetakeTestDriver::BuildWrong(const FString& Scene)
 	}
 	else if (Scene == TEXT("Scene15_Rehearsal"))
 	{
-		MoveTo(2300, 0, 60.f, 40.f); // straight into the pit, no way out
+		LeapAndClimb(1000.f);            // too wide to run-jump, too deep to climb out of
+		MoveTo(2500, 0, 60.f, 40.f);
 	}
 	else if (Scene == TEXT("Scene12_TheRig"))
 	{

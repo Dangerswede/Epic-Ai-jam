@@ -74,6 +74,17 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void OnConstruction(const FTransform& Transform) override;
 
+	/**
+	 * A stunt double standing on this take's head keeps it as a base (no automatic "jump off").
+	 * ACharacter's capsule says CanCharacterStepUpOn = No, which made the engine push the player off every ghost.
+	 * (Godot: like letting a CharacterBody3D stand on another one's head instead of sliding off.)
+	 */
+	virtual bool CanBeBaseForCharacter(APawn* Pawn) const override;
+
+	/** True while the head is a solid platform (take finished standing, or standing still mid-take). */
+	UFUNCTION(BlueprintPure, Category = "Retake")
+	bool IsHeadSolid() const;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -123,6 +134,12 @@ private:
 	void FireActionsUpTo(float Time);
 	void FaceLabelToCamera();
 	void Finish();
+	/** Head platform on/off. Turning it on waits until no pawn is inside the box (never pops anyone upward). */
+	void SetHeadSolid(bool bSolid);
+	void UpdateHeadWhilePlaying(float DeltaSeconds);
+
+	/** Seconds the replay has been standing still (no planar or vertical motion). */
+	float StillTime = 0.f;
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> GhostMIDs;

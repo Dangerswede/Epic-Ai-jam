@@ -44,6 +44,12 @@ private:
 	void WaitUntil(const FString& Name, TFunction<bool()> Pred, float Timeout = 30.f);
 	void Check(const FString& Name, TFunction<bool()> Pred);
 	void Do(const FString& Name, TFunction<void()> Action);
+	/** Full-speed run, jump in time to reach TargetX (landing on TargetFloorZ), steer in the air like a player. */
+	void HopTo(const FString& Name, TFunction<float()> TargetX, TFunction<float()> TargetFloorZ);
+	/** Wrong-way attempt: run-jump at the very edge of a pit, then try to climb out of it by jumping at the far wall. */
+	void LeapAndClimb(float EdgeX);
+	/** True when the player stands on a take's head (its base is a ghost) - i.e. the engine didn't push them off. */
+	bool IsStandingOnGhost() const;
 
 	void BuildSolution(const FString& Scene);
 	void BuildWrong(const FString& Scene);
