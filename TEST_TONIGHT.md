@@ -251,3 +251,4 @@ Open `EpicAiJam.uproject` (if asked to rebuild modules, say Yes).
 - Scene 15: take 1 stand on the yellow tape mark in the pit (just stand still, no need to press R). Take 2: jump onto that take's head, then hop to the far side. Expected: you stay on the head (no longer pushed off) and the hop up to the floor works.
 - Scene 16: the pit is much longer now. One stand-in should NOT be enough; two (on the two tape marks) should be: edge -> head -> head -> edge.
 - Any scene: a take standing still mid-replay can now be stood on; it stops being a platform as soon as it moves.
+142. Music: a calm loop plays in the main menu, briefing, Director's Cut and results; a tenser loop while a take rolls. Both loop without a click; the MUSIC slider changes them; scene 16's wrap still drops to silence.
