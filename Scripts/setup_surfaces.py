@@ -86,6 +86,9 @@ def import_texture(fname):
     task.set_editor_property("automated", True)
     task.set_editor_property("replace_existing", True)
     task.set_editor_property("save", False)
+    # Legacy factory: synchronous, and it really replaces the pixels of an existing texture
+    # (the default Interchange path kept the old source data on re-import).
+    task.set_editor_property("factory", unreal.TextureFactory())
     tools.import_asset_tasks([task])
     tex = unreal.load_asset(DIR + "/" + name)
     if not tex:
